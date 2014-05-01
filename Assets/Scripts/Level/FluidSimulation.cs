@@ -558,32 +558,34 @@ public class FluidSimulation
 				{
 					float average = 0;
 					int count = 0;
-					if(north.type != CellType.SOLID && north.level < levelRemaining)
+					if(north.type != CellType.SOLID && north.level < level)
 					{
 						average += north.level;
 						count += 1;
 					}
-					if(east.type != CellType.SOLID && east.level < levelRemaining)
+					if(east.type != CellType.SOLID && east.level < level)
 					{
 						average += east.level;
 						count += 1;
 					}
-					if(south.type != CellType.SOLID && south.level < levelRemaining)
+					if(south.type != CellType.SOLID && south.level < level)
 					{
 						average += south.level;
 						count += 1;
 					}
-					if(west.type != CellType.SOLID && west.level < levelRemaining)
+					if(west.type != CellType.SOLID && west.level < level)
 					{
 						average += west.level;
 						count += 1;
 					}
 					if(count > 0)
 					{
-						average /= count;
+						average = (average / count) * .95f;
 						outFlow = clampFlow(levelRemaining - average, levelRemaining);
 						if(outFlow > 0)
 						{
+							levelNextStep -= outFlow;
+							levelRemaining -= outFlow;
 							outFlow /= count;
 							if(north.type != CellType.SOLID && north.level <= levelRemaining)
 							{
@@ -605,8 +607,6 @@ public class FluidSimulation
 								west.levelNextStep += outFlow;
 								container.updated.Add(west);
 							}
-							levelNextStep -= outFlow;
-							levelRemaining -= outFlow;
 						}
 					}
 				}
@@ -644,11 +644,7 @@ public class FluidSimulation
 		{
 			if(flow > s_minFlow)
 			{
-				flow *= 0.1f;
-			}
-			else 
-			{
-				flow = 0;
+				flow *= 0.5f;
 			}
 			return Mathf.Clamp (flow, 0, Mathf.Min(level, s_maxFlow));
 		}

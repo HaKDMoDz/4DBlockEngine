@@ -182,8 +182,8 @@ public class Chunk : MonoBehaviour
 		if(block == 3)
 		{
 			//world.simulation.AddFluidAt(x + chunkX * world.chunkSize, y + chunkY * world.chunkSize, z + chunkZ * world.chunkSize, 0, 1, false);
-			world.SetBlockAt(x + chunkX * world.chunkSize, y + chunkY * world.chunkSize, z + chunkZ * world.chunkSize, world.worldW, 0);
-			block = 0;
+		//	world.SetBlockAt(x + chunkX * world.chunkSize, y + chunkY * world.chunkSize, z + chunkZ * world.chunkSize, world.worldW, 0);
+		//	block = 0;
 		}
 		return block;
 	}
