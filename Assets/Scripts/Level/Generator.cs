@@ -16,6 +16,11 @@ public class Generator
 	protected HashSet<long> pending;
 	protected AutoResetEvent waitHandle;
 	protected float[] biasTable;
+	protected List<PathData> paths;
+
+
+
+
 
 	protected Noise elevation = new Noise((ulong)Random.Range(0, int.MaxValue));
 	protected Noise detail = new Noise ((ulong)Random.Range(0, int.MaxValue));
@@ -28,6 +33,13 @@ public class Generator
 	protected static float s_mountainHeight = 64;
 	protected static float s_detailScale = 16;
 	protected static float s_sinkHoleDepth = 8;
+	protected static float s_riverEndMaxHeight = s_seaLevel;
+	protected static float s_riversStartMinHeight = 92;
+
+
+
+
+
 
 	public Generator(World world) 
 	{
@@ -107,8 +119,10 @@ public class Generator
 					int cW = chunkW * chunkSize + w;
 					Vector3 cube = sampleCube[x, z, w];	
 					float groundLevel = cube.x;
+
+					float detailNoise = cube.z;
 					BiomeData biome = GetBiomeData (cX, cZ, cW, 16.0f, 256.0f);				
-					float overhangStart = s_seaLevel + Mathf.Clamp(cube.z * 4, -1, 1) * 2;
+					float overhangStart = s_seaLevel + Mathf.Clamp(detailNoise * 4, -1, 1) * 2;
 
 					for (int y = 0; y < chunkSize; ++y)
 					{
@@ -125,12 +139,12 @@ public class Generator
 								float density = (Mathf.Clamp(volume.Perlin4DFBM(cX, cY, cZ, cW, 64, 0, 4) * 4, -1, 1) + 1);
 								if(density > 0)
 								{
-									chunkData [x, y, z, w] = BuildColumn(cY, groundLevel, (cube.z * 2 + 2), biome.id);
+									chunkData [x, y, z, w] = BuildColumn(cY, groundLevel, (detailNoise * 2 + 2), biome.id);
 								}
 							}
 							else
 							{
-								chunkData [x, y, z, w] = BuildColumn(cY, groundLevel, (cube.z * 2 + 2), biome.id);
+								chunkData [x, y, z, w] = BuildColumn(cY, groundLevel, (detailNoise * 2 + 2), biome.id);
 							}
 						}
 					}
@@ -222,7 +236,7 @@ public class Generator
 
 	public float GetHeight(float x, float z, float w)
 	{
-		float seaElevation = Mathf.Clamp(elevation.Perlin3DFMB(x, z, w, 256, 0.15f, 4), -.5f, 0);
+		float seaElevation = Mathf.Clamp(elevation.Perlin3DFMB(x, z, w, 512, 0.1715f, 4), -.5f, 0);
 		float elevationGain = Mathf.Clamp(((Mathf.Clamp(detail.Perlin3DFMB (x, z, w, 256, 0, 2) * 5, -1, 1) + 1) / 2), 0.01f, 1);
 		float elevation0ffset = Mathf.Clamp(((Mathf.Clamp(detail2.Perlin3DFMB (x, z, w, 256, 0, 2) * 5, -1, 1) + 1) / 2), 0.01f, 1);
 		float elevationValue = seaElevation < 0 ? seaElevation : elevation.RidgedMultiFractal3D (x, z, w, 128, elevation0ffset, elevationGain, 4);
@@ -235,13 +249,6 @@ public class Generator
 			detailApplied -= sinkHoleOffset;
 		}
 		return detailApplied;
-	}
-	
-	public struct BiomeData
-	{
-		public float rainfall;
-		public float temperature;
-		public int id;
 	}
 
 	public BiomeData GetBiomeData(float x, float y, float z, float scale, float biomeSampleRescale)
@@ -260,18 +267,38 @@ public class Generator
 			biome.temperature = (Mathf.Clamp(biomeNoise.Perlin3DFMB(centroid.x, centroid.y, centroid.z, biomeSampleRescale * 2, 0, 3) * 5, -1, 1) + 1) / 2;
 			//Adjust temperature with elevation based on atmospheric pressure (http://tinyurl.com/macaquk)
 			biome.temperature *= Mathf.Pow(1 - 0.3158078f *  Mathf.Max(centroidHeight - (s_seaLevel + s_temperatureOffset), 0) / (m_world.height - s_seaLevel), 5.25588f);
-			//Rainfall is biased with a curve based on temperature (http://tinyurl.com/ksj2qkf)
-			biome.rainfall = ((Mathf.Clamp(biomeNoise.Perlin3DFMB(centroid.x, centroid.y, centroid.z, biomeSampleRescale, 0, 3) * 5, -1, 1) + 1) / 2) * bias(biome.temperature, 0.2f);
+			//Rainfall is biased with a curve based on temperature (http://tinyurl.com/qfc3kf7)
+			biome.rainfall = ((Mathf.Clamp(biomeNoise.Perlin3DFMB(centroid.x, centroid.y, centroid.z, biomeSampleRescale, 0, 3) * 5, -1, 1) + 1) / 2) * bias(biome.temperature, 0.7f);
 			biome.id = GetBiomeID(biome.rainfall, biome.temperature);
 		}
 		return biome;
 	}
 
 	protected int GetBiomeID(float rainfall, float temperature)
-	{		
+	{
+		//TODO : Implement properly... 
 		return temperature <= .2f ? -1 : temperature >= .8f ? 1 : 0;
 	}
 
+	public struct PathData
+	{
+		public PathType type;
+		public List<Vector4> cells;
+	}
+
+	public enum PathType
+	{
+		RIVER,
+		ROAD
+	}
+	
+	public struct BiomeData
+	{
+		public float rainfall;
+		public float temperature;
+		public int id;
+	}
+	
 	public struct GeneratorResponse
 	{
 		public Vector4 chunkLocation;

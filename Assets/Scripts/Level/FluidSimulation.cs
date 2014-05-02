@@ -7,11 +7,11 @@ public class FluidSimulation
 {
 	protected static float s_maxLevel = 1;
 	protected static float s_maxFlow = 1;
-	protected static float s_evaporationLevel = 0.16f;
+	protected static float s_evaporationLevel = 0.08f;
 	protected static float s_minLevel = 0.0001f;
 	protected static float s_maxCompression = 0.07f;
-	protected static float s_evaporationRate = 0.01f;
-	protected static float s_minFlow = 0.0005f;
+	protected static float s_evaporationRate = 0.005f;
+	protected static float s_minFlow = 0.000001f;
 	protected World m_world;
 	protected List<FluidContainer> m_containers;
 	protected bool m_stepDone;
@@ -59,7 +59,6 @@ public class FluidSimulation
 		{
 			FluidCell cell = new FluidCell(x, y, z, w, CellType.WATER, amount);
 			cell.isSource = isSource;
-			//cell.isSource = true;
 			foreach(FluidCell existing in cellAccumulator)
 			{
 				if(existing.x == cell.x && existing.y == cell.y && existing.z == cell.z && existing.w == cell.w)
@@ -101,7 +100,7 @@ public class FluidSimulation
 							container.BuildNeighborhood(cell);
 						}
 					}
-					for(int i = -1; i < 1; ++i)
+					for(int i = -1; i <= 1; ++i)
 					{
 						if(i == 0) continue;
 						hash = CellHash(x + i, y, z);
@@ -360,7 +359,7 @@ public class FluidSimulation
 					hasChanged = true;
 					potentialPruningNeeded = true;
 				}
-				if(Mathf.Abs(cell.level - cell.levelNextStep) > s_minFlow / 2.0f)
+				if(Mathf.Abs(cell.level - cell.levelNextStep) >= s_minFlow / 2.0f)
 				{
 					hasChanged = true;
 					cell.awake = true;
@@ -539,6 +538,7 @@ public class FluidSimulation
 				levelNextStep -= outFlow;
 				levelRemaining -= outFlow;
 				up.levelNextStep += outFlow;
+				up.awake = true;
 				container.updated.Add(up);
 			}
 			else 
@@ -551,6 +551,7 @@ public class FluidSimulation
 						levelNextStep -= outFlow;
 						levelRemaining -= outFlow;
 						down.levelNextStep += outFlow;
+						down.awake = true;
 						container.updated.Add(down);
 					}
 				}
@@ -580,7 +581,7 @@ public class FluidSimulation
 					}
 					if(count > 0)
 					{
-						average = (average / count) * .95f;
+						average = average / count;
 						outFlow = clampFlow(levelRemaining - average, levelRemaining);
 						if(outFlow > 0)
 						{
@@ -590,21 +591,25 @@ public class FluidSimulation
 							if(north.type != CellType.SOLID && north.level <= levelRemaining)
 							{
 								north.levelNextStep += outFlow;
+								north.awake = true;
 								container.updated.Add(north);
 							}
 							if(east.type != CellType.SOLID && east.level <= levelRemaining)
 							{
 								east.levelNextStep += outFlow;
+								east.awake = true;
 								container.updated.Add(east);
 							}
 							if(south.type != CellType.SOLID && south.level <= levelRemaining)
 							{
 								south.levelNextStep += outFlow;
+								south.awake = true;
 								container.updated.Add(south);
 							}
 							if(west.type != CellType.SOLID && west.level <= levelRemaining)
 							{
 								west.levelNextStep += outFlow;
+								west.awake = true;
 								container.updated.Add(west);
 							}
 						}
@@ -620,17 +625,17 @@ public class FluidSimulation
 							levelNextStep -= outFlow;
 							levelRemaining -= outFlow;
 							up.levelNextStep += outFlow;
+							up.awake = true;
 							container.updated.Add(up);
 						}
 					}
-					//only remove stagnant water
-					if(levelNextStep == level && levelRemaining <= s_evaporationLevel && up.type == CellType.AIR)
+					if(levelRemaining <= s_evaporationLevel && up.type == CellType.AIR)
 					{
 						levelNextStep -= s_evaporationRate;
 					}
 				}
 			}
-			if(Mathf.Abs(level - levelNextStep) > s_minFlow / 2.0f)
+			if(Mathf.Abs(level - levelNextStep) >= s_minFlow / 2.0f)
 			{
 				container.updated.Add(this);
 			}

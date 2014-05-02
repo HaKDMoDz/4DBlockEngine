@@ -135,43 +135,49 @@ public class Chunk : MonoBehaviour
 	Color blockColor;
 	private void ConditionallyBuildFaces(int x, int y, int z) 
 	{
-		byte block = Block (x, y, z);
-
-		blockColor = BlockColor (x, y, z);
-		//This code will run for every block in the chunk
-		if(block != 0)
+		int cX = x + chunkX * world.chunkSize;
+		int cY = y + chunkY * world.chunkSize;
+		int cZ = z + chunkZ * world.chunkSize;
+		byte[,,,] chunkData = world.GetChunkData (cX, cY, cZ, world.worldW);
+		if(chunkData != null)
 		{
-			Vector2 topTexture = GetTopTextureIndex(block);
-			Vector2 sideTexture = GetSideTextureIndex(block);
-			Vector2 bottomTexture = GetBottomTextureIndex(block);
-			if(Block(x, y + 1, z) == 0)
+			byte block = Block (x, y, z);
+			blockColor = BlockColor (x, y, z);
+			//This code will run for every block in the chunk
+			if(block != 0)
 			{
-				//Block above is air
-				CubeTop(x, y, z, ref topTexture);
-			}
-			if(Block(x, y - 1, z) == 0){
-				//Block below is air
-				CubeBot(x, y, z, ref bottomTexture);
-			}
-			if(Block(x + 1, y, z) == 0)
-			{
-				//Block east is air
-				CubeEast(x, y, z, ref sideTexture);
-			}
-			if(Block(x - 1, y, z ) == 0)
-			{
-				//Block west is air
-				CubeWest(x, y, z, ref sideTexture);
-			}
-			if(Block(x, y, z + 1) == 0)
-			{
-				//Block north is air
-				CubeNorth(x, y, z, ref sideTexture);
-			}
-			if(Block(x, y, z - 1) == 0)
-			{
-				//Block south is air
-				CubeSouth(x, y, z, ref sideTexture);
+				Vector2 topTexture = GetTopTextureIndex(block);
+				Vector2 sideTexture = GetSideTextureIndex(block);
+				Vector2 bottomTexture = GetBottomTextureIndex(block);
+				if(Block(x, y + 1, z) == 0)
+				{
+					//Block above is air
+					CubeTop(x, y, z, ref topTexture);
+				}
+				if(Block(x, y - 1, z) == 0){
+					//Block below is air
+					CubeBot(x, y, z, ref bottomTexture);
+				}
+				if(Block(x + 1, y, z) == 0)
+				{
+					//Block east is air
+					CubeEast(x, y, z, ref sideTexture);
+				}
+				if(Block(x - 1, y, z ) == 0)
+				{
+					//Block west is air
+					CubeWest(x, y, z, ref sideTexture);
+				}
+				if(Block(x, y, z + 1) == 0)
+				{
+					//Block north is air
+					CubeNorth(x, y, z, ref sideTexture);
+				}
+				if(Block(x, y, z - 1) == 0)
+				{
+					//Block south is air
+					CubeSouth(x, y, z, ref sideTexture);
+				}
 			}
 		}
 	}
@@ -182,8 +188,8 @@ public class Chunk : MonoBehaviour
 		if(block == 3)
 		{
 			//world.simulation.AddFluidAt(x + chunkX * world.chunkSize, y + chunkY * world.chunkSize, z + chunkZ * world.chunkSize, 0, 1, false);
-		//	world.SetBlockAt(x + chunkX * world.chunkSize, y + chunkY * world.chunkSize, z + chunkZ * world.chunkSize, world.worldW, 0);
-		//	block = 0;
+			world.SetBlockAt(x + chunkX * world.chunkSize, y + chunkY * world.chunkSize, z + chunkZ * world.chunkSize, world.worldW, 0);
+			block = 0;
 		}
 		return block;
 	}

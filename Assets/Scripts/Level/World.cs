@@ -56,7 +56,7 @@ public class World : MonoBehaviour
 
 	public void SpawnWater(int x, int y, int z)
 	{
-		simulation.AddFluidAt (x, y, z, 0, 1, false);
+		simulation.AddFluidAt (x, y, z, 0, 1, true);
 	}
 
 	public long Hash(Vector4 chunk)
@@ -158,7 +158,7 @@ public class World : MonoBehaviour
 		{
 			playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
 		}
-		LoadChunks(playerTransform.position, 6, 8);
+		LoadChunks(playerTransform.position, 10, 14);
 	}
 
 	protected void ReDrawWorld() 
