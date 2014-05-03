@@ -16,11 +16,9 @@ public class Generator
 	protected HashSet<long> pending;
 	protected AutoResetEvent waitHandle;
 	protected float[] biasTable;
-	protected List<PathData> paths;
-
-
-
-
+	protected List<List<PathData>> activePaths;
+	protected List<List<PathData>> completedPaths;
+	protected List<Dictionary<long, PathGraphNode>> pathNodes;
 
 	protected Noise elevation = new Noise((ulong)Random.Range(0, int.MaxValue));
 	protected Noise detail = new Noise ((ulong)Random.Range(0, int.MaxValue));
@@ -35,11 +33,7 @@ public class Generator
 	protected static float s_sinkHoleDepth = 8;
 	protected static float s_riverEndMaxHeight = s_seaLevel;
 	protected static float s_riversStartMinHeight = 92;
-
-
-
-
-
+	protected static float s_pathSectionNoiseScale = 1 / 64f;
 
 	public Generator(World world) 
 	{
@@ -54,6 +48,9 @@ public class Generator
 		generatorThread = new Thread (ThreadLoop);
 		generatorThread.Start();
 		biasTable = new float[101];
+		pathNodes = new List<Dictionary<long, PathGraphNode>>();
+		activePaths = new List<List<PathData>>();
+		completedPaths = new List<List<PathData>>();
 		for(int i = 0; i < 101; ++i)
 		{
 			biasTable[i] = Mathf.Log(i * 0.01f) / Mathf.Log(0.5f);
@@ -279,11 +276,116 @@ public class Generator
 		//TODO : Implement properly... 
 		return temperature <= .2f ? -1 : temperature >= .8f ? 1 : 0;
 	}
+	
+	
+	
+	
+	
+	protected void BuildPathSections(int x, int z, int w)
+	{
+		List<PathData> active = activePaths[w];
+		List<PathData> completed = completedPaths[w];
+		Dictionary<long, PathGraphNode> nodeMap = pathNodes[w];
+		//determine if any new pathing regions are added
+		Noise.VoroniData segmentation = detail.Voroni(x * s_pathSectionNoiseScale, z * s_pathSectionNoiseScale, w * s_pathSectionNoiseScale);
+		if(!nodeMap.ContainsKey(segmentation.id))
+		{
+			PathGraphNode node = new PathGraphNode();
+			node.position = new Vector3(x, z, w) + segmentation.delta / s_pathSectionNoiseScale;
+			//determine if there are any new sources or sinks in this group
+			
+		}
+		
+			//create new active paths
+				
+			//determine if any active paths can be expanded
+			
+			//add cells along each path (A*)
+			
+			//move any finished paths to the complete list	
+		
+	}
+	
+	
+	protected List<PathGraphNode> AddNewPathNodes(Vector3 minPos, Vector3 maxPos)
+	{
+		List<PathGraphNode> nodes = new List<PathGraphNode>();
+		for(int x = (int)minPos.x; x < maxPos.x; ++x)
+		{
+			for(int z = (int)minPos.y; z < maxPos.y; ++z)
+			{
+				for(int w = (int)minPos.z; w < maxPos.z; ++w)
+				{
+					
+				}	
+			}	
+		}
+		return nodes;
+	}
+	
+	protected PathGraphNode BuildPathNode(int x, int z, int w, PathType type)
+	{
+		Dictionary<long, PathGraphNode> nodeMap = pathNodes[w];
+		//determine if any new pathing regions are added
+		Noise.VoroniData segmentation;
+		//TODO : do we need to generate different segmentations per path type?
+		switch(type)
+		{
+			case PathType.ROAD:
+				segmentation = detail.Voroni(x * s_pathSectionNoiseScale, z * s_pathSectionNoiseScale, w * s_pathSectionNoiseScale);
+				break;
+			default:
+				segmentation = elevation.Voroni(x * s_pathSectionNoiseScale, z * s_pathSectionNoiseScale, w * s_pathSectionNoiseScale);
+				break;
+		}
+		//TODO : THIS MAY FAIL SINCE THE IDs MAY NOT BE UNIQUE BETWEEN GENERATORS
+		if(!nodeMap.ContainsKey(segmentation.id))
+		{
+			PathGraphNode node = new PathGraphNode();
+			node.position = new Vector3(x, z, w) + segmentation.delta / s_pathSectionNoiseScale;
+			//determine if there are any new sources or sinks in this group
+			return node;
+		}
+		return null;
+		
+	}
+	
+	
+	
+	public class PathGraphNode
+	{
+		public Dictionary<PathGraphNode, float> edges;	
+		public PathNodeType nodeType;
+		public Vector3 position;
+		public PathGraphNode()
+		{
+			edges = new Dictionary<PathGraphNode, float>();
+			nodeType = PathNodeType.GENERAL;
+		}
+		
+	}
+	
 
-	public struct PathData
+	public class PathData
 	{
 		public PathType type;
-		public List<Vector4> cells;
+		public List<Vector3> cells;
+		public bool isBuildingForward;
+		public PathGraphNode currentNode;
+		public PathData(PathType type, bool isBuildingForward)
+		{
+			this.type = type;
+			this.isBuildingForward = isBuildingForward;	
+			cells = new List<Vector3>();
+		}
+	}
+	
+	public enum PathNodeType
+	{
+		SOURCE,
+		SINK,
+		INVALID,
+		GENERAL
 	}
 
 	public enum PathType
