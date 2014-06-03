@@ -1,0 +1,278 @@
+﻿
+
+using System;
+using System.Globalization;
+using System.Text;
+using _4DMonoEngine.Core.Assets;
+using _4DMonoEngine.Core.Chunks;
+using _4DMonoEngine.Core.Common.Extensions;
+using _4DMonoEngine.Core.Common.Logging;
+using _4DMonoEngine.Core.Graphics.Drawing;
+using _4DMonoEngine.Core.Universe;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+
+namespace _4DMonoEngine.Core.Debugging
+{
+    /// <summary>
+    /// Allows interaction with the statistics service.
+    /// </summary>
+    public interface IStatistics
+    {
+        /// <summary>
+        /// Returns current FPS.
+        /// </summary>
+        int FPS { get; }
+
+        /// <summary>
+        /// Returns the memory size.
+        /// </summary>
+        /// <returns></returns>
+        long MemoryUsed { get; }
+
+        int GenerateQueue { get; }
+        int LightenQueue { get; }
+        int BuildQueue { get; }
+        int ReadyQueue { get; }
+        int RemovalQueue { get; }
+    }
+
+    internal class DebugBar : DrawableGameComponent, IStatistics
+    {
+        // exported statistics.
+        public int FPS { get; private set; }
+        public long MemoryUsed { get { return GC.GetTotalMemory(false); } }
+        public int GenerateQueue { get; private set; }
+        public int LightenQueue { get; private set; }
+        public int BuildQueue { get; private set; }
+        public int ReadyQueue { get; private set; }
+        public int RemovalQueue { get; private set; }
+
+        // internal counters.
+        private int _frameCounter = 0; // the frame count.
+        private TimeSpan _elapsedTime = TimeSpan.Zero;
+
+        // drawn-blocks stuff.
+        private string _drawnBlocks;
+        private string _totalBlocks;
+
+        // resources.
+        private PrimitiveBatch _primitiveBatch;
+        private SpriteBatch _spriteBatch;
+        private SpriteFont _spriteFont;
+        private Matrix _localProjection;
+        private Matrix _localView;
+        private Rectangle _bounds;
+        private readonly Vector2[] _backgroundPolygon = new Vector2[4];
+
+        // for grabbing internal string, we should init string builder capacity and max capacity ctor so that, grabbed internal string is always valid. - http://www.gavpugh.com/2010/03/23/xnac-stringbuilder-to-string-with-no-garbage/
+        private readonly StringBuilder _stringBuilder = new StringBuilder(512, 512);
+
+        // required services.       
+        private IWorld _world;
+        private IPlayer _player;
+        private Fogger _fogger;
+        private IChunkStorage _chunkStorage;
+        private IChunkCache _chunkCache;
+        private IAssetManager _assetManager;
+
+        // misc.
+        private static readonly Logger Logger = LogManager.GetOrCreateLogger(); // loging-facility
+
+        public DebugBar(Game game)
+            : base(game)
+        {
+            Game.Services.AddService(typeof(IStatistics), this); // export the service.
+        }
+
+        /// <summary>
+        /// Initializes the debug-bar service.
+        /// </summary>
+        public override void Initialize()
+        {
+            Logger.Trace("init()");
+
+            // import required services.            
+            _player = (IPlayer)Game.Services.GetService(typeof(IPlayer));
+            _fogger = (Fogger)Game.Services.GetService(typeof(Fogger));
+            _world = (IWorld)Game.Services.GetService(typeof(IWorld));
+            _chunkStorage = (IChunkStorage)Game.Services.GetService(typeof(IChunkStorage));
+            _chunkCache = (IChunkCache)Game.Services.GetService(typeof(IChunkCache));
+            _assetManager = (IAssetManager)Game.Services.GetService(typeof(IAssetManager));
+
+            if (_assetManager == null)
+                throw new NullReferenceException("Can not find asset manager component.");
+
+            base.Initialize();
+        }
+
+        protected override void LoadContent()
+        {
+            // load resources.
+            _primitiveBatch = new PrimitiveBatch(GraphicsDevice, 1000);
+            _localProjection = Matrix.CreateOrthographicOffCenter(0f, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 0f, 0f, 1f);
+            _localView = Matrix.Identity;
+            _spriteBatch = new SpriteBatch(GraphicsDevice);
+            _spriteFont = _assetManager.Verdana;
+
+            // init bounds.
+            _bounds = new Rectangle(10, 10, Game.GraphicsDevice.Viewport.Bounds.Width - 20, 20);
+            _backgroundPolygon[0] = new Vector2(_bounds.X - 2, _bounds.Y - 2); // top left
+            _backgroundPolygon[1] = new Vector2(_bounds.X - 2, _bounds.Y + _bounds.Height + 14); // bottom left
+            _backgroundPolygon[2] = new Vector2(_bounds.X + 2 + _bounds.Width, _bounds.Y + _bounds.Height + 14); // bottom right
+            _backgroundPolygon[3] = new Vector2(_bounds.X + 2 + _bounds.Width, _bounds.Y - 2); // top right
+        }
+
+        /// <summary>
+        /// Calculates the FPS.
+        /// </summary>
+        /// <param name="gameTime"></param>
+        public override void Update(GameTime gameTime)
+        {
+            _elapsedTime += gameTime.ElapsedGameTime;
+            if (_elapsedTime < TimeSpan.FromSeconds(1))
+                return;
+
+            _elapsedTime -= TimeSpan.FromSeconds(1);
+            FPS = _frameCounter;
+            _frameCounter = 0;
+        }
+
+        /// <summary>
+        /// Draws the statistics.
+        /// </summary>
+        /// <param name="gameTime"></param>
+        public override void Draw(GameTime gameTime)
+        {
+            _frameCounter++;
+
+            // backup  the raster and depth-stencil states.
+            var previousRasterizerState = Game.GraphicsDevice.RasterizerState;
+            var previousDepthStencilState = Game.GraphicsDevice.DepthStencilState;
+
+            // set new states for drawing primitive shapes.
+            Game.GraphicsDevice.RasterizerState = RasterizerState.CullNone;
+            Game.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+
+            _primitiveBatch.Begin(_localProjection, _localView); // initialize the primitive batch.
+
+            BasicShapes.DrawSolidPolygon(_primitiveBatch, _backgroundPolygon, 4, Color.Black, true);
+
+            _primitiveBatch.End(); // end the batch.
+
+            // restore old states.
+            Game.GraphicsDevice.RasterizerState = previousRasterizerState;
+            Game.GraphicsDevice.DepthStencilState = previousDepthStencilState;
+
+            // calculate drawn blocks
+            if (_chunkCache.ChunksDrawn >= 31)
+                _drawnBlocks = (_chunkCache.ChunksDrawn / 31f).ToString("F2") + "M";
+            else if (_chunkCache.ChunksDrawn > 1)
+                _drawnBlocks = (_chunkCache.ChunksDrawn / 0.03f).ToString("F2") + "K";
+            else _drawnBlocks = "0";
+
+            // calculate total blocks
+            if (_chunkStorage.Count > 31) 
+                _totalBlocks = (_chunkStorage.Count / 31f).ToString("F2") + "M";
+            else if (_chunkStorage.Count > 1) 
+                _totalBlocks = (_chunkStorage.Count / 0.03f).ToString("F2") + "K";
+            else 
+                _totalBlocks = Core.Core.Instance.Configuration.Chunk.Volume.ToString(CultureInfo.InvariantCulture);
+
+            _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
+
+            // Attention: DO NOT use string.format as it's slower than string concat.
+
+            // FPS
+            _stringBuilder.Length = 0;
+            _stringBuilder.Append("fps:");
+            _stringBuilder.Append(FPS);
+            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 5, _bounds.Y + 5), Color.White);
+
+            // mem used
+            _stringBuilder.Length = 0;
+            _stringBuilder.Append("mem:");
+            _stringBuilder.Append(MemoryUsed.GetKiloString());
+            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 105, _bounds.Y + 5), Color.White);
+
+            // chunks
+            _stringBuilder.Length = 0;
+            _stringBuilder.Append("chunks:");
+            _stringBuilder.AppendNumber(_chunkCache.ChunksDrawn);
+            _stringBuilder.Append('/');
+            _stringBuilder.AppendNumber(_chunkStorage.Count);
+            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 205, _bounds.Y + 5), Color.White);
+
+            // blocks
+            _stringBuilder.Length = 0;
+            _stringBuilder.Append("blocks:");
+            _stringBuilder.Append(_drawnBlocks);
+            _stringBuilder.Append('/');
+            _stringBuilder.Append(_totalBlocks);
+            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 305, _bounds.Y + 5), Color.White);
+
+            // process queues.
+            GenerateQueue = _chunkCache.StateStatistics[ChunkState.AwaitingGenerate] + _chunkCache.StateStatistics[ChunkState.Generating];
+            LightenQueue = _chunkCache.StateStatistics[ChunkState.AwaitingLighting] + _chunkCache.StateStatistics[ChunkState.Lighting];
+            BuildQueue = _chunkCache.StateStatistics[ChunkState.AwaitingBuild] + _chunkCache.StateStatistics[ChunkState.Building];
+            ReadyQueue = _chunkCache.StateStatistics[ChunkState.Ready];
+            RemovalQueue = _chunkCache.StateStatistics[ChunkState.AwaitingRemoval];
+
+            // chunk generation queue
+            _stringBuilder.Length = 0;
+            _stringBuilder.Append("GenerateQ:");
+            _stringBuilder.AppendNumber(GenerateQueue);
+            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 450, _bounds.Y + 5), Color.White);
+
+            // chunk lighting queue
+            _stringBuilder.Length = 0;
+            _stringBuilder.Append("LightenQ:");
+            _stringBuilder.AppendNumber(LightenQueue);
+            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 550, _bounds.Y + 5), Color.White);
+
+            // chunk build queue
+            _stringBuilder.Length = 0;
+            _stringBuilder.Append("BuildQ:");
+            _stringBuilder.AppendNumber(BuildQueue);
+            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 650, _bounds.Y + 5), Color.White);
+
+            // ready chunks queue
+            _stringBuilder.Length = 0;
+            _stringBuilder.Append("Ready:");
+            _stringBuilder.AppendNumber(ReadyQueue);
+            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 750, _bounds.Y + 5), Color.White);
+
+            // chunk removal queue
+            _stringBuilder.Length = 0;
+            _stringBuilder.Append("Removal:");
+            _stringBuilder.AppendNumber(RemovalQueue);
+            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 850, _bounds.Y + 5), Color.White);
+
+            // infinitive world
+            _stringBuilder.Length = 0;
+            _stringBuilder.Append("inf:");
+            _stringBuilder.Append(Core.Core.Instance.Configuration.World.IsInfinitive ? "On" : "Off");
+            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 5, _bounds.Y + 15), Color.White);
+
+            // fly
+            _stringBuilder.Length = 0;
+            _stringBuilder.Append("fly:");
+            _stringBuilder.Append(_player.FlyingEnabled ? "On" : "Off");
+            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 105, _bounds.Y + 15), Color.White);
+
+            // fog
+            _stringBuilder.Length = 0;
+            _stringBuilder.Append("fog:");
+            _stringBuilder.Append(_fogger.State);
+            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 205, _bounds.Y + 15), Color.White);
+
+            // player position
+            _stringBuilder.Length = 0;
+            _stringBuilder.Append("pos:");
+            _stringBuilder.Append(_player.Position);
+            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 305, _bounds.Y + 15), Color.White);
+
+            _spriteBatch.End();
+        }
+    }
+}

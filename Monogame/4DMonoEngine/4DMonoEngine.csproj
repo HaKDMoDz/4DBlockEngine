@@ -1,0 +1,217 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{F9FA8EF3-186B-4851-8A82-A197C6294FC8}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>_4DMonoEngine</RootNamespace>
+    <AssemblyName>4DMonoEngine</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Windows\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;WINDOWS</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Windows\Release\</OutputPath>
+    <DefineConstants>TRACE;WINDOWS</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Icon.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Core\Assets\AssetManager.cs" />
+    <Compile Include="Core\Blocks\Block.cs" />
+    <Compile Include="Core\Blocks\BlockDictionary.cs" />
+    <Compile Include="Core\Common\Enums\FaceDirection.cs" />
+    <Compile Include="Core\Blocks\BlockVertex.cs" />
+    <Compile Include="Core\Blocks\Dynamic\BlockMetaObject.cs" />
+    <Compile Include="Core\Blocks\Dynamic\DynamicBlockComponent.cs" />
+    <Compile Include="Core\Blocks\Dynamic\DynamicBlock.cs" />
+    <Compile Include="Core\Blocks\PositionedBlock.cs" />
+    <Compile Include="Core\Chunks\Chunk.cs" />
+    <Compile Include="Core\Chunks\ChunkCache.cs" />
+    <Compile Include="Core\Chunks\Generators\Biomes\EvergreenGenerator.cs" />
+    <Compile Include="Core\Chunks\Generators\Biomes\PlainsGenerator.cs" />
+    <Compile Include="Core\Chunks\Generators\Biomes\PolarGenerator.cs" />
+    <Compile Include="Core\Chunks\Generators\Biomes\BiomeGeneratorBase.cs" />
+    <Compile Include="Core\Chunks\Generators\BiomeGeneratorCollection.cs" />
+    <Compile Include="Core\Chunks\Generators\Biomes\DesertGenerator.cs" />
+    <Compile Include="Core\Chunks\Generators\Biomes\RainForestGenerator.cs" />
+    <Compile Include="Core\Chunks\Generators\TerrainGenerator.cs" />
+    <Compile Include="Core\Chunks\Generators\Biomes\SavanahGenerator.cs" />
+    <Compile Include="Core\Chunks\Generators\Biomes\SeasonalGenerator.cs" />
+    <Compile Include="Core\Chunks\Generators\Biomes\SwampGenerator.cs" />
+    <Compile Include="Core\Chunks\Generators\Biomes\TaigiaGenerator.cs" />
+    <Compile Include="Core\Chunks\Generators\Biomes\TropicalGenerator.cs" />
+    <Compile Include="Core\Chunks\Generators\Structures\PathGenerator.cs" />
+    <Compile Include="Core\Chunks\Generators\Structures\PlantPopulator.cs" />
+    <Compile Include="Core\Chunks\Processors\CellularLghting.cs" />
+    <Compile Include="Core\Chunks\Processors\VertexBuilder.cs" />
+    <Compile Include="Core\Common\Interfaces\IAssetProvider.cs" />
+    <Compile Include="Core\Common\Interfaces\IInGameDebuggable.cs" />
+    <Compile Include="Core\Common\Interfaces\IItem.cs" />
+    <Compile Include="Core\Common\Interfaces\ILightable.cs" />
+    <Compile Include="Core\Common\Interfaces\VertexBuilderTarget.cs" />
+    <Compile Include="Core\Common\Interfaces\Renderable.cs" />
+    <Compile Include="Core\Common\Interfaces\Updateable.cs" />
+    <Compile Include="Core\Common\Interfaces\WorldRenderable.cs" />
+    <Compile Include="Core\Common\Random\BallInBin.cs" />
+    <Compile Include="Core\Common\Random\DeckOfCards.cs" />
+    <Compile Include="Core\Common\SparseArray3D.cs" />
+    <Compile Include="Core\Common\SparseArray2D.cs" />
+    <Compile Include="Core\Common\Extensions\NumberExtensions.cs" />
+    <Compile Include="Core\Common\Extensions\StringBuilderExtensions.cs" />
+    <Compile Include="Core\Common\Extensions\StringExtensions.cs" />
+    <Compile Include="Core\Common\Helpers\IO\FileHelper.cs" />
+    <Compile Include="Core\Common\Logging\ConsoleTarget.cs" />
+    <Compile Include="Core\Common\Logging\FileTarget.cs" />
+    <Compile Include="Core\Common\Logging\Logger.cs" />
+    <Compile Include="Core\Common\Logging\LogManager.cs" />
+    <Compile Include="Core\Common\Logging\LogRouter.cs" />
+    <Compile Include="Core\Common\Logging\LogTarget.cs" />
+    <Compile Include="Core\Common\MathUtilities.cs" />
+    <Compile Include="Core\Common\Noise\CellNoise.cs" />
+    <Compile Include="Core\Common\Noise\SimplexNoise.cs" />
+    <Compile Include="Core\Common\Random\FastRandom.cs" />
+    <Compile Include="Core\Common\Vector\Vector2Int.cs" />
+    <Compile Include="Core\Common\Vector\Vector3Byte.cs" />
+    <Compile Include="Core\Common\Vector\Vector3Int.cs" />
+    <Compile Include="Core\Common\Vector\Vector4Byte.cs" />
+    <Compile Include="Core\Config\ObjectText\ChildCollection.cs" />
+    <Compile Include="Core\Config\ObjectText\Dummy.cs" />
+    <Compile Include="Core\Config\ObjectText\Exceptions.cs" />
+    <Compile Include="Core\Config\ObjectText\Extensions.cs" />
+    <Compile Include="Core\Config\ObjectText\Field.cs" />
+    <Compile Include="Core\Config\ObjectText\Formatters.cs" />
+    <Compile Include="Core\Config\ObjectText\Group.ChildCollection.cs" />
+    <Compile Include="Core\Config\ObjectText\Group.cs" />
+    <Compile Include="Core\Config\ObjectText\GroupedDummy.cs" />
+    <Compile Include="Core\Config\ObjectText\GroupedField.cs" />
+    <Compile Include="Core\Config\ObjectText\GroupedGroup.cs" />
+    <Compile Include="Core\Config\ObjectText\GroupedList.cs" />
+    <Compile Include="Core\Config\ObjectText\GroupedReference.cs" />
+    <Compile Include="Core\Config\ObjectText\GroupEx.cs" />
+    <Compile Include="Core\Config\ObjectText\IFormatter.cs" />
+    <Compile Include="Core\Config\ObjectText\IGroupedNode.cs" />
+    <Compile Include="Core\Config\ObjectText\IListedNode.cs" />
+    <Compile Include="Core\Config\ObjectText\InheritenceList.ChildCollection.cs" />
+    <Compile Include="Core\Config\ObjectText\InheritenceList.cs" />
+    <Compile Include="Core\Config\ObjectText\InheritenceReference.cs" />
+    <Compile Include="Core\Config\ObjectText\INode.cs" />
+    <Compile Include="Core\Config\ObjectText\List.ChildCollection.cs" />
+    <Compile Include="Core\Config\ObjectText\List.cs" />
+    <Compile Include="Core\Config\ObjectText\ListedDummy.cs" />
+    <Compile Include="Core\Config\ObjectText\ListedField.cs" />
+    <Compile Include="Core\Config\ObjectText\ListedGroup.cs" />
+    <Compile Include="Core\Config\ObjectText\ListedList.cs" />
+    <Compile Include="Core\Config\ObjectText\ListedReference.cs" />
+    <Compile Include="Core\Config\ObjectText\ListEx.cs" />
+    <Compile Include="Core\Config\ObjectText\Misc.cs" />
+    <Compile Include="Core\Config\ObjectText\Node.cs" />
+    <Compile Include="Core\Config\ObjectText\ObjectTextFile.cs" />
+    <Compile Include="Core\Config\ObjectText\Parent.cs" />
+    <Compile Include="Core\Config\ObjectText\Reference.cs" />
+    <Compile Include="Core\Config\ObjectText\Tokenizer.cs" />
+    <Compile Include="Core\Config\Parsing\Exceptions.cs" />
+    <Compile Include="Core\Config\Parsing\LineCharPosition.cs" />
+    <Compile Include="Core\Config\Parsing\State.cs" />
+    <Compile Include="Core\Config\Parsing\StateAction.cs" />
+    <Compile Include="Core\Config\Parsing\Token.cs" />
+    <Compile Include="Core\Config\Parsing\Tokenizer.cs" />
+    <Compile Include="Core\Config\Parsing\TokenizerFSM.cs" />
+    <Compile Include="Core\Config\Parsing\Transition.cs" />
+    <Compile Include="Core\MainEngine.cs" />
+    <Compile Include="Core\Debugging\Commands.cs" />
+    <Compile Include="Core\Debugging\Console\Command.cs" />
+    <Compile Include="Core\Debugging\Console\CommandAttributes.cs" />
+    <Compile Include="Core\Debugging\Console\CommandHistory.cs" />
+    <Compile Include="Core\Debugging\Console\CommandManager.cs" />
+    <Compile Include="Core\Debugging\Console\CommandProcesser.cs" />
+    <Compile Include="Core\Debugging\Console\GameConsole.cs" />
+    <Compile Include="Core\Debugging\Console\GameConsoleComponent.cs" />
+    <Compile Include="Core\Debugging\Console\GameConsoleOptions.cs" />
+    <Compile Include="Core\Debugging\Console\InputProcessor.cs" />
+    <Compile Include="Core\Debugging\Console\KeyEventArgs.cs" />
+    <Compile Include="Core\Debugging\Console\OutputLine.cs" />
+    <Compile Include="Core\Debugging\Console\Renderer.cs" />
+    <Compile Include="Core\Debugging\DebugBar.cs" />
+    <Compile Include="Core\Debugging\Graphs\DebugGraph.cs" />
+    <Compile Include="Core\Debugging\Graphs\GraphManager.cs" />
+    <Compile Include="Core\Debugging\Graphs\Implementations\ChunkGraphs\BuildQ.cs" />
+    <Compile Include="Core\Debugging\Graphs\Implementations\ChunkGraphs\GenerateQ.cs" />
+    <Compile Include="Core\Debugging\Graphs\Implementations\ChunkGraphs\LightenQ.cs" />
+    <Compile Include="Core\Debugging\Graphs\Implementations\ChunkGraphs\ReadyQ.cs" />
+    <Compile Include="Core\Debugging\Graphs\Implementations\ChunkGraphs\RemoveQ.cs" />
+    <Compile Include="Core\Debugging\Graphs\Implementations\FPSGraph.cs" />
+    <Compile Include="Core\Debugging\Graphs\Implementations\MemGraph.cs" />
+    <Compile Include="Core\Debugging\Ingame\BoundingBoxRenderer.cs" />
+    <Compile Include="Core\Debugging\Ingame\InGameDebugger.cs" />
+    <Compile Include="Core\Debugging\Profiling\Profiler.cs" />
+    <Compile Include="Core\Debugging\Timing\Layout.cs" />
+    <Compile Include="Core\Debugging\Timing\TimeRuler.cs" />
+    <Compile Include="Core\Graphics\Camera.cs" />
+    <Compile Include="Core\Graphics\Commands.cs" />
+    <Compile Include="Core\Graphics\Drawing\BasicShapes.cs" />
+    <Compile Include="Core\Graphics\Drawing\PrimitiveBatch.cs" />
+    <Compile Include="Core\Graphics\GraphicsManager.cs" />
+    <Compile Include="Core\Graphics\Rasterizer.cs" />
+    <Compile Include="Core\Input\InputManager.cs" />
+    <Compile Include="Core\Interface\UserInterface.cs" />
+    <Compile Include="Core\Universe\Sky.cs" />
+    <Compile Include="Core\Universe\Commands.cs" />
+    <Compile Include="Core\Universe\Player.cs" />
+    <Compile Include="Core\Universe\Shovel.cs" />
+    <Compile Include="Core\Universe\Equipable.cs" />
+    <Compile Include="Core\Universe\World.cs" />
+    <Compile Include="Client\Game1.cs" />
+    <Compile Include="Client\Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="MonoGame.Framework">
+      <HintPath>$(MSBuildExtensionsPath)\..\MonoGame\v3.0\Assemblies\Windows\MonoGame.Framework.dll</HintPath>
+    </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Icon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="ClassDiagram1.cd" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
