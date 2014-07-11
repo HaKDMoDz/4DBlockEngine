@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using Microsoft.Xna.Framework;
-using _4DMonoEngine.Core.Common.Noise;
+using _4DMonoEngine.Core.Noise;
 
 namespace _4DMonoEngine.Core.Chunks.Generators.Structures
 {
@@ -27,15 +27,15 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
 
         protected void BuildPathSections(int x, int z, int w)
         {
-            List<PathData> active = activePaths[w];
-            List<PathData> completed = completedPaths[w];
-            Dictionary<long, PathGraphNode> nodeMap = pathNodes[w];
+            var active = activePaths[w];
+            var completed = completedPaths[w];
+            var nodeMap = pathNodes[w];
             //determine if any new pathing regions are added
-            CellNoise.VoroniData segmentation = cellNoise.Voroni(x * s_pathSectionNoiseScale, z * s_pathSectionNoiseScale, w * s_pathSectionNoiseScale);
-            if (!nodeMap.ContainsKey(segmentation.id))
+            var segmentation = cellNoise.Voroni(x * s_pathSectionNoiseScale, z * s_pathSectionNoiseScale, w * s_pathSectionNoiseScale);
+            if (!nodeMap.ContainsKey(segmentation.Id))
             {
-                PathGraphNode node = new PathGraphNode();
-                node.position = new Vector3(x, z, w) + segmentation.delta / s_pathSectionNoiseScale;
+                var node = new PathGraphNode();
+                node.position = new Vector3(x, z, w) + segmentation.Delta / s_pathSectionNoiseScale;
                 //determine if there are any new sources or sinks in this group
 
             }
@@ -53,12 +53,12 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
 
         protected List<PathGraphNode> AddNewPathNodes(Vector3 minPos, Vector3 maxPos)
         {
-            List<PathGraphNode> nodes = new List<PathGraphNode>();
-            for (int x = (int)minPos.X; x < maxPos.X; ++x)
+            var nodes = new List<PathGraphNode>();
+            for (var x = (int)minPos.X; x < maxPos.X; ++x)
             {
-                for (int z = (int)minPos.Y; z < maxPos.Y; ++z)
+                for (var z = (int)minPos.Y; z < maxPos.Y; ++z)
                 {
-                    for (int w = (int)minPos.Z; w < maxPos.Z; ++w)
+                    for (var w = (int)minPos.Z; w < maxPos.Z; ++w)
                     {
 
                     }
@@ -69,7 +69,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
 
         protected PathGraphNode BuildPathNode(int x, int z, int w, PathType type)
         {
-            Dictionary<long, PathGraphNode> nodeMap = pathNodes[w];
+            var nodeMap = pathNodes[w];
             //determine if any new pathing regions are added
             CellNoise.VoroniData segmentation;
             //TODO : do we need to generate different segmentations per path type?
@@ -83,10 +83,10 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
                     break;
             }
             //TODO : THIS MAY FAIL SINCE THE IDs MAY NOT BE UNIQUE BETWEEN GENERATORS
-            if (!nodeMap.ContainsKey(segmentation.id))
+            if (!nodeMap.ContainsKey(segmentation.Id))
             {
-                PathGraphNode node = new PathGraphNode();
-                node.position = new Vector3(x, z, w) + segmentation.delta / s_pathSectionNoiseScale;
+                var node = new PathGraphNode();
+                node.position = new Vector3(x, z, w) + segmentation.Delta / s_pathSectionNoiseScale;
                 //determine if there are any new sources or sinks in this group
                 return node;
             }

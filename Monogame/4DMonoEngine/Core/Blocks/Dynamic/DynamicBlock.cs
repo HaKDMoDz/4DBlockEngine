@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Microsoft.Xna.Framework;
-using _4DMonoEngine.Core.Common.AbstractClasses;
+using _4DMonoEngine.Core.AbstractClasses;
 
 namespace _4DMonoEngine.Core.Blocks.Dynamic
 {

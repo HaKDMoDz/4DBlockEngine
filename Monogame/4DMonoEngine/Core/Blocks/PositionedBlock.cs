@@ -1,4 +1,4 @@
-﻿using _4DMonoEngine.Core.Common.Structs.Vector;
+﻿using _4DMonoEngine.Core.Structs.Vector;
 
 namespace _4DMonoEngine.Core.Blocks
 {

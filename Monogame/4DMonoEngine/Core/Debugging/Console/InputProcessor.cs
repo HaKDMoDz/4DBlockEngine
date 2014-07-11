@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using _4DMonoEngine.Core.Common.Helpers;
+using _4DMonoEngine.Core.Helpers;
 using _4DMonoEngine.Core.Events;
 using _4DMonoEngine.Core.Events.Args;
 using Microsoft.Xna.Framework.Input;

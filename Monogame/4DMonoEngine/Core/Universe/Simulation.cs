@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using _4DMonoEngine.Core.AbstractClasses;
 using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Chunks;
-using _4DMonoEngine.Core.Common.AbstractClasses;
-using _4DMonoEngine.Core.Common.Structs.Vector;
+using _4DMonoEngine.Core.Structs.Vector;
 using Microsoft.Xna.Framework;
 
 namespace _4DMonoEngine.Core.Universe
@@ -26,12 +26,6 @@ namespace _4DMonoEngine.Core.Universe
         private readonly Player m_player;
         private readonly List<Renderable> m_worldComponents;
         private Vector2 m_fogVector;
-
-        public static Vector4 NightColor = Color.Black.ToVector4();
-        public static Vector4 SunColor = Color.White.ToVector4();
-        public static Vector4 HorizonColor = Color.DarkGray.ToVector4();
-        public static Vector4 EveningTint = Color.Red.ToVector4();
-        public static Vector4 MorningTint = Color.Gold.ToVector4();
 
         public Simulation(Game game, uint seed)
             : base(game)

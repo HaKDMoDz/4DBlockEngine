@@ -1,5 +1,5 @@
 ﻿using System.Runtime.Serialization;
-using _4DMonoEngine.Core.Common.Interfaces;
+using _4DMonoEngine.Core.Interfaces;
 
 namespace _4DMonoEngine.Core.Config
 {

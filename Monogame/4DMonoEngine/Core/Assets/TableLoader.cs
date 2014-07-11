@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CsvHelper;
-using _4DMonoEngine.Core.Common.Interfaces;
+using _4DMonoEngine.Core.Interfaces;
 
 
 namespace _4DMonoEngine.Core.Assets

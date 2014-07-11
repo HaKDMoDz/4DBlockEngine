@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
-using _4DMonoEngine.Core.Common.AbstractClasses;
-using _4DMonoEngine.Core.Common.Structs;
-using _4DMonoEngine.Core.Common.Structs.Vector;
+using _4DMonoEngine.Core.AbstractClasses;
+using _4DMonoEngine.Core.Structs;
+using _4DMonoEngine.Core.Structs.Vector;
 
 namespace _4DMonoEngine.Core.Universe
 {

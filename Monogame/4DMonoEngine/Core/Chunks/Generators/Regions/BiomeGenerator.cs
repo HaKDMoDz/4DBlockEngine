@@ -1,5 +1,5 @@
 ﻿using _4DMonoEngine.Core.Blocks;
-using _4DMonoEngine.Core.Common.Noise;
+using _4DMonoEngine.Core.Noise;
 using _4DMonoEngine.Core.Config;
 
 namespace _4DMonoEngine.Core.Chunks.Generators.Regions

@@ -1,9 +1,8 @@
 ﻿using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Chunks.Generators.Regions;
-using _4DMonoEngine.Core.Common.Noise;
-using _4DMonoEngine.Core.Common.Random;
+using _4DMonoEngine.Core.Noise;
+using _4DMonoEngine.Core.Random;
 using Microsoft.Xna.Framework;
-using _4DMonoEngine.Core.Common.Structs.Vector;
 
 namespace _4DMonoEngine.Core.Chunks.Generators
 {
@@ -117,7 +116,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
             {
                 return detailApplied;
             }
-            var sinkHoleBlend = m_voroni.VoroniFBM(x, z, w, 128.0f, 0, 3);
+            var sinkHoleBlend = m_voroni.VoroniFbm(x, z, w, 128.0f, 0, 3);
             var sinkHoleOffset = (sinkHoleBlend > 0.08f ? 0 : (0.08f - sinkHoleBlend) / 0.08f) * m_sinkHoleDepth;	
             detailApplied -= sinkHoleOffset;
             return detailApplied;

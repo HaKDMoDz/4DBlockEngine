@@ -3,20 +3,19 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using _4DMonoEngine.Core.AbstractClasses;
 using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Chunks.Generators;
-using _4DMonoEngine.Core.Common.AbstractClasses;
-using _4DMonoEngine.Core.Common.Enums;
-using _4DMonoEngine.Core.Common.Helpers;
-using _4DMonoEngine.Core.Common.Structs.Vector;
-using _4DMonoEngine.Core.Common;
+using _4DMonoEngine.Core.Enums;
+using _4DMonoEngine.Core.Helpers;
+using _4DMonoEngine.Core.Structs.Vector;
 using _4DMonoEngine.Core.Events;
 using _4DMonoEngine.Core.Events.Args;
 using _4DMonoEngine.Core.Graphics;
 using _4DMonoEngine.Core.Processors;
-using _4DMonoEngine.Core.Universe;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using _4DMonoEngine.Core.Utils;
 
 namespace _4DMonoEngine.Core.Chunks
 {
@@ -300,11 +299,11 @@ namespace _4DMonoEngine.Core.Chunks
             m_blockEffect.Parameters["BlockTextureAtlas"].SetValue(m_blockTextureAtlas);
 
             // atmospheric settings
-            m_blockEffect.Parameters["SunColor"].SetValue(Simulation.SunColor);
-            m_blockEffect.Parameters["NightColor"].SetValue(Simulation.NightColor);
-            m_blockEffect.Parameters["HorizonColor"].SetValue(Simulation.HorizonColor);
-            m_blockEffect.Parameters["MorningTint"].SetValue(Simulation.MorningTint);
-            m_blockEffect.Parameters["EveningTint"].SetValue(Simulation.EveningTint);
+            m_blockEffect.Parameters["SunColor"].SetValue(RenderingConstants.SunColor);
+            m_blockEffect.Parameters["NightColor"].SetValue(RenderingConstants.NightColor);
+            m_blockEffect.Parameters["HorizonColor"].SetValue(RenderingConstants.HorizonColor);
+            m_blockEffect.Parameters["MorningTint"].SetValue(RenderingConstants.MorningTint);
+            m_blockEffect.Parameters["EveningTint"].SetValue(RenderingConstants.EveningTint);
 
             // time of day parameters
             m_blockEffect.Parameters["TimeOfDay"].SetValue(m_getTimeOfDay());

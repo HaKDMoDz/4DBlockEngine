@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using _4DMonoEngine.Core.Common.Interfaces;
+using _4DMonoEngine.Core.Interfaces;
 using _4DMonoEngine.Core.Graphics;
 
 namespace _4DMonoEngine.Core.Debugging.Ingame

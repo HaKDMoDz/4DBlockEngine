@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using _4DMonoEngine.Core.Assets;
-using _4DMonoEngine.Core.Common.Interfaces;
+using _4DMonoEngine.Core.Interfaces;
 using _4DMonoEngine.Core.Config;
 using _4DMonoEngine.Core.Events;
 using _4DMonoEngine.Core.Graphics;

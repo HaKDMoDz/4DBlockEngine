@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
-using _4DMonoEngine.Core.Common.Noise;
+using _4DMonoEngine.Core.Noise;
 using _4DMonoEngine.Core.Config;
 
 namespace _4DMonoEngine.Core.Chunks.Generators.Regions
@@ -52,12 +52,12 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
         public RegionData GetRegionData(float x, float y, float z)
         {
             var data = m_cellNoise.Voroni(x / m_centroidSampleScale, y / m_centroidSampleScale, z / m_centroidSampleScale);
-            if (!m_biomes.ContainsKey(data.id))
+            if (!m_biomes.ContainsKey(data.Id))
             {
-                var centroid = new Vector3(x, y, z) + data.delta * m_centroidSampleScale;
-                m_biomes[data.id] = InternalGetRegionData(x, y, z, centroid);
+                var centroid = new Vector3(x, y, z) + data.Delta * m_centroidSampleScale;
+                m_biomes[data.Id] = InternalGetRegionData(x, y, z, centroid);
             }
-            return m_biomes[data.id];
+            return m_biomes[data.Id];
         }
 
         protected abstract WorldRegionTerrainGenerator GeneratorBuilder(SimplexNoise noise, WorldRegionData data);

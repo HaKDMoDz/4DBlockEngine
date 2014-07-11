@@ -2,12 +2,12 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Graphics.PackedVector;
+using _4DMonoEngine.Core.AbstractClasses;
 using _4DMonoEngine.Core.Blocks;
-using _4DMonoEngine.Core.Common.AbstractClasses;
-using _4DMonoEngine.Core.Common.Enums;
-using _4DMonoEngine.Core.Common.Interfaces;
-using _4DMonoEngine.Core.Common.Noise;
-using _4DMonoEngine.Core.Common.Structs.Vector;
+using _4DMonoEngine.Core.Enums;
+using _4DMonoEngine.Core.Interfaces;
+using _4DMonoEngine.Core.Noise;
+using _4DMonoEngine.Core.Structs.Vector;
 using _4DMonoEngine.Core.Graphics;
 using _4DMonoEngine.Core.Processors;
 
@@ -112,11 +112,11 @@ namespace _4DMonoEngine.Core.Universe
             m_blockEffect.Parameters["BlockTextureAtlas"].SetValue(m_blockTextureAtlas);
 
             // atmospheric settings
-            m_blockEffect.Parameters["SunColor"].SetValue(Simulation.SunColor);
-            m_blockEffect.Parameters["NightColor"].SetValue(Simulation.NightColor);
-            m_blockEffect.Parameters["HorizonColor"].SetValue(Simulation.HorizonColor);
-            m_blockEffect.Parameters["MorningTint"].SetValue(Simulation.MorningTint);
-            m_blockEffect.Parameters["EveningTint"].SetValue(Simulation.EveningTint);
+            m_blockEffect.Parameters["SunColor"].SetValue(RenderingConstants.SunColor);
+            m_blockEffect.Parameters["NightColor"].SetValue(RenderingConstants.NightColor);
+            m_blockEffect.Parameters["HorizonColor"].SetValue(RenderingConstants.HorizonColor);
+            m_blockEffect.Parameters["MorningTint"].SetValue(RenderingConstants.MorningTint);
+            m_blockEffect.Parameters["EveningTint"].SetValue(RenderingConstants.EveningTint);
 
             // time of day parameters
             m_blockEffect.Parameters["TimeOfDay"].SetValue(m_getTimeOfDay());

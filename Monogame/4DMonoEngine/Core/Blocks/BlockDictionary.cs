@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework.Graphics.PackedVector;
-using _4DMonoEngine.Core.Common.Enums;
+using _4DMonoEngine.Core.Enums;
 
 namespace _4DMonoEngine.Core.Blocks
 {
