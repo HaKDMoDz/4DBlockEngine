@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using _4DMonoEngine.Core.Blocks;
 
@@ -7,21 +6,23 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
 {
     public class PlantPopulator
     {
-        private readonly Dictionary<BiomeType, List<PlantData>> m_biomeMapping;
-        public PlantPopulator(BlockDictionary blockDictionary)
+        private readonly Dictionary<string, List<PlantData>> m_biomeMapping;
+        private readonly IEnumerable<Block> m_blocks; 
+        public PlantPopulator(IEnumerable<Block> blocks)
         {
-            BiomeType biome;
+            m_blocks = blocks;
+            BlockDictionary blockDictionary = BlockDictionary.GetInstance();
             var trunks = blockDictionary.GetBlockIdsForType("trunk");
             var leaves = blockDictionary.GetBlockIdsForType("leaf");
             var flowers = blockDictionary.GetBlockIdsForType("flower");
             var grasses = blockDictionary.GetBlockIdsForType("grass");
-            m_biomeMapping = new Dictionary<BiomeType, List<PlantData>>();
+            m_biomeMapping = new Dictionary<string, List<PlantData>>();
             //we iterate over leaves because a trunk must have leaves, but a leaf may not have a trunk (which would make it a bush)
             foreach (var leaf in leaves)
             {
                 var leafBlock = blockDictionary.GetStaticData(leaf);
                 var blockStructureId = leafBlock.BlockStructureId;
-                Enum.TryParse(leafBlock.Biome, false, out biome);
+                string biome = leafBlock.Biome;
                 var validTrunks = trunks.Where(trunk => blockDictionary.GetStaticData(trunk).BlockStructureId == blockStructureId);
                 var enumerable = validTrunks as ushort[] ?? validTrunks.ToArray();
                 if (enumerable.Any())
@@ -38,7 +39,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
             }
         }
 
-        private List<PlantData> GetPlantDataListForBiome(BiomeType biome)
+        private List<PlantData> GetPlantDataListForBiome(string biome)
         {
             if (!m_biomeMapping.ContainsKey(biome))
             {
@@ -51,7 +52,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
 
         public void PopulateTree(int worldPositionX, int worldPositionZ, int groundLevel)
         {
-            var trunkHeight = 5;
+           /* var trunkHeight = 5;
             var trunkOffset = ChunkCache.BlockIndexByWorldPosition(worldPositionX, worldPositionZ);
 
             for (var y = trunkHeight + groundLevel; y > groundLevel; y--)
@@ -70,7 +71,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
                         ChunkCache.Blocks[offset + k + trunkHeight + 1] = new Block(BlockType.Leaves);
                     }
                 }
-            }
+            }*/
         }
         
         protected enum PlantType

@@ -1,6 +1,4 @@
-﻿
-
-using System;
+﻿using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -12,18 +10,18 @@ namespace _4DMonoEngine.Core.Graphics.Drawing
     {
         private const int DefaultBufferSize = 500;
 
-        private BasicEffect _basicEffect; // a basic effect, which contains the shaders that we will use to draw our primitives.        
+        private readonly BasicEffect m_basicEffect; // a basic effect, which contains the shaders that we will use to draw our primitives.        
 
-        private GraphicsDevice _device; // the device that we will issue draw calls to.        
+        private readonly GraphicsDevice m_device; // the device that we will issue draw calls to.        
 
-        private bool _hasBegun; // hasBegun is flipped to true once Begin is called, and is used to make sure users don't call End before Begin is called.
+        private bool m_hasBegun; // hasBegun is flipped to true once Begin is called, and is used to make sure users don't call End before Begin is called.
 
-        private VertexPositionColor[] _lineVertices;
-        private VertexPositionColor[] _triangleVertices;
-        private int _lineVertsCount;
-        private int _triangleVertsCount;
+        private readonly VertexPositionColor[] m_lineVertices;
+        private readonly VertexPositionColor[] m_triangleVertices;
+        private int m_lineVertsCount;
+        private int m_triangleVertsCount;
 
-        private bool _isDisposed;
+        private bool m_isDisposed;
 
         /// <summary>
         /// the constructor creates a new PrimitiveBatch and sets up all of the internals
@@ -34,18 +32,18 @@ namespace _4DMonoEngine.Core.Graphics.Drawing
             if (graphicsDevice == null)
                 throw new ArgumentNullException("graphicsDevice");
 
-            _device = graphicsDevice;
+            m_device = graphicsDevice;
 
-            _triangleVertices = new VertexPositionColor[bufferSize - bufferSize%3];
-            _lineVertices = new VertexPositionColor[bufferSize - bufferSize%2];
+            m_triangleVertices = new VertexPositionColor[bufferSize - bufferSize%3];
+            m_lineVertices = new VertexPositionColor[bufferSize - bufferSize%2];
 
             // set up a new basic effect, and enable vertex colors.
-            _basicEffect = new BasicEffect(graphicsDevice) {VertexColorEnabled = true};
+            m_basicEffect = new BasicEffect(graphicsDevice) {VertexColorEnabled = true};
         }
 
         public void SetProjection(ref Matrix projection)
         {
-            _basicEffect.Projection = projection;
+            m_basicEffect.Projection = projection;
         }
 
         /// <summary>
@@ -56,26 +54,26 @@ namespace _4DMonoEngine.Core.Graphics.Drawing
         /// <param name="view">The view.</param>
         public void Begin(Matrix projection, Matrix view)
         {
-            if (_hasBegun)
+            if (m_hasBegun)
                 throw new InvalidOperationException("End must be called before Begin can be called again.");
 
             //tell our basic effect to begin.
-            _basicEffect.Projection = projection;
-            _basicEffect.View = view;
-            _basicEffect.CurrentTechnique.Passes[0].Apply();
+            m_basicEffect.Projection = projection;
+            m_basicEffect.View = view;
+            m_basicEffect.CurrentTechnique.Passes[0].Apply();
 
             // flip the error checking boolean. It's now ok to call AddVertex, Flush and End.
-            _hasBegun = true;
+            m_hasBegun = true;
         }
 
         public bool IsReady()
         {
-            return _hasBegun;
+            return m_hasBegun;
         }
 
         public void AddVertex(Vector2 vertex, Color color, PrimitiveType primitiveType)
         {
-            if (!_hasBegun)
+            if (!m_hasBegun)
                 throw new InvalidOperationException("Begin() must be called before AddVertex can be called.");
 
             if (primitiveType == PrimitiveType.LineStrip || primitiveType == PrimitiveType.TriangleStrip)
@@ -83,22 +81,22 @@ namespace _4DMonoEngine.Core.Graphics.Drawing
 
             if (primitiveType == PrimitiveType.TriangleList)
             {
-                if (_triangleVertsCount >= _triangleVertices.Length)
+                if (m_triangleVertsCount >= m_triangleVertices.Length)
                     FlushTriangles();
 
-                _triangleVertices[_triangleVertsCount].Position = new Vector3(vertex, -0.1f);
-                _triangleVertices[_triangleVertsCount].Color = color;
-                _triangleVertsCount++;
+                m_triangleVertices[m_triangleVertsCount].Position = new Vector3(vertex, -0.1f);
+                m_triangleVertices[m_triangleVertsCount].Color = color;
+                m_triangleVertsCount++;
             }
 
             if (primitiveType == PrimitiveType.LineList)
             {
-                if (_lineVertsCount >= _lineVertices.Length)
+                if (m_lineVertsCount >= m_lineVertices.Length)
                     FlushLines();
 
-                _lineVertices[_lineVertsCount].Position = new Vector3(vertex, 0f);
-                _lineVertices[_lineVertsCount].Color = color;
-                _lineVertsCount++;
+                m_lineVertices[m_lineVertsCount].Position = new Vector3(vertex, 0f);
+                m_lineVertices[m_lineVertsCount].Color = color;
+                m_lineVertsCount++;
             }
         }
 
@@ -109,45 +107,45 @@ namespace _4DMonoEngine.Core.Graphics.Drawing
         /// </summary>
         public void End()
         {
-            if (!_hasBegun)
+            if (!m_hasBegun)
                 throw new InvalidOperationException("Begin must be called before End can be called.");
 
             // Draw whatever the user wanted us to draw
             FlushTriangles();
             FlushLines();
 
-            _hasBegun = false;
+            m_hasBegun = false;
         }
 
         private void FlushTriangles()
         {
-            if (!_hasBegun)
+            if (!m_hasBegun)
                 throw new InvalidOperationException("Begin must be called before Flush can be called.");
 
-            if (_triangleVertsCount >= 3)
+            if (m_triangleVertsCount >= 3)
             {
-                int primitiveCount = _triangleVertsCount/3;
+                var primitiveCount = m_triangleVertsCount/3;
 
                 // submit the draw call to the graphics card
-                _device.SamplerStates[0] = SamplerState.AnisotropicClamp;
-                _device.DrawUserPrimitives(PrimitiveType.TriangleList, _triangleVertices, 0, primitiveCount);
-                _triangleVertsCount -= primitiveCount*3;
+                m_device.SamplerStates[0] = SamplerState.AnisotropicClamp;
+                m_device.DrawUserPrimitives(PrimitiveType.TriangleList, m_triangleVertices, 0, primitiveCount);
+                m_triangleVertsCount -= primitiveCount*3;
             }
         }
 
         private void FlushLines()
         {
-            if (!_hasBegun)
+            if (!m_hasBegun)
                 throw new InvalidOperationException("Begin must be called before Flush can be called.");
 
-            if (_lineVertsCount >= 2)
+            if (m_lineVertsCount >= 2)
             {
-                int primitiveCount = _lineVertsCount/2;
+                var primitiveCount = m_lineVertsCount/2;
 
                 // submit the draw call to the graphics card
-                _device.SamplerStates[0] = SamplerState.AnisotropicClamp;
-                _device.DrawUserPrimitives(PrimitiveType.LineList, _lineVertices, 0, primitiveCount);
-                _lineVertsCount -= primitiveCount*2;
+                m_device.SamplerStates[0] = SamplerState.AnisotropicClamp;
+                m_device.DrawUserPrimitives(PrimitiveType.LineList, m_lineVertices, 0, primitiveCount);
+                m_lineVertsCount -= primitiveCount*2;
             }
         }
 
@@ -155,12 +153,12 @@ namespace _4DMonoEngine.Core.Graphics.Drawing
 
         protected virtual void Dispose(bool disposing)
         {
-            if (disposing && !_isDisposed)
+            if (disposing && !m_isDisposed)
             {
-                if (_basicEffect != null)
-                    _basicEffect.Dispose();
+                if (m_basicEffect != null)
+                    m_basicEffect.Dispose();
 
-                _isDisposed = true;
+                m_isDisposed = true;
             }
         }
 

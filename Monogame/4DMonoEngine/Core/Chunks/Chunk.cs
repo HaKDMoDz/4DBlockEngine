@@ -1,12 +1,15 @@
 ﻿using System.Collections.Generic;
 using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Common;
+using _4DMonoEngine.Core.Common.AbstractClasses;
 using _4DMonoEngine.Core.Common.Enums;
-using _4DMonoEngine.Core.Common.Vector;
+using _4DMonoEngine.Core.Common.Interfaces;
+using _4DMonoEngine.Core.Common.Structs;
+using _4DMonoEngine.Core.Common.Structs.Vector;
 using _4DMonoEngine.Core.Debugging.Ingame;
-using _4DMonoEngine.Core.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using _4DMonoEngine.Core.Graphics;
 
 namespace _4DMonoEngine.Core.Chunks
 {
@@ -24,8 +27,8 @@ namespace _4DMonoEngine.Core.Chunks
 
     public sealed class Chunk : VertexBuilderTarget, IInGameDebuggable
     {
-        public static byte MaxSunValue = 255;
-        public static int SizeInBlocks = 16;
+        public const byte MaxSunValue = 255;
+        public const int SizeInBlocks = 16;
         private readonly Block[] m_blocks;
         public Vector3Int RelativePosition;
 
@@ -60,7 +63,7 @@ namespace _4DMonoEngine.Core.Chunks
             return !(x < BoundingBox.Min.X || y < BoundingBox.Min.Y || z < BoundingBox.Min.Z || x > BoundingBox.Max.X || y > BoundingBox.Max.Y || z > BoundingBox.Max.Z);
         }
 
-        public static List<FaceDirection> GetChunkEdgesBlockIsIn(int x, int y, int z)
+        public static IEnumerable<FaceDirection> GetChunkEdgesBlockIsIn(int x, int y, int z)
         {
             var edges = new List<FaceDirection>();
 
@@ -124,16 +127,16 @@ namespace _4DMonoEngine.Core.Chunks
         }
         public void RemoveBlock(int blockPositionX, int blockPositionZ, int blockPositionY)
         {
-            if(blockPositionX == BoundingBox.Max.X || blockPositionX == BoundingBox.Min.X ||
-               blockPositionZ == BoundingBox.Max.Z || blockPositionZ == BoundingBox.Min.Z ||
-               blockPositionY == BoundingBox.Max.Y || blockPositionY == BoundingBox.Min.Y)
+            if (blockPositionX == (int)BoundingBox.Max.X || blockPositionX == (int)BoundingBox.Min.X ||
+               blockPositionZ == (int)BoundingBox.Max.Z || blockPositionZ == (int)BoundingBox.Min.Z ||
+               blockPositionY == (int)BoundingBox.Max.Y || blockPositionY == (int)BoundingBox.Min.Y)
             {
                 //When we do a remove we can't take a shortcut. Luckily only removals on the shell will change the bounding box
                 UpdateBoundingBox();
             }
         }
 
-        public void UpdateBoundingBox()
+        private void UpdateBoundingBox()
         {
             var upperBoundX = 0;
             var lowerBoundX = SizeInBlocks;
@@ -187,7 +190,7 @@ namespace _4DMonoEngine.Core.Chunks
                     }
                     else if (x < lowerBoundZ)
                     {
-                        lowerBoundZ = x;
+                        lowerBoundX = x;
                     }
                 }
             }
@@ -206,7 +209,7 @@ namespace _4DMonoEngine.Core.Chunks
         }
 
         
-        public void DrawInGameDebugVisual(GraphicsDevice graphicsDevice, ICamera camera, SpriteBatch spriteBatch, SpriteFont spriteFont)
+        public void DrawInGameDebugVisual(GraphicsDevice graphicsDevice, Camera camera, SpriteBatch spriteBatch, SpriteFont spriteFont)
         {
             var position = RelativePosition + " " + ChunkState;
             var positionSize = spriteFont.MeasureString(position);

@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using _4DMonoEngine.Core.Common.Vector;
+using _4DMonoEngine.Core.Common.Structs.Vector;
 
 namespace _4DMonoEngine.Core.Blocks.Dynamic
 {

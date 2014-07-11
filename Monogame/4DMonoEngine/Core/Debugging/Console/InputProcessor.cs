@@ -1,42 +1,35 @@
-﻿
-
-/* Code based on: http://code.google.com/p/xnagameconsole/ */
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using _4DMonoEngine.Core.Input;
+using _4DMonoEngine.Core.Common.Helpers;
+using _4DMonoEngine.Core.Events;
+using _4DMonoEngine.Core.Events.Args;
 using Microsoft.Xna.Framework.Input;
 
 namespace _4DMonoEngine.Core.Debugging.Console
 {
-    class InputProcessor
+    class InputProcessor : IEventSink
     {
         public event EventHandler Open = delegate { };
         public event EventHandler Close = delegate { };
-        public event EventHandler PlayerCommand = delegate { };
-        public event EventHandler ConsoleCommand = delegate { };
 
         public CommandHistory CommandHistory { get; set; }
         public OutputLine Buffer { get; set; }
         public List<OutputLine> Out { get; set; }
 
-        private const int BACKSPACE = 8;
-        private const int ENTER = 13;
-        private const int TAB = 9;
-        private bool isActive, isHandled;
-        private CommandProcesser commandProcesser;
+        private bool m_isActive;
+        private readonly CommandProcesser m_commandProcesser;
+        private readonly GameConsoleOptions m_options;
 
-        public InputProcessor(CommandProcesser commandProcesser)
+        public InputProcessor(CommandProcesser commandProcesser, GameConsoleOptions options)
         {
-            this.commandProcesser = commandProcesser;
-            isActive = false;
+            m_commandProcesser = commandProcesser;
+            m_options = options;
+            m_isActive = false;
             CommandHistory = new CommandHistory();
             Out = new List<OutputLine>();
             Buffer = new OutputLine("", OutputLineType.Command);
-
-            var inputManager = (IInputManager)Core.Core.Instance.Game.Services.GetService(typeof(IInputManager));
-            inputManager.KeyDown += new InputManager.KeyEventHandler(OnKeyDown);
+            MainEngine.GetEngineInstance().CentralDispatch.Register(EventConstants.KeyDown, GetHandlerForEvent(EventConstants.KeyDown));
         }
 
         public void AddToBuffer(string text)
@@ -54,9 +47,9 @@ namespace _4DMonoEngine.Core.Debugging.Console
 
         public void AddToOutput(string text)
         {
-            if (GameConsoleOptions.Options.OpenOnWrite)
+            if (m_options.OpenOnWrite)
             {
-                isActive = true;
+                m_isActive = true;
                 Open(this, EventArgs.Empty);
             }
             foreach (var line in text.Split('\n'))
@@ -67,8 +60,8 @@ namespace _4DMonoEngine.Core.Debugging.Console
 
         void ToggleConsole()
         {
-            isActive = !isActive;
-            if (isActive)
+            m_isActive = !m_isActive;
+            if (m_isActive)
             {
                 Open(this, EventArgs.Empty);
             }
@@ -78,12 +71,11 @@ namespace _4DMonoEngine.Core.Debugging.Console
             }
         }
 
-        void OnKeyDown(object sender, KeyEventArgs e)
+        void OnKeyDown(KeyArgs e)
         {
-            if (e.KeyCode == GameConsoleOptions.Options.ToggleKey)
+            if (e.KeyCode == m_options.ToggleKey)
             {
                 ToggleConsole();
-                isHandled = true;
             }
 
             switch (e.KeyCode)
@@ -113,11 +105,6 @@ namespace _4DMonoEngine.Core.Debugging.Console
             }
         }
 
-        /// <summary>
-        /// Translates alphanumeric XNA key code to character value.
-        /// </summary>
-        /// <param name="sfKey">XNA key code.</param>
-        /// <returns>Translated character.</returns>
         private static char TranslateChar(Keys xnaKey)
         {
             if (xnaKey >= Keys.A && xnaKey <= Keys.Z)
@@ -148,7 +135,7 @@ namespace _4DMonoEngine.Core.Debugging.Console
             {
                 return;
             }
-            var output = commandProcesser.Process(Buffer.Output).Split('\n').Where(l => l != "");
+            var output = m_commandProcesser.Process(Buffer.Output).Split('\n').Where(l => l != "");
             Out.Add(new OutputLine(Buffer.Output, OutputLineType.Command));
             foreach (var line in output)
             {
@@ -171,9 +158,31 @@ namespace _4DMonoEngine.Core.Debugging.Console
             Buffer.Output += restOfTheCommand + " ";
         }
 
-        static bool IsPrintable(char letter)
+        private bool IsPrintable(char letter)
         {
-            return GameConsoleOptions.Options.Font.Characters.Contains(letter);
+            return m_options.Font.Characters.Contains(letter);
+        }
+
+        public bool CanHandleEvent(string eventName)
+        {
+            switch (eventName)
+            {
+                case EventConstants.KeyDown:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        public Action<EventArgs> GetHandlerForEvent(string eventName)
+        {
+            switch (eventName)
+            {
+                case EventConstants.KeyDown:
+                    return EventHelper.Wrap<KeyArgs>(OnKeyDown);
+                default:
+                    return null;
+            }
         }
     }
 }

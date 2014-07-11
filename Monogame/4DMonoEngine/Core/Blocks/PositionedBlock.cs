@@ -1,8 +1,6 @@
-﻿
+﻿using _4DMonoEngine.Core.Common.Structs.Vector;
 
-using _4DMonoEngine.Core.Common.Vector;
-
-namespace _4DMonoEngine.Core.Common.Enums
+namespace _4DMonoEngine.Core.Blocks
 {
     public struct PositionedBlock
     {

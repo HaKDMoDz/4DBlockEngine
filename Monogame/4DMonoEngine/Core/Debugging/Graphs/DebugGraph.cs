@@ -1,93 +1,30 @@
-﻿
-
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using _4DMonoEngine.Core.Graphics.Drawing;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace _4DMonoEngine.Core.Debugging.Graphs
 {
-    /// <summary>
-    /// DebugGraph is a special graph module that can draw graphs for debugging purposes.
-    /// <remarks>DebugGraph's is not a DrawableGameComponent itself but the GraphManager call's its update() and draw functions.</remarks>
-    /// </summary>
-    public class DebugGraph
+    public abstract class DebugGraph
     {
-        /// <summary>
-        /// The attached game.
-        /// </summary>
         protected Game Game { get; private set; }
-
-        /// <summary>
-        /// Graph bounds.
-        /// </summary>
         protected Rectangle Bounds { get; private set; }
 
-        // settings 
-
-        /// <summary>
-        /// Is the graph adaptive to handled values maximum and mininums?
-        /// </summary>
-        public bool AdaptiveLimits { get; set; }
-
-        /// <summary>
-        /// Number of values to graph in a given moment.
-        /// </summary>
-        public int ValuesToGraph { get; private set; }
-
-        /// <summary>
-        /// Holds values of current session.
-        /// </summary>
+        protected readonly bool AdaptiveLimits;
+        protected readonly int ValuesToGraph;
         protected readonly List<float> GraphValues = new List<float>();
-
-        /// <summary>
-        /// Used for drawing the background shape.
-        /// </summary>
         protected readonly Vector2[] BackgroundPolygon = new Vector2[4];
+        protected int m_maxValue;
+        protected int m_averageValue;
+        protected int m_minimumValue;
+        protected int m_currentValue;
+        protected int m_adaptiveMinimum;
+        protected int m_adaptiveMaximum = 1000;
+        protected PrimitiveBatch m_primitiveBatch;
+        protected SpriteBatch m_spriteBatch;
+        protected SpriteFont m_spriteFont;
 
-        /// <summary>
-        /// Current maximum value.
-        /// </summary>
-        protected int MaxValue;
-
-        /// <summary>
-        /// Current average value.
-        /// </summary>
-        protected int AverageValue;
-
-        /// <summary>
-        /// Current minimum value.
-        /// </summary>
-        protected int MinimumValue;
-
-        /// <summary>
-        /// Current value.
-        /// </summary>
-        protected int CurrentValue;
-
-        /// <summary>
-        /// Adaptive minimum value.
-        /// </summary>
-        protected int AdaptiveMinimum;
-
-        /// <summary>
-        /// Adaptive maximum value. When our current value is higher than AdaptiveMaximum, it will rise it AdaptiveMaximum.
-        /// </summary>
-        protected int AdaptiveMaximum = 1000;
-
-        // stuff required for drawing.
-        protected PrimitiveBatch PrimitiveBatch;
-        protected SpriteBatch SpriteBatch;
-        protected SpriteFont SpriteFont;
-        protected Matrix LocalProjection;
-        protected Matrix LocalView;
-
-        /// <summary>
-        /// Creates a new debug graph.
-        /// </summary>
-        /// <param name="game">The attached game.</param>
-        /// <param name="bounds">Graphs bounds.</param>
-        public DebugGraph(Game game, Rectangle bounds)            
+        protected DebugGraph(Game game, Rectangle bounds)            
         {
             Game = game;
             Bounds = bounds;
@@ -95,36 +32,19 @@ namespace _4DMonoEngine.Core.Debugging.Graphs
             ValuesToGraph = 2500;
         }
 
-        /// <summary>
-        /// Attachs the required drawing objects to graph.
-        /// </summary>
-        /// <param name="primitiveBatch"><see cref="PrimitiveBatch"/></param>
-        /// <param name="spriteBatch"><see cref="SpriteBatch"/></param>
-        /// <param name="spriteFont"><see cref="SpriteFont"/></param>
-        /// <param name="localProjection"><see cref="Matrix"/></param>
-        /// <param name="localView"><see cref="Matrix"/></param>
-        public void AttachGraphics(PrimitiveBatch primitiveBatch, SpriteBatch spriteBatch, SpriteFont spriteFont, Matrix localProjection, Matrix localView)
+        public void AttachGraphics(PrimitiveBatch primitiveBatch, SpriteBatch spriteBatch, SpriteFont spriteFont)
         {
-            PrimitiveBatch = primitiveBatch;
-            SpriteBatch = spriteBatch;
-            SpriteFont = spriteFont;
-            LocalProjection = localProjection;
-            LocalView = localView;
+            m_primitiveBatch = primitiveBatch;
+            m_spriteBatch = spriteBatch;
+            m_spriteFont = spriteFont;
 
             Initialize();
             LoadContent();
         }
 
-        /// <summary>
-        /// Should be overloaded by the actual graph object and initialize itself.
-        /// </summary>
-        protected virtual void Initialize()
-        { }
+        protected abstract void Initialize();
 
-        /// <summary>
-        /// Loads the required contents.
-        /// </summary>
-        public void LoadContent()
+        private void LoadContent()
         {
             // calculate the coordinates for drawing the background.
             BackgroundPolygon[0] = new Vector2(Bounds.X - 2, Bounds.Y - 2); // top left
@@ -133,24 +53,9 @@ namespace _4DMonoEngine.Core.Debugging.Graphs
             BackgroundPolygon[2] = new Vector2(Bounds.X + 2 + Bounds.Width, Bounds.Y + Bounds.Height + 14); // bottom right
         }
 
-        /// <summary>
-        /// Should be overloaded by the actual graph object and update itself.
-        /// </summary>
-        public virtual void Update(GameTime gameTime)
-        { }
+        public abstract void Update();
+        public abstract void DrawStrings();
+        public abstract void DrawGraph();
 
-        /// <summary>
-        /// Should be overloaded by the actual graph object and should only draw any strings.
-        /// <remarks>SpriteBatch gets handled (begin and end functions) by the calling GraphManager itself.</remarks>
-        /// </summary>
-        public virtual void DrawStrings(GameTime gameTime)
-        { }
-
-        /// <summary>
-        /// Should be overloaded by the actual graph object and should only draw primitive shapes.
-        /// <remarks>PrimitiveBatch gets handled (begin and end functions) by the calling GraphManager itself.</remarks>
-        /// </summary>
-        public virtual void DrawGraph(GameTime gameTime)
-        { }
     }
 }

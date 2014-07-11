@@ -1,6 +1,4 @@
-﻿
-
-using System;
+﻿using System;
 
 namespace _4DMonoEngine.Core.Debugging.Console
 {

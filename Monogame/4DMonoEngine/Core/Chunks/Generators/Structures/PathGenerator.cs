@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using _4DMonoEngine.Core.Common.Noise;
+﻿using System.Collections.Generic;
 using Microsoft.Xna.Framework;
+using _4DMonoEngine.Core.Common.Noise;
 
-namespace _4DMonoEngine.Core.Chunks.Generators.Structures.Paths
+namespace _4DMonoEngine.Core.Chunks.Generators.Structures
 {
 
     //TODO : all of this really

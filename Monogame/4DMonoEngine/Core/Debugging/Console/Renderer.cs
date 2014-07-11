@@ -24,23 +24,24 @@ namespace _4DMonoEngine.Core.Debugging.Console
         {
             get
             {
-                return currentState == State.Opened;
+                return m_currentState == State.Opened;
             }
         }
 
-        private readonly SpriteBatch spriteBatch;
-        private readonly InputProcessor inputProcessor;
-        private readonly Texture2D pixel;
-        private readonly int width;
-        private State currentState;
-        private Vector2 openedPosition, closedPosition, position;
-        private DateTime stateChangeTime;
-        private Vector2 firstCommandPositionOffset;
+        private readonly SpriteBatch m_spriteBatch;
+        private readonly InputProcessor m_inputProcessor;
+        private readonly Texture2D m_pixel;
+        private readonly int m_width;
+        private readonly GameConsoleOptions m_options;
+        private State m_currentState;
+        private Vector2 m_openedPosition, m_closedPosition, m_position;
+        private DateTime m_stateChangeTime;
+        private Vector2 m_firstCommandPositionOffset;
         private Vector2 FirstCommandPosition
         {
             get
             {
-                return new Vector2(InnerBounds.X, InnerBounds.Y) + firstCommandPositionOffset;
+                return new Vector2(InnerBounds.X, InnerBounds.Y) + m_firstCommandPositionOffset;
             }
         }
 
@@ -48,7 +49,7 @@ namespace _4DMonoEngine.Core.Debugging.Console
         {
             get
             {
-                return new Rectangle((int)position.X, (int)position.Y, width - (GameConsoleOptions.Options.Margin * 2), GameConsoleOptions.Options.Height);
+                return new Rectangle((int)m_position.X, (int)m_position.Y, m_width - (m_options.Margin * 2), m_options.Height);
             }
         }
 
@@ -56,70 +57,71 @@ namespace _4DMonoEngine.Core.Debugging.Console
         {
             get
             {
-                return new Rectangle(Bounds.X + GameConsoleOptions.Options.Padding, Bounds.Y + GameConsoleOptions.Options.Padding, Bounds.Width - GameConsoleOptions.Options.Padding, Bounds.Height);
+                return new Rectangle(Bounds.X + m_options.Padding, Bounds.Y + m_options.Padding, Bounds.Width - m_options.Padding, Bounds.Height);
             }
         }
 
-        private readonly float oneCharacterWidth;
-        private readonly int maxCharactersPerLine;
+        private readonly float m_oneCharacterWidth;
+        private readonly int m_maxCharactersPerLine;
 
-        public Renderer(Game game, SpriteBatch spriteBatch, InputProcessor inputProcessor)
+        public Renderer(Game game, SpriteBatch spriteBatch, InputProcessor inputProcessor, GameConsoleOptions options)
         {
-            currentState = State.Closed;
-            width = game.GraphicsDevice.Viewport.Width;
-            position = closedPosition = new Vector2(GameConsoleOptions.Options.Margin, -GameConsoleOptions.Options.Height - GameConsoleOptions.Options.RoundedCorner.Height);
-            openedPosition = new Vector2(GameConsoleOptions.Options.Margin, 0);
-            this.spriteBatch = spriteBatch;
-            this.inputProcessor = inputProcessor;
-            pixel = new Texture2D(game.GraphicsDevice, 1, 1,false, SurfaceFormat.Color);
-            pixel.SetData(new[] { Color.White });
-            firstCommandPositionOffset = Vector2.Zero;
-            oneCharacterWidth = GameConsoleOptions.Options.Font.MeasureString("x").X;
-            maxCharactersPerLine = (int)((Bounds.Width - GameConsoleOptions.Options.Padding * 2) / oneCharacterWidth);
+            m_currentState = State.Closed;
+            m_width = game.GraphicsDevice.Viewport.Width;
+            m_position = m_closedPosition = new Vector2(m_options.Margin, -m_options.Height - m_options.RoundedCorner.Height);
+            m_openedPosition = new Vector2(m_options.Margin, 0);
+            m_spriteBatch = spriteBatch;
+            m_inputProcessor = inputProcessor;
+            m_options = options;
+            m_pixel = new Texture2D(game.GraphicsDevice, 1, 1,false, SurfaceFormat.Color);
+            m_pixel.SetData(new[] { Color.White });
+            m_firstCommandPositionOffset = Vector2.Zero;
+            m_oneCharacterWidth = m_options.Font.MeasureString("x").X;
+            m_maxCharactersPerLine = (int)((Bounds.Width - m_options.Padding * 2) / m_oneCharacterWidth);
         }
 
         public void Update(GameTime gameTime)
         {
-            if (currentState == State.Opening)
+            if (m_currentState == State.Opening)
             {
-                position.Y = MathHelper.SmoothStep(position.Y, openedPosition.Y, ((float)((DateTime.Now - stateChangeTime).TotalSeconds / GameConsoleOptions.Options.AnimationSpeed)));
-                if (position.Y == openedPosition.Y)
+                m_position.Y = MathHelper.SmoothStep(m_position.Y, m_openedPosition.Y, ((float)((DateTime.Now - m_stateChangeTime).TotalSeconds / m_options.AnimationSpeed)));
+                if (m_position.Y >= m_openedPosition.Y)
                 {
-                    currentState = State.Opened;
+                    m_currentState = State.Opened;
                 }
             }
-            if (currentState == State.Closing)
+            if (m_currentState == State.Closing)
             {
-                position.Y = MathHelper.SmoothStep(position.Y, closedPosition.Y, ((float)((DateTime.Now - stateChangeTime).TotalSeconds / GameConsoleOptions.Options.AnimationSpeed)));
-                if (position.Y == closedPosition.Y)
+                m_position.Y = MathHelper.SmoothStep(m_position.Y, m_closedPosition.Y, ((float)((DateTime.Now - m_stateChangeTime).TotalSeconds / m_options.AnimationSpeed)));
+                if (m_position.Y <= m_closedPosition.Y)
                 {
-                    currentState = State.Closed;
+                    m_currentState = State.Closed;
                 }
             }
         }
 
         public void Draw(GameTime gameTime)
         {
-            if (currentState == State.Closed) //Do not draw if the console is closed
+            if (m_currentState == State.Closed) //Do not draw if the console is closed
             {
                 return;
             }
-            spriteBatch.Draw(pixel, Bounds, GameConsoleOptions.Options.BackgroundColor);
+            m_spriteBatch.Draw(m_pixel, Bounds, m_options.BackgroundColor);
             DrawRoundedEdges();
-            var nextCommandPosition = DrawCommands(inputProcessor.Out, FirstCommandPosition);
+            var nextCommandPosition = DrawCommands(m_inputProcessor.Out, FirstCommandPosition);
             nextCommandPosition = DrawPrompt(nextCommandPosition);
-            var bufferPosition = DrawCommand(inputProcessor.Buffer.ToString(), nextCommandPosition, GameConsoleOptions.Options.BufferColor); //Draw the buffer
+            var bufferPosition = DrawCommand(m_inputProcessor.Buffer.ToString(), nextCommandPosition, m_options.BufferColor); //Draw the buffer
             DrawCursor(bufferPosition, gameTime);
         }
 
         void DrawRoundedEdges()
         {
             //Bottom-left edge
-            spriteBatch.Draw(GameConsoleOptions.Options.RoundedCorner, new Vector2(position.X, position.Y + GameConsoleOptions.Options.Height), null, GameConsoleOptions.Options.BackgroundColor, 0, Vector2.Zero, 1, SpriteEffects.None, 1);
+            m_spriteBatch.Draw(m_options.RoundedCorner, new Vector2(m_position.X, m_position.Y + m_options.Height), null, m_options.BackgroundColor, 0, Vector2.Zero, 1, SpriteEffects.None, 1);
             //Bottom-right edge 
-            spriteBatch.Draw(GameConsoleOptions.Options.RoundedCorner, new Vector2(position.X + Bounds.Width - GameConsoleOptions.Options.RoundedCorner.Width, position.Y + GameConsoleOptions.Options.Height), null, GameConsoleOptions.Options.BackgroundColor, 0, Vector2.Zero, 1, SpriteEffects.FlipHorizontally, 1);
+            m_spriteBatch.Draw(m_options.RoundedCorner, new Vector2(m_position.X + Bounds.Width - m_options.RoundedCorner.Width, m_position.Y + m_options.Height), null, m_options.BackgroundColor, 0, Vector2.Zero, 1, SpriteEffects.FlipHorizontally, 1);
             //connecting bottom-rectangle
-            spriteBatch.Draw(pixel, new Rectangle(Bounds.X + GameConsoleOptions.Options.RoundedCorner.Width, Bounds.Y + GameConsoleOptions.Options.Height, Bounds.Width - GameConsoleOptions.Options.RoundedCorner.Width * 2, GameConsoleOptions.Options.RoundedCorner.Height), GameConsoleOptions.Options.BackgroundColor);
+            m_spriteBatch.Draw(m_pixel, new Rectangle(Bounds.X + m_options.RoundedCorner.Width, Bounds.Y + m_options.Height, Bounds.Width - m_options.RoundedCorner.Width * 2, m_options.RoundedCorner.Height), m_options.BackgroundColor);
         }
 
         void DrawCursor(Vector2 pos, GameTime gameTime)
@@ -128,10 +130,10 @@ namespace _4DMonoEngine.Core.Debugging.Console
             {
                 return;
             }
-            var split = SplitCommand(inputProcessor.Buffer.ToString(), maxCharactersPerLine).Last();
-            pos.X += GameConsoleOptions.Options.Font.MeasureString(split).X;
-            pos.Y -= GameConsoleOptions.Options.Font.LineSpacing;
-            spriteBatch.DrawString(GameConsoleOptions.Options.Font, (int)(gameTime.TotalGameTime.TotalSeconds / GameConsoleOptions.Options.CursorBlinkSpeed) % 2 == 0 ? GameConsoleOptions.Options.Cursor.ToString() : "", pos, GameConsoleOptions.Options.CursorColor);
+            var split = SplitCommand(m_inputProcessor.Buffer.ToString(), m_maxCharactersPerLine).Last();
+            pos.X += m_options.Font.MeasureString(split).X;
+            pos.Y -= m_options.Font.LineSpacing;
+            m_spriteBatch.DrawString(m_options.Font, (int)(gameTime.TotalGameTime.TotalSeconds / m_options.CursorBlinkSpeed) % 2 == 0 ? m_options.Cursor.ToString() : "", pos, m_options.CursorColor);
         }
 
         /// <summary>
@@ -143,15 +145,15 @@ namespace _4DMonoEngine.Core.Debugging.Console
         /// <returns></returns>
         Vector2 DrawCommand(string command, Vector2 pos, Color color)
         {
-            var splitLines = command.Length > maxCharactersPerLine ? SplitCommand(command, maxCharactersPerLine) : new[] { command };
+            var splitLines = command.Length > m_maxCharactersPerLine ? SplitCommand(command, m_maxCharactersPerLine) : new[] { command };
             foreach (var line in splitLines)
             {
                 if (IsInBounds(pos.Y))
                 {
-                    spriteBatch.DrawString(GameConsoleOptions.Options.Font, line, pos, color);
+                    m_spriteBatch.DrawString(m_options.Font, line, pos, color);
                 }
-                ValidateFirstCommandPosition(pos.Y + GameConsoleOptions.Options.Font.LineSpacing);
-                pos.Y += GameConsoleOptions.Options.Font.LineSpacing;
+                ValidateFirstCommandPosition(pos.Y + m_options.Font.LineSpacing);
+                pos.Y += m_options.Font.LineSpacing;
             }
             return pos;
         }
@@ -184,8 +186,8 @@ namespace _4DMonoEngine.Core.Debugging.Console
                 {
                     pos = DrawPrompt(pos);
                 }
-                //position.Y = DrawCommand(command.ToString(), position, GameConsoleOptions.Options.FontColor).Y;
-                pos.Y = DrawCommand(command.ToString(), pos, command.Type == OutputLineType.Command ? GameConsoleOptions.Options.PastCommandColor : GameConsoleOptions.Options.PastCommandOutputColor).Y;
+                //position.Y = DrawCommand(command.ToString(), position, m_options.FontColor).Y;
+                pos.Y = DrawCommand(command.ToString(), pos, command.Type == OutputLineType.Command ? m_options.PastCommandColor : m_options.PastCommandOutputColor).Y;
                 pos.X = originalX;
             }
             return pos;
@@ -198,42 +200,42 @@ namespace _4DMonoEngine.Core.Debugging.Console
         /// <returns></returns>
         Vector2 DrawPrompt(Vector2 pos)
         {
-            spriteBatch.DrawString(GameConsoleOptions.Options.Font, GameConsoleOptions.Options.Prompt, pos, GameConsoleOptions.Options.PromptColor);
-            pos.X += oneCharacterWidth * GameConsoleOptions.Options.Prompt.Length + oneCharacterWidth;
+            m_spriteBatch.DrawString(m_options.Font, m_options.Prompt, pos, m_options.PromptColor);
+            pos.X += m_oneCharacterWidth * m_options.Prompt.Length + m_oneCharacterWidth;
             return pos;
         }
 
         public void Open()
         {
-            if (currentState == State.Opening || currentState == State.Opened)
+            if (m_currentState == State.Opening || m_currentState == State.Opened)
             {
                 return;
             }
-            stateChangeTime = DateTime.Now;
-            currentState = State.Opening;
+            m_stateChangeTime = DateTime.Now;
+            m_currentState = State.Opening;
         }
 
         public void Close()
         {
-            if (currentState == State.Closing || currentState == State.Closed)
+            if (m_currentState == State.Closing || m_currentState == State.Closed)
             {
                 return;
             }
-            stateChangeTime = DateTime.Now;
-            currentState = State.Closing;
+            m_stateChangeTime = DateTime.Now;
+            m_currentState = State.Closing;
         }
 
         void ValidateFirstCommandPosition(float nextCommandY)
         {
             if (!IsInBounds(nextCommandY))
             {
-                firstCommandPositionOffset.Y -= GameConsoleOptions.Options.Font.LineSpacing;
+                m_firstCommandPositionOffset.Y -= m_options.Font.LineSpacing;
             }
         }
 
         bool IsInBounds(float yPosition)
         {
-            return yPosition < openedPosition.Y + GameConsoleOptions.Options.Height;
+            return yPosition < m_openedPosition.Y + m_options.Height;
         }
     }
 }

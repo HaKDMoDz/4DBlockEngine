@@ -1,119 +1,121 @@
 ﻿using System;
-using _4DMonoEngine.Core.Chunks;
-using _4DMonoEngine.Core.Common.Logging;
-using _4DMonoEngine.Core.Debugging.Console;
-using _4DMonoEngine.Core.Debugging.Ingame;
-using _4DMonoEngine.Core.Graphics;
-using _4DMonoEngine.Core.Universe;
+using System.Collections.Generic;
+using _4DMonoEngine.Core.Events;
+using _4DMonoEngine.Core.Events.Args;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using Keyboard = Microsoft.Xna.Framework.Input.Keyboard;
+using Mouse = Microsoft.Xna.Framework.Input.Mouse;
 
 namespace _4DMonoEngine.Core.Input
 {
-    public class InputManager : GameComponent
+    public class InputManager : GameComponent, IEventSource
     {
-        // properties.
-        public bool CaptureMouse { get; set; } // Should the game capture mouse?
-        public bool CursorCentered { get; set; } // Should the mouse cursor centered on screen?
+        private const int MouseMoveTolerance = 2; // in pixels
 
-        // previous input states.
+        public bool CursorCentered { get; set; } // Should the mouse cursor centered on screen?
+        
         private MouseState m_previousMouseState;
         private KeyboardState m_previousKeyboardState;
+        private readonly EventSource m_eventSourceImpl;
 
         public InputManager(Game game)
             : base(game)
         {
-            CaptureMouse = true; // capture the mouse by default.
-            CursorCentered = true; // center the mouse by default.        
+            CursorCentered = true;
+            EventsFired = new[]
+            {
+                EventConstants.MousePositionUpdated, 
+                EventConstants.LeftMouseDown, 
+                EventConstants.LeftMouseUp,
+                EventConstants.RightMouseDown, 
+                EventConstants.RightMouseUp,
+                EventConstants.KeyDown,
+                EventConstants.KeyUp
+            };
+            m_eventSourceImpl = new EventSource(EventsFired, true);
         }
 
         public override void Initialize()
         {
-            // get current mouse & keyboard states.
             m_previousKeyboardState = Keyboard.GetState();
             m_previousMouseState = Mouse.GetState();
-
             base.Initialize();
         }
 
         public override void Update(GameTime gameTime)
         {
             ProcessMouse();
-            ProcessKeyboard(gameTime);
+            ProcessKeyboard();
         }
 
         private void ProcessMouse()
         {
             var currentState = Mouse.GetState();
+            if (Math.Abs(currentState.X - m_previousMouseState.X) > MouseMoveTolerance ||
+                Math.Abs(currentState.Y - m_previousMouseState.Y) > MouseMoveTolerance)
+            {
+                if (Math.Abs(currentState.X - Game.Window.ClientBounds.Width/2) > MouseMoveTolerance ||
+                    Math.Abs(currentState.Y - Game.Window.ClientBounds.Height/2) > MouseMoveTolerance)
+                {
+                    m_eventSourceImpl.FireEvent(EventConstants.MousePositionUpdated,
+                        new Vector2Args(new Vector2(currentState.X - Game.Window.ClientBounds.Width/2.0f,
+                            currentState.Y - Game.Window.ClientBounds.Height/2.0f)));
+                }
+                else if (Math.Abs(m_previousMouseState.X - Game.Window.ClientBounds.Width/2) > MouseMoveTolerance ||
+                            Math.Abs(m_previousMouseState.Y - Game.Window.ClientBounds.Height/2) > MouseMoveTolerance)
+                {
+                    m_eventSourceImpl.FireEvent(EventConstants.MousePositionUpdated,
+                        new Vector2Args(Vector2.Zero));
+                }
+            }
 
-            if (currentState == m_previousMouseState || !CaptureMouse) // if there's no mouse-state change or if it's not captured, just return.
-                return;
-
-            float rotation = currentState.X - Core.Core.Instance.Configuration.Graphics.Width / 2;
-            if (rotation != 0) _cameraController.RotateCamera(rotation);
-
-            float elevation = currentState.Y - Core.Core.Instance.Configuration.Graphics.Height / 2;
-            if (elevation != 0) _cameraController.ElevateCamera(elevation);
-
-            if (currentState.LeftButton == ButtonState.Pressed && m_previousMouseState.LeftButton == ButtonState.Released)
-                _player.Weapon.Use();
-            if (currentState.RightButton == ButtonState.Pressed && m_previousMouseState.RightButton == ButtonState.Released) 
-                _player.Weapon.SecondaryUse();
-
+            if (currentState.LeftButton == ButtonState.Pressed &&
+                m_previousMouseState.LeftButton == ButtonState.Released)
+            {
+                m_eventSourceImpl.FireEvent(EventConstants.LeftMouseDown, new MouseButtonArgs(MouseButtonArgs.MouseButtons.Left));
+            }
+            else if (currentState.LeftButton == ButtonState.Released &&
+                m_previousMouseState.LeftButton == ButtonState.Pressed)
+            {
+                m_eventSourceImpl.FireEvent(EventConstants.LeftMouseUp, new MouseButtonArgs(MouseButtonArgs.MouseButtons.Left));
+            }
+            if (currentState.RightButton == ButtonState.Pressed &&
+                m_previousMouseState.RightButton == ButtonState.Released)
+            {
+                m_eventSourceImpl.FireEvent(EventConstants.RightMouseDown, new MouseButtonArgs(MouseButtonArgs.MouseButtons.Right));
+            }
+            else if (currentState.LeftButton == ButtonState.Released &&
+                m_previousMouseState.LeftButton == ButtonState.Pressed)
+            {
+                m_eventSourceImpl.FireEvent(EventConstants.RightMouseUp, new MouseButtonArgs(MouseButtonArgs.MouseButtons.Right));
+            }
+            if (CursorCentered)
+            {
+                CenterCursor();
+            }
             m_previousMouseState = currentState;
-            CenterCursor();
         }
 
-        private void ProcessKeyboard(GameTime gameTime)
+        private void ProcessKeyboard()
         {
             var currentState = Keyboard.GetState();
-
-            if (currentState.IsKeyDown(Keys.Escape)) // allows quick exiting of the game.
-                Game.Exit();
-
-            if (!Core.Core.Instance.Console.Opened)
+            if (currentState.IsKeyDown(Keys.Escape))
             {
-                if (m_previousKeyboardState.IsKeyUp(Keys.OemTilde) && currentState.IsKeyDown(Keys.OemTilde)) // tilda
-                    KeyDown(null, new KeyEventArgs(Keys.OemTilde));
-
-                // movement keys.
-                if (currentState.IsKeyDown(Keys.Up) || currentState.IsKeyDown(Keys.W))
-                    _player.Move(gameTime, MoveDirection.Forward);
-                if (currentState.IsKeyDown(Keys.Down) || currentState.IsKeyDown(Keys.S))
-                    _player.Move(gameTime, MoveDirection.Backward);
-                if (currentState.IsKeyDown(Keys.Left) || currentState.IsKeyDown(Keys.A))
-                    _player.Move(gameTime, MoveDirection.Left);
-                if (currentState.IsKeyDown(Keys.Right) || currentState.IsKeyDown(Keys.D))
-                    _player.Move(gameTime, MoveDirection.Right);
-                if (m_previousKeyboardState.IsKeyUp(Keys.Space) && currentState.IsKeyDown(Keys.Space)) _player.Jump();
-
-                // debug keys.
-
-                if (m_previousKeyboardState.IsKeyUp(Keys.F1) && currentState.IsKeyDown(Keys.F1)) // toggles infinitive world on or off.
-                    Core.Core.Instance.Configuration.World.ToggleInfinitiveWorld();
-
-                if (m_previousKeyboardState.IsKeyUp(Keys.F2) && currentState.IsKeyDown(Keys.F2)) // toggles flying on or off.
-                    _player.ToggleFlyForm();
-
-                if (m_previousKeyboardState.IsKeyUp(Keys.F5) && currentState.IsKeyDown(Keys.F5))
-                {
-                    CaptureMouse = !CaptureMouse;
-                    Game.IsMouseVisible = !CaptureMouse;
-                }
-
-                if (m_previousKeyboardState.IsKeyUp(Keys.F10) && currentState.IsKeyDown(Keys.F10))
-                    _ingameDebuggerService.ToggleInGameDebugger();
-            }
-            else
-            {
-                // console chars.
-                foreach (var @key in Enum.GetValues(typeof(Keys)))
-                {
-                    if (m_previousKeyboardState.IsKeyUp((Keys)@key) && currentState.IsKeyDown((Keys)@key))
-                        KeyDown(null, new KeyEventArgs((Keys)@key));
-                }
+                MainEngine.GetEngineInstance().Exit();
             }
 
+            foreach (var @key in Enum.GetValues(typeof(Keys)))
+            {
+                if (m_previousKeyboardState.IsKeyUp((Keys) @key) && currentState.IsKeyDown((Keys) @key))
+                {
+                    m_eventSourceImpl.FireEvent(EventConstants.KeyDown, new KeyArgs((Keys) @key));
+                }
+                else if (m_previousKeyboardState.IsKeyDown((Keys) @key) && currentState.IsKeyUp((Keys) @key))
+                {
+                    m_eventSourceImpl.FireEvent(EventConstants.KeyUp, new KeyArgs((Keys)@key));
+                }
+            }
             m_previousKeyboardState = currentState;
         }      
 
@@ -122,7 +124,22 @@ namespace _4DMonoEngine.Core.Input
             Mouse.SetPosition(Game.Window.ClientBounds.Width/2, Game.Window.ClientBounds.Height/2);
         }
 
-        public delegate void KeyEventHandler(object sender, KeyEventArgs e);
-        public event KeyEventHandler KeyDown;
+        public IEnumerable<string> EventsFired { get; private set; }
+
+        public bool EventsEnabled
+        {
+            get { return m_eventSourceImpl.EventsEnabled; } 
+            set { m_eventSourceImpl.EventsEnabled = value; }
+        }
+
+        public void Register(string eventName, Action<EventArgs> handler)
+        {
+            m_eventSourceImpl.Register(eventName, handler);
+        }
+
+        public void Unregister(string eventName, Action<EventArgs> handler)
+        {
+            m_eventSourceImpl.Unregister(eventName, handler);
+        }
     }
 }

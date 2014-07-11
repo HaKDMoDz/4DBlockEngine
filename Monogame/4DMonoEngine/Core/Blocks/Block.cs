@@ -7,19 +7,19 @@ namespace _4DMonoEngine.Core.Blocks
 {
     public struct Block : ILightable
     {
-        public static ushort None = 0;
-        public DynamicBlock DynamicBlockData;
-        public ushort MetaObjectId;
-        public ushort Type;
+        private const ushort None = 0;
+        private DynamicBlock m_dynamicBlockData;
+        private ushort m_metaObjectId;
+        private readonly ushort m_type;
         private byte m_lightSun;
         private byte m_lightRed;
         private byte m_lightGreen;
         private byte m_lightBlue;
         public Block(ushort type, ushort metaObjectId)
         {
-            DynamicBlockData = null;
-            Type = type;
-            MetaObjectId = metaObjectId;
+            m_dynamicBlockData = null;
+            m_type = type;
+            m_metaObjectId = metaObjectId;
             m_lightSun = 255;
             m_lightRed = 0;
             m_lightGreen = 0;
@@ -57,17 +57,17 @@ namespace _4DMonoEngine.Core.Blocks
 
         public HalfVector2[] GetTextureMapping(FaceDirection faceDir)
         {
-            return BlockDictionary.GetInstance().GetTextureMapping(Type, faceDir);
+            return BlockDictionary.GetInstance().GetTextureMapping(m_type, faceDir);
         }
 
         public bool Exists
         {
-            get { return Type != None; }
+            get { return m_type != None; }
         }
 
         public float Opacity
         {
-            get { return BlockDictionary.GetInstance().GetStaticData(Type).Opacity; }
+            get { return BlockDictionary.GetInstance().GetStaticData(m_type).Opacity; }
         }
     }
 }

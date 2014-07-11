@@ -11,7 +11,7 @@ namespace _4DMonoEngine.Core.Debugging.Profiling
     /// </summary>
     public static class Profiler
     {
-        public static readonly Dictionary<string, Stopwatch> Timers;
+        private static readonly Dictionary<string, Stopwatch> Timers;
 
         static Profiler()
         {

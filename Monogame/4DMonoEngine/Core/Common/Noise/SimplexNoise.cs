@@ -4,24 +4,24 @@ namespace _4DMonoEngine.Core.Common.Noise
 {
     public class SimplexNoise
     {
-	    private static double F4 = (Math.Sqrt(5.0)-1.0)/4.0;
-	    private static double G4 = (5.0-Math.Sqrt(5.0))/20.0;	
+	    private static readonly double F4 = (Math.Sqrt(5.0)-1.0)/4.0;
+	    private static readonly double G4 = (5.0-Math.Sqrt(5.0))/20.0;	
 
-        private static int[][] grad3 = new int[][] {
-		    new int[] {1,1,0}, new int[] {-1,1,0}, new int[] {1,-1,0}, new int[] {-1,-1,0},
-		    new int[] {1,0,1}, new int[] {-1,0,1}, new int[] {1,0,-1}, new int[] {-1,0,-1},
-		    new int[] {0,1,1}, new int[] {0,-1,1}, new int[] {0,1,-1}, new int[] {0,-1,-1}
+        private static readonly int[][] grad3 = new int[][] {
+		    new[] {1,1,0}, new[] {-1,1,0}, new[] {1,-1,0}, new[] {-1,-1,0},
+		    new[] {1,0,1}, new[] {-1,0,1}, new[] {1,0,-1}, new[] {-1,0,-1},
+		    new[] {0,1,1}, new[] {0,-1,1}, new[] {0,1,-1}, new[] {0,-1,-1}
 	    };
 	
-	    private static int[][] grad4= new int[][]{
-		    new int[] {0,1,1,1}, new int[] {0,1,1,-1}, new int[] {0,1,-1,1}, new int[] {0,1,-1,-1},
-		    new int[] {0,-1,1,1}, new int[] {0,-1,1,-1}, new int[] {0,-1,-1,1}, new int[] {0,-1,-1,-1},
-		    new int[] {1,0,1,1}, new int[] {1,0,1,-1}, new int[] {1,0,-1,1}, new int[] {1,0,-1,-1},
-		    new int[] {-1,0,1,1}, new int[] {-1,0,1,-1}, new int[] {-1,0,-1,1}, new int[] {-1,0,-1,-1},
-		    new int[] {1,1,0,1}, new int[] {1,1,0,-1}, new int[] {1,-1,0,1}, new int[] {1,-1,0,-1},
-		    new int[] {-1,1,0,1}, new int[] {-1,1,0,-1}, new int[] {-1,-1,0,1}, new int[] {-1,-1,0,-1},
-		    new int[] {1,1,1,0}, new int[] {1,1,-1,0}, new int[] {1,-1,1,0}, new int[] {1,-1,-1,0},
-		    new int[] {-1,1,1,0}, new int[] {-1,1,-1,0}, new int[] {-1,-1,1,0}, new int[] {-1,-1,-1,0}
+	    private static readonly int[][] grad4= new int[][]{
+		    new[] {0,1,1,1}, new[] {0,1,1,-1}, new[] {0,1,-1,1}, new[] {0,1,-1,-1},
+		    new[] {0,-1,1,1}, new[] {0,-1,1,-1}, new[] {0,-1,-1,1}, new[] {0,-1,-1,-1},
+		    new[] {1,0,1,1}, new[] {1,0,1,-1}, new[] {1,0,-1,1}, new[] {1,0,-1,-1},
+		    new[] {-1,0,1,1}, new[] {-1,0,1,-1}, new[] {-1,0,-1,1}, new[] {-1,0,-1,-1},
+		    new[] {1,1,0,1}, new[] {1,1,0,-1}, new[] {1,-1,0,1}, new[] {1,-1,0,-1},
+		    new[] {-1,1,0,1}, new[] {-1,1,0,-1}, new[] {-1,-1,0,1}, new[] {-1,-1,0,-1},
+		    new[] {1,1,1,0}, new[] {1,1,-1,0}, new[] {1,-1,1,0}, new[] {1,-1,-1,0},
+		    new[] {-1,1,1,0}, new[] {-1,1,-1,0}, new[] {-1,-1,1,0}, new[] {-1,-1,-1,0}
 	    };
 	
 	private static int[] p = {151,160,137,91,90,15,
@@ -39,54 +39,54 @@ namespace _4DMonoEngine.Core.Common.Noise
 		138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180};
         
 	    private ulong m_seed;
-	    private ulong lcgCurrSeed;
-	    private int[] perm;
+	    private ulong m_lcgCurrSeed;
+	    private readonly int[] m_perm;
         public SimplexNoise(ulong seed)
         {
 		    m_seed = seed;
-		    lcgCurrSeed = 6364136223846793005 * seed + 1442695040888963407;
-		    int[] permTemp = new int[256];
+		    m_lcgCurrSeed = 6364136223846793005 * seed + 1442695040888963407;
+		    var permTemp = new int[256];
             for (uint i = 0; i < 256; i++)
 		    {
 			    permTemp[i] = p[i];
 		    }
-		    for(int i = 255; i > 0; --i)
+		    for(var i = 255; i > 0; --i)
 		    {
-			    int j = randInt(i);
-			    int permTempJ = permTemp[j];
+			    var j = RandInt(i);
+			    var permTempJ = permTemp[j];
 			    permTemp[j] = permTemp[i];
 			    permTemp[i] = permTempJ;
 		    }
-		    perm = new int[512];
+		    m_perm = new int[512];
 		    for (uint i = 0; i < 512; i++)
 		    {
-			    perm[i] = permTemp[i & 255];
+			    m_perm[i] = permTemp[i & 255];
 		    }
 
         }
 
-	    private int randInt(int max)
+	    private int RandInt(int max)
 	    {
-		    return (int)(max * rand());
+		    return (int)(max * Rand());
 	    }
 
-	    public float rand()
+        private float Rand()
 	    {
-		    lcgCurrSeed = 6364136223846793005 * lcgCurrSeed + 1442695040888963407;
-		    return (float)(lcgCurrSeed / (double)ulong.MaxValue);
+		    m_lcgCurrSeed = 6364136223846793005 * m_lcgCurrSeed + 1442695040888963407;
+		    return (float)(m_lcgCurrSeed / (double)ulong.MaxValue);
 	    }
 
 	    public float RidgedMultiFractal4D (float x, float y, float z, float w, float scale, float offset, float gain, int octaves)
 	    {
 		    float rValue = 0;
-		    Vector4 position = new Vector4 (x / scale, y / scale, z / scale, w / scale);
+		    var position = new Vector4 (x / scale, y / scale, z / scale, w / scale);
 		    float divisor = 0;
 		    float weight = 1;
-		    for (int i = 0; i < octaves; ++i) 
+		    for (var i = 0; i < octaves; ++i) 
 		    {
-                float octaveScale = (float)Math.Pow(2, i);
+                var octaveScale = (float)Math.Pow(2, i);
 			    divisor += (1.0f / octaveScale);
-			    float signal = Perlin4D (position * octaveScale);
+			    var signal = Perlin4D (position * octaveScale);
 			    signal = offset - (signal < 0 ? -signal : signal);
 			    signal *= signal;
 			    signal *= weight;
@@ -102,14 +102,14 @@ namespace _4DMonoEngine.Core.Common.Noise
 	    public float RidgedMultiFractal3D (float x, float y, float z, float scale, float offset, float gain, int octaves)
 	    {
 		    float rValue = 0;
-		    Vector3 position = new Vector3 (x / scale, y / scale, z / scale);
+		    var position = new Vector3 (x / scale, y / scale, z / scale);
 		    float divisor = 0;
 		    float weight = 1;
-		    for (int i = 0; i < octaves; ++i) 
+		    for (var i = 0; i < octaves; ++i) 
 		    {
-			    float octaveScale = (float)Math.Pow(2, i);
+			    var octaveScale = (float)Math.Pow(2, i);
 			    divisor += (1.0f / octaveScale);
-			    float signal = Perlin3D (position * octaveScale);
+			    var signal = Perlin3D (position * octaveScale);
 			    signal = offset - (signal < 0 ? -signal : signal);
 			    signal *= signal;
 			    signal *= weight;
@@ -123,14 +123,14 @@ namespace _4DMonoEngine.Core.Common.Noise
 	    }
 
 
-	    public float Perlin4DFBM (float x, float y, float z, float w, float scale, float offset, int octaves)
+	    public float Perlin4Dfbm (float x, float y, float z, float w, float scale, float offset, int octaves)
 	    {
 		    float rValue = 0;
-		    Vector4 position = new Vector4 (x / scale, y / scale, z / scale, w / scale);
+		    var position = new Vector4 (x / scale, y / scale, z / scale, w / scale);
 		    float divisor = 0;
-		    for (int i = 0; i < octaves; ++i) 
+		    for (var i = 0; i < octaves; ++i) 
 		    {
-                float octaveScale = (float)Math.Pow(2, i);
+                var octaveScale = (float)Math.Pow(2, i);
 			    divisor += (1.0f / octaveScale);
 			    rValue += (1.0f / octaveScale) * (Perlin4D (position * octaveScale) + offset);
 		    }
@@ -138,46 +138,46 @@ namespace _4DMonoEngine.Core.Common.Noise
 		    return rValue / divisor;
 	    }
 	
-	    public float Perlin3DFMB (float x, float y, float z, float scale, float offset, int octaves)
+	    public float Perlin3Dfmb (float x, float y, float z, float scale, float offset, int octaves)
 	    {
 		    float rValue = 0;
-		    Vector3 position = new Vector3 (x / scale, y / scale, z / scale);
+		    var position = new Vector3 (x / scale, y / scale, z / scale);
 		    float divisor = 0;
-		    for (int i = 0; i < octaves; ++i) 
+		    for (var i = 0; i < octaves; ++i) 
 		    {
-                float octaveScale = (float)Math.Pow(2, i);
+                var octaveScale = (float)Math.Pow(2, i);
 			    divisor += (1.0f / octaveScale);
 			    rValue += (1.0f / octaveScale) * (Perlin3D (position * octaveScale) + offset);
 		    }
 		    return rValue  / divisor;
 	    }
-  
-	    public float Perlin4D(Vector4 pos)
+
+        private float Perlin4D(Vector4 pos)
 	    {
 		    return Perlin4D(pos.X, pos.Y, pos.Z, pos.W);
 	    }
 
-	    public float Perlin3D(Vector3 pos)
+        private float Perlin3D(Vector3 pos)
 	    {
 		    return Perlin3D(pos.X, pos.Y, pos.Z);
 	    }
 
-	    public float Perlin3D(double pX, double pY, double pZ) {
+        private float Perlin3D(double pX, double pY, double pZ) {
 		    double n0, n1, n2, n3; // Noise contributions from the four corners
 		    // Skew the input space to determine which simplex cell we're in
-		    double F3 = 1.0/3.0; // Very nice and simple skew factor for 3D
-		    double s = (pX+pY+pZ)*F3;
-		    int i = fastfloor(pX+s);
-		    int j = fastfloor(pY+s);
-		    int k = fastfloor(pZ+s);
-		    double G3 = 1.0/6.0; // Very nice and simple unskew factor, too
-		    double t = (i+j+k)*G3; 
-		    double X0 = i-t; // Unskew the cell origin back to (x,y,z) space
-		    double Y0 = j-t;
-		    double Z0 = k-t;
-		    double x0 = pX-X0; // The x,y,z distances from the cell origin
-		    double y0 = pY-Y0;
-		    double z0 = pZ-Z0;
+		    var F3 = 1.0/3.0; // Very nice and simple skew factor for 3D
+		    var s = (pX+pY+pZ)*F3;
+            int i = MathUtilities.FastFloor(pX + s);
+            int j = MathUtilities.FastFloor(pY + s);
+            int k = MathUtilities.FastFloor(pZ + s);
+		    var G3 = 1.0/6.0; // Very nice and simple unskew factor, too
+		    var t = (i+j+k)*G3; 
+		    var X0 = i-t; // Unskew the cell origin back to (x,y,z) space
+		    var Y0 = j-t;
+		    var Z0 = k-t;
+		    var x0 = pX-X0; // The x,y,z distances from the cell origin
+		    var y0 = pY-Y0;
+		    var z0 = pZ-Z0;
 		    // For the 3D case, the simplex shape is a slightly irregular tetrahedron.
 		    // Determine which simplex we are in.
 		    int i1, j1, k1; // Offsets for second corner of simplex in (i,j,k) coords
@@ -246,43 +246,43 @@ namespace _4DMonoEngine.Core.Common.Noise
 		    // a step of (0,1,0) in (i,j,k) means a step of (-c,1-c,-c) in (x,y,z), and
 		    // a step of (0,0,1) in (i,j,k) means a step of (-c,-c,1-c) in (x,y,z), where
 		    // c = 1/6.
-		    double x1 = x0 - i1 + G3; // Offsets for second corner in (x,y,z) coords
-		    double y1 = y0 - j1 + G3;
-		    double z1 = z0 - k1 + G3;
-		    double x2 = x0 - i2 + 2.0*G3; // Offsets for third corner in (x,y,z) coords
-		    double y2 = y0 - j2 + 2.0*G3;
-		    double z2 = z0 - k2 + 2.0*G3;
-		    double x3 = x0 - 1.0 + 3.0*G3; // Offsets for last corner in (x,y,z) coords
-		    double y3 = y0 - 1.0 + 3.0*G3;
-		    double z3 = z0 - 1.0 + 3.0*G3;
+		    var x1 = x0 - i1 + G3; // Offsets for second corner in (x,y,z) coords
+		    var y1 = y0 - j1 + G3;
+		    var z1 = z0 - k1 + G3;
+		    var x2 = x0 - i2 + 2.0*G3; // Offsets for third corner in (x,y,z) coords
+		    var y2 = y0 - j2 + 2.0*G3;
+		    var z2 = z0 - k2 + 2.0*G3;
+		    var x3 = x0 - 1.0 + 3.0*G3; // Offsets for last corner in (x,y,z) coords
+		    var y3 = y0 - 1.0 + 3.0*G3;
+		    var z3 = z0 - 1.0 + 3.0*G3;
 		    // Work out the hashed gradient indices of the four simplex corners
-		    int ii = i & 255;
-		    int jj = j & 255;
-		    int kk = k & 255;
-		    int gi0 = perm[ii+perm[jj+perm[kk]]] % 12;
-		    int gi1 = perm[ii+i1+perm[jj+j1+perm[kk+k1]]] % 12;
-		    int gi2 = perm[ii+i2+perm[jj+j2+perm[kk+k2]]] % 12;
-		    int gi3 = perm[ii+1+perm[jj+1+perm[kk+1]]] % 12;
+		    var ii = i & 255;
+		    var jj = j & 255;
+		    var kk = k & 255;
+		    var gi0 = m_perm[ii+m_perm[jj+m_perm[kk]]] % 12;
+		    var gi1 = m_perm[ii+i1+m_perm[jj+j1+m_perm[kk+k1]]] % 12;
+		    var gi2 = m_perm[ii+i2+m_perm[jj+j2+m_perm[kk+k2]]] % 12;
+		    var gi3 = m_perm[ii+1+m_perm[jj+1+m_perm[kk+1]]] % 12;
 		    // Calculate the contribution from the four corners
-		    double t0 = 0.5 - x0*x0 - y0*y0 - z0*z0;
+		    var t0 = 0.5 - x0*x0 - y0*y0 - z0*z0;
 		    if(t0<0) n0 = 0.0;
 		    else {
 			    t0 *= t0;
 			    n0 = t0 * t0 * dot(grad3[gi0], x0, y0, z0);
 		    }
-		    double t1 = 0.5 - x1*x1 - y1*y1 - z1*z1;
+		    var t1 = 0.5 - x1*x1 - y1*y1 - z1*z1;
 		    if(t1<0) n1 = 0.0;
 		    else {
 			    t1 *= t1;
 			    n1 = t1 * t1 * dot(grad3[gi1], x1, y1, z1);
 		    }
-		    double t2 = 0.5 - x2*x2 - y2*y2 - z2*z2;
+		    var t2 = 0.5 - x2*x2 - y2*y2 - z2*z2;
 		    if(t2<0) n2 = 0.0;
 		    else {
 			    t2 *= t2;
 			    n2 = t2 * t2 * dot(grad3[gi2], x2, y2, z2);
 		    }
-		    double t3 = 0.5 - x3*x3 - y3*y3 - z3*z3;
+		    var t3 = 0.5 - x3*x3 - y3*y3 - z3*z3;
 		    if(t3<0) n3 = 0.0;
 		    else {
 			    t3 *= t3;
@@ -293,33 +293,33 @@ namespace _4DMonoEngine.Core.Common.Noise
 		    return (float)(32.0*(n0 + n1 + n2 + n3));
 	    }
 
-        public float Perlin4D(double pX, double pY, double pZ, double pW)
+        private float Perlin4D(double pX, double pY, double pZ, double pW)
 	    {
 		    double n0, n1, n2, n3, n4; // Noise contributions from the five corners
 		    // Skew the (x,y,z,w) space to determine which cell of 24 simplices we're in
-		    double s = (pX + pY + pZ + pW) * F4; // Factor for 4D skewing
-            int i = MathUtilities.FastFloor(pX + s);
-            int j = MathUtilities.FastFloor(pY + s);
-            int k = MathUtilities.FastFloor(pZ + s);
-            int l = MathUtilities.FastFloor(pW + s);
-		    double t = (i + j + k + l) * G4; // Factor for 4D unskewing
-		    double X0 = i - t; // Unskew the cell origin back to (x,y,z,w) space
-		    double Y0 = j - t;
-		    double Z0 = k - t;
-		    double W0 = l - t;
-		    double x0 = pX - X0;  // The x,y,z,w distances from the cell origin
-		    double y0 = pY - Y0;
-		    double z0 = pZ - Z0;
-		    double w0 = pW - W0;
+		    var s = (pX + pY + pZ + pW) * F4; // Factor for 4D skewing
+            var i = MathUtilities.FastFloor(pX + s);
+            var j = MathUtilities.FastFloor(pY + s);
+            var k = MathUtilities.FastFloor(pZ + s);
+            var l = MathUtilities.FastFloor(pW + s);
+		    var t = (i + j + k + l) * G4; // Factor for 4D unskewing
+		    var X0 = i - t; // Unskew the cell origin back to (x,y,z,w) space
+		    var Y0 = j - t;
+		    var Z0 = k - t;
+		    var W0 = l - t;
+		    var x0 = pX - X0;  // The x,y,z,w distances from the cell origin
+		    var y0 = pY - Y0;
+		    var z0 = pZ - Z0;
+		    var w0 = pW - W0;
 		    // For the 4D case, the simplex is a 4D shape I won't even try to describe.
 		    // To find out which of the 24 possible simplices we're in, we need to
 		    // determine the magnitude ordering of x0, y0, z0 and w0.
 		    // Six pair-wise comparisons are performed between each possible pair
 		    // of the four coordinates, and the results are used to rank the numbers.
-		    int rankx = 0;
-		    int ranky = 0;
-		    int rankz = 0;
-		    int rankw = 0;
+		    var rankx = 0;
+		    var ranky = 0;
+		    var rankz = 0;
+		    var rankw = 0;
 		    if(x0 > y0) rankx++; else ranky++;
 		    if(x0 > z0) rankx++; else rankz++;
 		    if(x0 > w0) rankx++; else rankw++;
@@ -349,58 +349,58 @@ namespace _4DMonoEngine.Core.Common.Noise
 		    k3 = rankz >= 1 ? 1 : 0;
 		    l3 = rankw >= 1 ? 1 : 0;
 		    // The fifth corner has all coordinate offsets = 1, so no need to compute that.
-		    double x1 = x0 - i1 + G4; // Offsets for second corner in (x,y,z,w) coords
-		    double y1 = y0 - j1 + G4;
-		    double z1 = z0 - k1 + G4;
-		    double w1 = w0 - l1 + G4;
-		    double x2 = x0 - i2 + 2.0*G4; // Offsets for third corner in (x,y,z,w) coords
-		    double y2 = y0 - j2 + 2.0*G4;
-		    double z2 = z0 - k2 + 2.0*G4;
-		    double w2 = w0 - l2 + 2.0*G4;
-		    double x3 = x0 - i3 + 3.0*G4; // Offsets for fourth corner in (x,y,z,w) coords
-		    double y3 = y0 - j3 + 3.0*G4;
-		    double z3 = z0 - k3 + 3.0*G4;
-		    double w3 = w0 - l3 + 3.0*G4;
-		    double x4 = x0 - 1.0 + 4.0*G4; // Offsets for last corner in (x,y,z,w) coords
-		    double y4 = y0 - 1.0 + 4.0*G4;
-		    double z4 = z0 - 1.0 + 4.0*G4;
-		    double w4 = w0 - 1.0 + 4.0*G4;
+		    var x1 = x0 - i1 + G4; // Offsets for second corner in (x,y,z,w) coords
+		    var y1 = y0 - j1 + G4;
+		    var z1 = z0 - k1 + G4;
+		    var w1 = w0 - l1 + G4;
+		    var x2 = x0 - i2 + 2.0*G4; // Offsets for third corner in (x,y,z,w) coords
+		    var y2 = y0 - j2 + 2.0*G4;
+		    var z2 = z0 - k2 + 2.0*G4;
+		    var w2 = w0 - l2 + 2.0*G4;
+		    var x3 = x0 - i3 + 3.0*G4; // Offsets for fourth corner in (x,y,z,w) coords
+		    var y3 = y0 - j3 + 3.0*G4;
+		    var z3 = z0 - k3 + 3.0*G4;
+		    var w3 = w0 - l3 + 3.0*G4;
+		    var x4 = x0 - 1.0 + 4.0*G4; // Offsets for last corner in (x,y,z,w) coords
+		    var y4 = y0 - 1.0 + 4.0*G4;
+		    var z4 = z0 - 1.0 + 4.0*G4;
+		    var w4 = w0 - 1.0 + 4.0*G4;
 		    // Work out the hashed gradient indices of the five simplex corners
-		    int ii = i & 255;
-		    int jj = j & 255;
-		    int kk = k & 255;
-		    int ll = l & 255;
-		    int gi0 = perm[ii+perm[jj+perm[kk+perm[ll]]]] % 32;
-		    int gi1 = perm[ii+i1+perm[jj+j1+perm[kk+k1+perm[ll+l1]]]] % 32;
-		    int gi2 = perm[ii+i2+perm[jj+j2+perm[kk+k2+perm[ll+l2]]]] % 32;
-		    int gi3 = perm[ii+i3+perm[jj+j3+perm[kk+k3+perm[ll+l3]]]] % 32;
-		    int gi4 = perm[ii+1+perm[jj+1+perm[kk+1+perm[ll+1]]]] % 32;
+		    var ii = i & 255;
+		    var jj = j & 255;
+		    var kk = k & 255;
+		    var ll = l & 255;
+		    var gi0 = m_perm[ii+m_perm[jj+m_perm[kk+m_perm[ll]]]] % 32;
+		    var gi1 = m_perm[ii+i1+m_perm[jj+j1+m_perm[kk+k1+m_perm[ll+l1]]]] % 32;
+		    var gi2 = m_perm[ii+i2+m_perm[jj+j2+m_perm[kk+k2+m_perm[ll+l2]]]] % 32;
+		    var gi3 = m_perm[ii+i3+m_perm[jj+j3+m_perm[kk+k3+m_perm[ll+l3]]]] % 32;
+		    var gi4 = m_perm[ii+1+m_perm[jj+1+m_perm[kk+1+m_perm[ll+1]]]] % 32;
 		    // Calculate the contribution from the five corners
-		    double t0 = 0.6 - x0*x0 - y0*y0 - z0*z0 - w0*w0;
+		    var t0 = 0.6 - x0*x0 - y0*y0 - z0*z0 - w0*w0;
 		    if(t0<0) n0 = 0.0;
 		    else {
 			    t0 *= t0;
 			    n0 = t0 * t0 * dot(grad4[gi0], x0, y0, z0, w0);
 		    }
-		    double t1 = 0.6 - x1*x1 - y1*y1 - z1*z1 - w1*w1;
+		    var t1 = 0.6 - x1*x1 - y1*y1 - z1*z1 - w1*w1;
 		    if(t1<0) n1 = 0.0;
 		    else {
 			    t1 *= t1;
 			    n1 = t1 * t1 * dot(grad4[gi1], x1, y1, z1, w1);
 		    }
-		    double t2 = 0.6 - x2*x2 - y2*y2 - z2*z2 - w2*w2;
+		    var t2 = 0.6 - x2*x2 - y2*y2 - z2*z2 - w2*w2;
 		    if(t2<0) n2 = 0.0;
 		    else {
 			    t2 *= t2;
 			    n2 = t2 * t2 * dot(grad4[gi2], x2, y2, z2, w2);
 		    }
-		    double t3 = 0.6 - x3*x3 - y3*y3 - z3*z3 - w3*w3;
+		    var t3 = 0.6 - x3*x3 - y3*y3 - z3*z3 - w3*w3;
 		    if(t3<0) n3 = 0.0;
 		    else {
 			    t3 *= t3;
 			    n3 = t3 * t3 * dot(grad4[gi3], x3, y3, z3, w3);
 		    }
-		    double t4 = 0.6 - x4*x4 - y4*y4 - z4*z4 - w4*w4;
+		    var t4 = 0.6 - x4*x4 - y4*y4 - z4*z4 - w4*w4;
 		    if(t4<0) n4 = 0.0;
 		    else {
 			    t4 *= t4;

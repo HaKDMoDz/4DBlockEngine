@@ -232,9 +232,9 @@ namespace _4DMonoEngine.Core.Common.Noise
                 seed = 142024253 * seed + 586950981;
                 float fz = (seed + 0.5f) * featurePointMap;
 
-                float dx = x + fx - at.x;
-                float dy = y + fy - at.y;
-                float dz = z + fz - at.z;
+                float dx = x + fx - at.X;
+                float dy = y + fy - at.Y;
+                float dz = z + fz - at.Z;
 
                 float d2 = dx * dx + dy * dy + dz * dz;
 

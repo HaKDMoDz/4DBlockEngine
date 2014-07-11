@@ -1,13 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Chunks.Generators;
-using _4DMonoEngine.Core.Chunks.Processors;
+using _4DMonoEngine.Core.Common.AbstractClasses;
 using _4DMonoEngine.Core.Common.Enums;
-using _4DMonoEngine.Core.Common.Vector;
+using _4DMonoEngine.Core.Common.Helpers;
+using _4DMonoEngine.Core.Common.Structs.Vector;
 using _4DMonoEngine.Core.Common;
+using _4DMonoEngine.Core.Events;
+using _4DMonoEngine.Core.Events.Args;
+using _4DMonoEngine.Core.Graphics;
+using _4DMonoEngine.Core.Processors;
 using _4DMonoEngine.Core.Universe;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -15,10 +21,10 @@ using Microsoft.Xna.Framework.Graphics;
 namespace _4DMonoEngine.Core.Chunks
 {
 
-    public class ChunkCache : WorldRenderable
+    public class ChunkCache : WorldRenderable, IEventSink
     {
-        public static byte CacheRange = 16;
-        public BoundingBox CacheRangeBoundingBox;
+        private const byte CacheRange = 16;
+        private BoundingBox m_cacheRangeBoundingBox;
         /*TODO : Implement LOD here
          * 
          * The level of detail zones should be smaller than ViewRange.
@@ -27,16 +33,15 @@ namespace _4DMonoEngine.Core.Chunks
          * issues with the Large Object Heap
          * 
          */
-        public static byte ViewRange = 12;
-        public BoundingBox ViewRangeBoundingBox;
+        public const byte ViewRange = 12;
+        private BoundingBox m_viewRangeBoundingBox;
 
-        public static int CacheSizeInBlocks = (CacheRange * 2 + 1) * Chunk.SizeInBlocks;
-        public static readonly int BlockStepX = Chunk.SizeInBlocks * Chunk.SizeInBlocks;
-        public static readonly int BlockStepZ = Chunk.SizeInBlocks;
-        public static readonly int BlockStepY = 1;
-
+        private const int CacheSizeInBlocks = (CacheRange*2 + 1)*Chunk.SizeInBlocks;
+        public const int BlockStepX = Chunk.SizeInBlocks*Chunk.SizeInBlocks;
+        public const int BlockStepZ = Chunk.SizeInBlocks;
 
         public int ChunksDrawn;
+        public int ChunksLoaded { get { return m_chunkStorage.Count; } }
 
         // assets & resources
         private Effect m_blockEffect; // block effect.
@@ -49,26 +54,25 @@ namespace _4DMonoEngine.Core.Chunks
         private Vector4 m_cacheCenterPosition;
         private Chunk m_currentChunk;
 
-        public bool CacheThreadStarted;
+        private bool m_cacheThreadStarted;
 
         public Dictionary<ChunkState, int> StateStatistics { get; private set; }
-        public readonly Block[] Blocks;
+        public Vector4 CachePosition { get { return m_cacheCenterPosition; } }
+
+        public Block[] Blocks { get; private set; }
 
 
-        public ChunkCache(GraphicsDevice graphicsDevice, BlockDictionary blockDictionary, int seed)
+        public ChunkCache(GraphicsDevice graphicsDevice, uint seed)
         {
-            if (ViewRange > CacheRange)
-            {
-                throw new ChunkCacheException();
-            }
-
+            Debug.Assert(ViewRange < CacheRange);
+            Debug.Assert(graphicsDevice != null);
             Blocks = new Block[CacheSizeInBlocks * CacheSizeInBlocks * CacheSizeInBlocks];
-            m_generator = new TerrainGenerator(blockDictionary, Chunk.SizeInBlocks, seed);
+            m_generator = new TerrainGenerator(Chunk.SizeInBlocks, Blocks, seed);
             m_lightingEngine = new CellularLighting<Block>(Blocks);
             m_vertexBuilder = new VertexBuilder<Block>(Blocks, BlockIndexByWorldPosition, graphicsDevice);
             m_chunkStorage = new SparseArray3D<Chunk>(CacheRange * 2 + 1, CacheRange * 2 + 1);
             m_cacheCenterPosition = new Vector4();
-            CacheThreadStarted = false;
+            m_cacheThreadStarted = false;
             StateStatistics = new Dictionary<ChunkState, int> // init. the debug stastics.
                                        {
                                            {ChunkState.AwaitingGenerate, 0},
@@ -80,6 +84,12 @@ namespace _4DMonoEngine.Core.Chunks
                                            {ChunkState.Ready, 0},
                                            {ChunkState.AwaitingRemoval, 0},
                                        };
+        }
+
+        public override void Initialize(GraphicsDevice graphicsDevice, Camera camera, GetTimeOfDay getTimeOfDay, GetFogVector getFogVector)
+        {
+            base.Initialize(graphicsDevice, camera, getTimeOfDay, getFogVector);
+            MainEngine.GetEngineInstance().CentralDispatch.Register(EventConstants.PlayerPositionUpdated, GetHandlerForEvent(EventConstants.PlayerPositionUpdated));
         }
 
         public override void LoadContent()
@@ -130,51 +140,59 @@ namespace _4DMonoEngine.Core.Chunks
             chunk.ChunkState = ChunkState.AwaitingBuild;
         }
 
+        private void UpdateCachePosition(Vector3Args args)
+        {
+            UpdateCachePosition((int)args.Vector.X, (int)args.Vector.Y, (int)args.Vector.Z);
+        }
+
         public void UpdateCachePosition(int x, int y, int z)
         {
-            m_cacheCenterPosition.X = x;
-            m_cacheCenterPosition.Y = y;
-            m_cacheCenterPosition.Z = z;
-            UpdateBoundingBoxes();
-            if (!CacheThreadStarted)
+            if(x != (int)m_cacheCenterPosition.X || y != (int)m_cacheCenterPosition.Y || z != (int)m_cacheCenterPosition.Z)
             {
-                var cacheThread = new Thread(CacheThread) {IsBackground = true};
-                cacheThread.Start();
-                CacheThreadStarted = true;
+                m_cacheCenterPosition.X = x;
+                m_cacheCenterPosition.Y = y;
+                m_cacheCenterPosition.Z = z;
+                UpdateBoundingBoxes();
+                if (!m_cacheThreadStarted)
+                {
+                    var cacheThread = new Thread(CacheThread) {IsBackground = true};
+                    cacheThread.Start();
+                    m_cacheThreadStarted = true;
+                }
             }
         }
 
         public bool IsInViewRange(Chunk chunk)
         {
-            return ViewRangeBoundingBox.Contains(chunk.BoundingBox) == ContainmentType.Contains;
+            return m_viewRangeBoundingBox.Contains(chunk.BoundingBox) == ContainmentType.Contains;
         }
 
         public bool IsInViewRange(int x, int y, int z)
         {
-            return !(x < ViewRangeBoundingBox.Min.X || z < ViewRangeBoundingBox.Min.Z || x >= ViewRangeBoundingBox.Max.X ||
-                     z >= ViewRangeBoundingBox.Max.Z || y < ViewRangeBoundingBox.Min.Y || y >= ViewRangeBoundingBox.Max.Y);
+            return !(x < m_viewRangeBoundingBox.Min.X || z < m_viewRangeBoundingBox.Min.Z || x >= m_viewRangeBoundingBox.Max.X ||
+                     z >= m_viewRangeBoundingBox.Max.Z || y < m_viewRangeBoundingBox.Min.Y || y >= m_viewRangeBoundingBox.Max.Y);
         }
 
         public bool IsInCacheRange(Chunk chunk)
         {
-            return CacheRangeBoundingBox.Contains(chunk.BoundingBox) == ContainmentType.Contains;
+            return m_cacheRangeBoundingBox.Contains(chunk.BoundingBox) == ContainmentType.Contains;
         }
 
         public bool IsInCacheRange(int x, int y, int z)
         {
-            return !(x < CacheRangeBoundingBox.Min.X || y < CacheRangeBoundingBox.Min.Y || z < CacheRangeBoundingBox.Min.Z ||
-                     x > CacheRangeBoundingBox.Max.X || y > CacheRangeBoundingBox.Max.Y || z > CacheRangeBoundingBox.Max.Z);
+            return !(x < m_cacheRangeBoundingBox.Min.X || y < m_cacheRangeBoundingBox.Min.Y || z < m_cacheRangeBoundingBox.Min.Z ||
+                     x > m_cacheRangeBoundingBox.Max.X || y > m_cacheRangeBoundingBox.Max.Y || z > m_cacheRangeBoundingBox.Max.Z);
         }
 
-        protected void UpdateBoundingBoxes()
+        private void UpdateBoundingBoxes()
         {
-            ViewRangeBoundingBox = new BoundingBox(
+            m_viewRangeBoundingBox = new BoundingBox(
                         new Vector3(m_cacheCenterPosition.X - (ViewRange * Chunk.SizeInBlocks), m_cacheCenterPosition.Y - (ViewRange * Chunk.SizeInBlocks),
                                     m_cacheCenterPosition.Z - (ViewRange * Chunk.SizeInBlocks)),
                         new Vector3(m_cacheCenterPosition.X + (ViewRange * Chunk.SizeInBlocks), m_cacheCenterPosition.Y + (ViewRange * Chunk.SizeInBlocks),
                                     m_cacheCenterPosition.Z + (ViewRange * Chunk.SizeInBlocks)));
                 
-            CacheRangeBoundingBox = new BoundingBox(
+            m_cacheRangeBoundingBox = new BoundingBox(
                         new Vector3(m_cacheCenterPosition.X - (CacheRange * Chunk.SizeInBlocks), m_cacheCenterPosition.Y - (CacheRange * Chunk.SizeInBlocks),
                                     m_cacheCenterPosition.Z - (CacheRange * Chunk.SizeInBlocks)),
                         new Vector3(m_cacheCenterPosition.X + (CacheRange * Chunk.SizeInBlocks), m_cacheCenterPosition.Y + (CacheRange * Chunk.SizeInBlocks),
@@ -193,7 +211,7 @@ namespace _4DMonoEngine.Core.Chunks
 // ReSharper disable once FunctionNeverReturns
         }
 
-        protected void Process()
+        private void Process()
         {
             foreach (var chunk in m_chunkStorage.Values)
             {
@@ -230,7 +248,7 @@ namespace _4DMonoEngine.Core.Chunks
                         {
                             if (!m_chunkStorage.ContainsKey(m_currentChunk.RelativePosition.X + x, m_currentChunk.RelativePosition.Y + y, m_currentChunk.RelativePosition.Z + z))
                             {
-                                var chunk = new Chunk(new Vector3Int(m_currentChunk.RelativePosition.X + x, m_currentChunk.RelativePosition.Y + y, m_currentChunk.RelativePosition.Z + z));
+                                var chunk = new Chunk(new Vector3Int(m_currentChunk.RelativePosition.X + x, m_currentChunk.RelativePosition.Y + y, m_currentChunk.RelativePosition.Z + z), Blocks);
                                 m_chunkStorage[chunk.RelativePosition.X, chunk.RelativePosition.Y, chunk.RelativePosition.Z] = chunk;
                             }
                         }
@@ -241,7 +259,7 @@ namespace _4DMonoEngine.Core.Chunks
 
         private void ProcessChunkInCacheRange(Chunk chunk)
         {
-            if (chunk.ChunkState == ChunkState.AwaitingGenerate)
+            if (chunk.ChunkState == ChunkState.AwaitingGenerate || chunk.ChunkState == ChunkState.Generating)
             {
                 m_generator.GenerateDataForChunk(chunk.Position, 0);
             }
@@ -276,17 +294,17 @@ namespace _4DMonoEngine.Core.Chunks
             m_blockEffect.Parameters["World"].SetValue(Matrix.Identity);
             m_blockEffect.Parameters["View"].SetValue(m_camera.View);
             m_blockEffect.Parameters["Projection"].SetValue(m_camera.Projection);
-            m_blockEffect.Parameters["CameraPosition"].SetValue(m_camera.Position);
+            m_blockEffect.Parameters["CameraPosition"].SetValue(m_camera.Ray.Position);
 
             // texture parameters
             m_blockEffect.Parameters["BlockTextureAtlas"].SetValue(m_blockTextureAtlas);
 
             // atmospheric settings
-            m_blockEffect.Parameters["SunColor"].SetValue(World.SunColor);
-            m_blockEffect.Parameters["NightColor"].SetValue(World.NightColor);
-            m_blockEffect.Parameters["HorizonColor"].SetValue(World.HorizonColor);
-            m_blockEffect.Parameters["MorningTint"].SetValue(World.MorningTint);
-            m_blockEffect.Parameters["EveningTint"].SetValue(World.EveningTint);
+            m_blockEffect.Parameters["SunColor"].SetValue(Simulation.SunColor);
+            m_blockEffect.Parameters["NightColor"].SetValue(Simulation.NightColor);
+            m_blockEffect.Parameters["HorizonColor"].SetValue(Simulation.HorizonColor);
+            m_blockEffect.Parameters["MorningTint"].SetValue(Simulation.MorningTint);
+            m_blockEffect.Parameters["EveningTint"].SetValue(Simulation.EveningTint);
 
             // time of day parameters
             m_blockEffect.Parameters["TimeOfDay"].SetValue(m_getTimeOfDay());
@@ -389,6 +407,11 @@ namespace _4DMonoEngine.Core.Chunks
             }
         }
 
+        public static int BlockIndexByWorldPosition(ref Vector3 position)
+        {
+            return BlockIndexByWorldPosition((int)position.X, (int)position.Y, (int)position.Z);
+        }
+
         public static int BlockIndexByWorldPosition(int x, int y, int z)
         {
             var wrapX = MathUtilities.Modulo(x, CacheSizeInBlocks);
@@ -409,11 +432,32 @@ namespace _4DMonoEngine.Core.Chunks
             var flattenIndex = wrapX * BlockStepX + wrapZ * BlockStepZ + wrapY;
             return flattenIndex;
         }
-    }
 
-    public class ChunkCacheException : Exception
-    {
-        public ChunkCacheException() : base("View range can not be larger than cache range!")
-        { }
+        public bool CanHandleEvent(string eventName)
+        {
+            switch (eventName)
+            {
+                case EventConstants.PlayerPositionUpdated:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        public Action<EventArgs> GetHandlerForEvent(string eventName)
+        {
+            switch (eventName)
+            {
+                case EventConstants.PlayerPositionUpdated:
+                    return EventHelper.Wrap<Vector3Args>(UpdateCachePosition);
+                default:
+                    return null;
+            }
+        }
+
+        public Chunk GetChunkByWorldPosition(Vector3 position)
+        {
+            return GetChunkByWorldPosition((int)position.X, (int)position.Y, (int)position.Z);
+        }
     }
 }

@@ -1,151 +1,64 @@
-﻿
-
-using System;
-using System.Globalization;
-using System.Text;
-using _4DMonoEngine.Core.Assets;
+﻿using System.Text;
 using _4DMonoEngine.Core.Chunks;
 using _4DMonoEngine.Core.Common.Extensions;
-using _4DMonoEngine.Core.Common.Logging;
+using _4DMonoEngine.Core.Debugging.Profiling;
 using _4DMonoEngine.Core.Graphics.Drawing;
-using _4DMonoEngine.Core.Universe;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace _4DMonoEngine.Core.Debugging
 {
-    /// <summary>
-    /// Allows interaction with the statistics service.
-    /// </summary>
-    public interface IStatistics
+
+    internal class DebugBar : DrawableGameComponent
     {
-        /// <summary>
-        /// Returns current FPS.
-        /// </summary>
-        int FPS { get; }
-
-        /// <summary>
-        /// Returns the memory size.
-        /// </summary>
-        /// <returns></returns>
-        long MemoryUsed { get; }
-
-        int GenerateQueue { get; }
-        int LightenQueue { get; }
-        int BuildQueue { get; }
-        int ReadyQueue { get; }
-        int RemovalQueue { get; }
-    }
-
-    internal class DebugBar : DrawableGameComponent, IStatistics
-    {
-        // exported statistics.
-        public int FPS { get; private set; }
-        public long MemoryUsed { get { return GC.GetTotalMemory(false); } }
-        public int GenerateQueue { get; private set; }
-        public int LightenQueue { get; private set; }
-        public int BuildQueue { get; private set; }
-        public int ReadyQueue { get; private set; }
-        public int RemovalQueue { get; private set; }
-
-        // internal counters.
-        private int _frameCounter = 0; // the frame count.
-        private TimeSpan _elapsedTime = TimeSpan.Zero;
-
-        // drawn-blocks stuff.
-        private string _drawnBlocks;
-        private string _totalBlocks;
-
         // resources.
-        private PrimitiveBatch _primitiveBatch;
-        private SpriteBatch _spriteBatch;
-        private SpriteFont _spriteFont;
-        private Matrix _localProjection;
-        private Matrix _localView;
-        private Rectangle _bounds;
-        private readonly Vector2[] _backgroundPolygon = new Vector2[4];
+        private PrimitiveBatch m_primitiveBatch;
+        private SpriteBatch m_spriteBatch;
+        private SpriteFont m_spriteFont;
+        private Matrix m_localProjection;
+        private Matrix m_localView;
+        private Rectangle m_bounds;
+        private readonly Vector2[] m_backgroundPolygon = new Vector2[4];
+        private readonly StringBuilder m_stringBuilder = new StringBuilder(512, 512);
+        private readonly ChunkCache m_chunkCache;
+        private Statistics m_statistics;
 
-        // for grabbing internal string, we should init string builder capacity and max capacity ctor so that, grabbed internal string is always valid. - http://www.gavpugh.com/2010/03/23/xnac-stringbuilder-to-string-with-no-garbage/
-        private readonly StringBuilder _stringBuilder = new StringBuilder(512, 512);
 
-        // required services.       
-        private IWorld _world;
-        private IPlayer _player;
-        private Fogger _fogger;
-        private IChunkStorage _chunkStorage;
-        private IChunkCache _chunkCache;
-        private IAssetManager _assetManager;
-
-        // misc.
-        private static readonly Logger Logger = LogManager.GetOrCreateLogger(); // loging-facility
-
-        public DebugBar(Game game)
+        public DebugBar(Game game, ChunkCache chunkCache)
             : base(game)
         {
-            Game.Services.AddService(typeof(IStatistics), this); // export the service.
+            m_chunkCache = chunkCache;
         }
 
-        /// <summary>
-        /// Initializes the debug-bar service.
-        /// </summary>
         public override void Initialize()
         {
-            Logger.Trace("init()");
-
-            // import required services.            
-            _player = (IPlayer)Game.Services.GetService(typeof(IPlayer));
-            _fogger = (Fogger)Game.Services.GetService(typeof(Fogger));
-            _world = (IWorld)Game.Services.GetService(typeof(IWorld));
-            _chunkStorage = (IChunkStorage)Game.Services.GetService(typeof(IChunkStorage));
-            _chunkCache = (IChunkCache)Game.Services.GetService(typeof(IChunkCache));
-            _assetManager = (IAssetManager)Game.Services.GetService(typeof(IAssetManager));
-
-            if (_assetManager == null)
-                throw new NullReferenceException("Can not find asset manager component.");
-
             base.Initialize();
+            m_statistics = (Statistics)Game.Services.GetService(typeof(Statistics));
         }
 
         protected override void LoadContent()
         {
             // load resources.
-            _primitiveBatch = new PrimitiveBatch(GraphicsDevice, 1000);
-            _localProjection = Matrix.CreateOrthographicOffCenter(0f, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 0f, 0f, 1f);
-            _localView = Matrix.Identity;
-            _spriteBatch = new SpriteBatch(GraphicsDevice);
-            _spriteFont = _assetManager.Verdana;
+            m_primitiveBatch = new PrimitiveBatch(GraphicsDevice, 1000);
+            m_localProjection = Matrix.CreateOrthographicOffCenter(0f, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 0f, 0f, 1f);
+            m_localView = Matrix.Identity;
+            m_spriteBatch = new SpriteBatch(GraphicsDevice);
+            m_spriteFont = MainEngine.GetEngineInstance().GetAsset<SpriteFont>("Verdana");
 
             // init bounds.
-            _bounds = new Rectangle(10, 10, Game.GraphicsDevice.Viewport.Bounds.Width - 20, 20);
-            _backgroundPolygon[0] = new Vector2(_bounds.X - 2, _bounds.Y - 2); // top left
-            _backgroundPolygon[1] = new Vector2(_bounds.X - 2, _bounds.Y + _bounds.Height + 14); // bottom left
-            _backgroundPolygon[2] = new Vector2(_bounds.X + 2 + _bounds.Width, _bounds.Y + _bounds.Height + 14); // bottom right
-            _backgroundPolygon[3] = new Vector2(_bounds.X + 2 + _bounds.Width, _bounds.Y - 2); // top right
+            m_bounds = new Rectangle(10, 10, Game.GraphicsDevice.Viewport.Bounds.Width - 20, 20);
+            m_backgroundPolygon[0] = new Vector2(m_bounds.X - 2, m_bounds.Y - 2); // top left
+            m_backgroundPolygon[1] = new Vector2(m_bounds.X - 2, m_bounds.Y + m_bounds.Height + 14); // bottom left
+            m_backgroundPolygon[2] = new Vector2(m_bounds.X + 2 + m_bounds.Width, m_bounds.Y + m_bounds.Height + 14); // bottom right
+            m_backgroundPolygon[3] = new Vector2(m_bounds.X + 2 + m_bounds.Width, m_bounds.Y - 2); // top right
         }
-
-        /// <summary>
-        /// Calculates the FPS.
-        /// </summary>
-        /// <param name="gameTime"></param>
-        public override void Update(GameTime gameTime)
-        {
-            _elapsedTime += gameTime.ElapsedGameTime;
-            if (_elapsedTime < TimeSpan.FromSeconds(1))
-                return;
-
-            _elapsedTime -= TimeSpan.FromSeconds(1);
-            FPS = _frameCounter;
-            _frameCounter = 0;
-        }
-
+        
         /// <summary>
         /// Draws the statistics.
         /// </summary>
         /// <param name="gameTime"></param>
         public override void Draw(GameTime gameTime)
         {
-            _frameCounter++;
-
             // backup  the raster and depth-stencil states.
             var previousRasterizerState = Game.GraphicsDevice.RasterizerState;
             var previousDepthStencilState = Game.GraphicsDevice.DepthStencilState;
@@ -154,125 +67,77 @@ namespace _4DMonoEngine.Core.Debugging
             Game.GraphicsDevice.RasterizerState = RasterizerState.CullNone;
             Game.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
-            _primitiveBatch.Begin(_localProjection, _localView); // initialize the primitive batch.
+            m_primitiveBatch.Begin(m_localProjection, m_localView); // initialize the primitive batch.
 
-            BasicShapes.DrawSolidPolygon(_primitiveBatch, _backgroundPolygon, 4, Color.Black, true);
+            BasicShapes.DrawSolidPolygon(m_primitiveBatch, m_backgroundPolygon, 4, Color.Black, true);
 
-            _primitiveBatch.End(); // end the batch.
+            m_primitiveBatch.End(); // end the batch.
 
             // restore old states.
             Game.GraphicsDevice.RasterizerState = previousRasterizerState;
             Game.GraphicsDevice.DepthStencilState = previousDepthStencilState;
-
-            // calculate drawn blocks
-            if (_chunkCache.ChunksDrawn >= 31)
-                _drawnBlocks = (_chunkCache.ChunksDrawn / 31f).ToString("F2") + "M";
-            else if (_chunkCache.ChunksDrawn > 1)
-                _drawnBlocks = (_chunkCache.ChunksDrawn / 0.03f).ToString("F2") + "K";
-            else _drawnBlocks = "0";
-
-            // calculate total blocks
-            if (_chunkStorage.Count > 31) 
-                _totalBlocks = (_chunkStorage.Count / 31f).ToString("F2") + "M";
-            else if (_chunkStorage.Count > 1) 
-                _totalBlocks = (_chunkStorage.Count / 0.03f).ToString("F2") + "K";
-            else 
-                _totalBlocks = Core.Core.Instance.Configuration.Chunk.Volume.ToString(CultureInfo.InvariantCulture);
-
-            _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
+            
+            m_spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
 
             // Attention: DO NOT use string.format as it's slower than string concat.
 
             // FPS
-            _stringBuilder.Length = 0;
-            _stringBuilder.Append("fps:");
-            _stringBuilder.Append(FPS);
-            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 5, _bounds.Y + 5), Color.White);
+            m_stringBuilder.Length = 0;
+            m_stringBuilder.Append("fps:");
+            m_stringBuilder.Append(m_statistics.Fps);
+            m_spriteBatch.DrawString(m_spriteFont, m_stringBuilder, new Vector2(m_bounds.X + 5, m_bounds.Y + 5), Color.White);
 
             // mem used
-            _stringBuilder.Length = 0;
-            _stringBuilder.Append("mem:");
-            _stringBuilder.Append(MemoryUsed.GetKiloString());
-            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 105, _bounds.Y + 5), Color.White);
+            m_stringBuilder.Length = 0;
+            m_stringBuilder.Append("mem:");
+            m_stringBuilder.Append(m_statistics.MemoryUsed.GetKiloString());
+            m_spriteBatch.DrawString(m_spriteFont, m_stringBuilder, new Vector2(m_bounds.X + 105, m_bounds.Y + 5), Color.White);
 
             // chunks
-            _stringBuilder.Length = 0;
-            _stringBuilder.Append("chunks:");
-            _stringBuilder.AppendNumber(_chunkCache.ChunksDrawn);
-            _stringBuilder.Append('/');
-            _stringBuilder.AppendNumber(_chunkStorage.Count);
-            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 205, _bounds.Y + 5), Color.White);
-
-            // blocks
-            _stringBuilder.Length = 0;
-            _stringBuilder.Append("blocks:");
-            _stringBuilder.Append(_drawnBlocks);
-            _stringBuilder.Append('/');
-            _stringBuilder.Append(_totalBlocks);
-            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 305, _bounds.Y + 5), Color.White);
-
-            // process queues.
-            GenerateQueue = _chunkCache.StateStatistics[ChunkState.AwaitingGenerate] + _chunkCache.StateStatistics[ChunkState.Generating];
-            LightenQueue = _chunkCache.StateStatistics[ChunkState.AwaitingLighting] + _chunkCache.StateStatistics[ChunkState.Lighting];
-            BuildQueue = _chunkCache.StateStatistics[ChunkState.AwaitingBuild] + _chunkCache.StateStatistics[ChunkState.Building];
-            ReadyQueue = _chunkCache.StateStatistics[ChunkState.Ready];
-            RemovalQueue = _chunkCache.StateStatistics[ChunkState.AwaitingRemoval];
+            m_stringBuilder.Length = 0;
+            m_stringBuilder.Append("chunks:");
+            m_stringBuilder.AppendNumber(m_chunkCache.ChunksDrawn);
+            m_stringBuilder.Append('/');
+            m_stringBuilder.AppendNumber(m_chunkCache.ChunksLoaded);
+            m_spriteBatch.DrawString(m_spriteFont, m_stringBuilder, new Vector2(m_bounds.X + 205, m_bounds.Y + 5), Color.White);
 
             // chunk generation queue
-            _stringBuilder.Length = 0;
-            _stringBuilder.Append("GenerateQ:");
-            _stringBuilder.AppendNumber(GenerateQueue);
-            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 450, _bounds.Y + 5), Color.White);
+            m_stringBuilder.Length = 0;
+            m_stringBuilder.Append("GenerateQ:");
+            m_stringBuilder.AppendNumber(m_statistics.GenerateQueue);
+            m_spriteBatch.DrawString(m_spriteFont, m_stringBuilder, new Vector2(m_bounds.X + 450, m_bounds.Y + 5), Color.White);
 
             // chunk lighting queue
-            _stringBuilder.Length = 0;
-            _stringBuilder.Append("LightenQ:");
-            _stringBuilder.AppendNumber(LightenQueue);
-            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 550, _bounds.Y + 5), Color.White);
+            m_stringBuilder.Length = 0;
+            m_stringBuilder.Append("LightenQ:");
+            m_stringBuilder.AppendNumber(m_statistics.LightenQueue);
+            m_spriteBatch.DrawString(m_spriteFont, m_stringBuilder, new Vector2(m_bounds.X + 550, m_bounds.Y + 5), Color.White);
 
             // chunk build queue
-            _stringBuilder.Length = 0;
-            _stringBuilder.Append("BuildQ:");
-            _stringBuilder.AppendNumber(BuildQueue);
-            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 650, _bounds.Y + 5), Color.White);
+            m_stringBuilder.Length = 0;
+            m_stringBuilder.Append("BuildQ:");
+            m_stringBuilder.AppendNumber(m_statistics.BuildQueue);
+            m_spriteBatch.DrawString(m_spriteFont, m_stringBuilder, new Vector2(m_bounds.X + 650, m_bounds.Y + 5), Color.White);
 
             // ready chunks queue
-            _stringBuilder.Length = 0;
-            _stringBuilder.Append("Ready:");
-            _stringBuilder.AppendNumber(ReadyQueue);
-            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 750, _bounds.Y + 5), Color.White);
+            m_stringBuilder.Length = 0;
+            m_stringBuilder.Append("Ready:");
+            m_stringBuilder.AppendNumber(m_statistics.ReadyQueue);
+            m_spriteBatch.DrawString(m_spriteFont, m_stringBuilder, new Vector2(m_bounds.X + 750, m_bounds.Y + 5), Color.White);
 
             // chunk removal queue
-            _stringBuilder.Length = 0;
-            _stringBuilder.Append("Removal:");
-            _stringBuilder.AppendNumber(RemovalQueue);
-            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 850, _bounds.Y + 5), Color.White);
-
-            // infinitive world
-            _stringBuilder.Length = 0;
-            _stringBuilder.Append("inf:");
-            _stringBuilder.Append(Core.Core.Instance.Configuration.World.IsInfinitive ? "On" : "Off");
-            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 5, _bounds.Y + 15), Color.White);
-
-            // fly
-            _stringBuilder.Length = 0;
-            _stringBuilder.Append("fly:");
-            _stringBuilder.Append(_player.FlyingEnabled ? "On" : "Off");
-            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 105, _bounds.Y + 15), Color.White);
-
-            // fog
-            _stringBuilder.Length = 0;
-            _stringBuilder.Append("fog:");
-            _stringBuilder.Append(_fogger.State);
-            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 205, _bounds.Y + 15), Color.White);
-
+            m_stringBuilder.Length = 0;
+            m_stringBuilder.Append("Removal:");
+            m_stringBuilder.AppendNumber(m_statistics.RemovalQueue);
+            m_spriteBatch.DrawString(m_spriteFont, m_stringBuilder, new Vector2(m_bounds.X + 850, m_bounds.Y + 5), Color.White);
+            
             // player position
-            _stringBuilder.Length = 0;
-            _stringBuilder.Append("pos:");
-            _stringBuilder.Append(_player.Position);
-            _spriteBatch.DrawString(_spriteFont, _stringBuilder, new Vector2(_bounds.X + 305, _bounds.Y + 15), Color.White);
+            m_stringBuilder.Length = 0;
+            m_stringBuilder.Append("pos:");
+            m_stringBuilder.Append(m_chunkCache.CachePosition);
+            m_spriteBatch.DrawString(m_spriteFont, m_stringBuilder, new Vector2(m_bounds.X + 305, m_bounds.Y + 15), Color.White);
 
-            _spriteBatch.End();
+            m_spriteBatch.End();
         }
     }
 }

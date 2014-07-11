@@ -19,9 +19,9 @@ namespace _4DMonoEngine.Core.Graphics.Drawing
                 return;
             }
 
-            Color colorFill = color * (outline ? 0.5f : 1.0f);
+            var colorFill = color * (outline ? 0.5f : 1.0f);
 
-            for (int i = 1; i < count - 1; i++)
+            for (var i = 1; i < count - 1; i++)
             {
                 primitiveBatch.AddVertex(vertices[0], colorFill, PrimitiveType.TriangleList);
                 primitiveBatch.AddVertex(vertices[i], colorFill, PrimitiveType.TriangleList);
@@ -44,7 +44,7 @@ namespace _4DMonoEngine.Core.Graphics.Drawing
             if (!primitiveBatch.IsReady())
                 throw new InvalidOperationException("BeginCustomDraw must be called before drawing anything.");
 
-            for (int i = 0; i < count - 1; i++)
+            for (var i = 0; i < count - 1; i++)
             {
                 primitiveBatch.AddVertex(vertices[i], color, PrimitiveType.LineList);
                 primitiveBatch.AddVertex(vertices[i + 1], color, PrimitiveType.LineList);

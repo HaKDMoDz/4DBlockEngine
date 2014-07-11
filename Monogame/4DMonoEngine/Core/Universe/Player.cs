@@ -1,175 +1,294 @@
-﻿using _4DMonoEngine.Core.Common.Enums;
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.Xna.Framework.Input;
+using _4DMonoEngine.Core.Blocks;
+using _4DMonoEngine.Core.Common.AbstractClasses;
 using _4DMonoEngine.Core.Chunks;
-using _4DMonoEngine.Core.Common.Vector;
-using _4DMonoEngine.Core.Graphics;
+using _4DMonoEngine.Core.Common.Helpers;
+using _4DMonoEngine.Core.Common.Interfaces;
+using _4DMonoEngine.Core.Common.Structs.Vector;
+using _4DMonoEngine.Core.Events;
+using _4DMonoEngine.Core.Events.Args;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace _4DMonoEngine.Core.Universe
 {
-    public class Player : DrawableGameComponent
+    public class Player : Renderable, IEventSink, IEventSource
     {
+        private const float MouseVelocity = 0.875f;
         public bool FlyingEnabled { get; set; }
-        public Vector3 Position { get; private set; }
-
-        public Equipable Equipable { get; set; }
-        public Vector3 LookVector { get; set; }
-        public PositionedBlock? AimedSolidBlock { get; private set; } // nullable object.        
-        public PositionedBlock? AimedEmptyBlock { get; private set; } // nullable object.        
-        public Vector3 Velocity;
-
-        private BasicEffect _aimedBlockEffect;
-        private Model _aimedBlockModel;
-        private Texture2D _aimedBlockTexture;
+        public IEquipable Equipable { get; set; }
+        private Vector2 m_currentMousePosition;
+        private Vector2 m_currentLookPolarVector;
+        private uint m_controlBitVector;
+        private const uint Jump = 1;
+        private const Keys JumpKey = Keys.Space;
+        private const uint Forward = 2;
+        private const Keys ForwardKey = Keys.W;
+        private const uint Right = 4;
+        private const Keys RightKey = Keys.D;
+        private const uint Backward = 8;
+        private const Keys BackwardKey = Keys.S;
+        private const uint Left = 16;
+        private const Keys LeftKey = Keys.A;
+        private readonly Block[] m_blocks;
+        private readonly HashSet<string> m_eventsHandled;
+        private readonly EventSource m_eventSourceImpl;
+        private Vector3 m_velocity;
+        private Vector3 m_lookVector;
+        private Vector3 m_position;
 
         private const float MoveSpeed = 5f; // the move speed.
         private const float FlySpeed = 25f; // the fly speed.
         private const float Gravity = -15f;
         private const float JumpVelocity = 6f;
-
-        // required services.
-        private ICamera _camera;
-        private IAssetManager _assetManager;
         
-        public Player(Game game, World world)
-            : base(game)
-        {
-            _world = world;
-        }
-
-        public override void Initialize()
+        public Player(Block[] blocks )
         {
             FlyingEnabled = true;
-            Equipable = new Shovel(Game);
-
-            // import required services.
-            _camera = (ICamera) Game.Services.GetService(typeof (ICamera));
-
-            _assetManager = (IAssetManager)Game.Services.GetService(typeof(IAssetManager));
-
-            LoadContent();
-
-            Equipable.Initialize();
+            m_blocks = blocks;
+            Equipable = new Shovel();
+            m_eventsHandled = new HashSet<string>
+            {
+                EventConstants.MousePositionUpdated, 
+                EventConstants.LeftMouseDown, 
+                EventConstants.LeftMouseUp,
+                EventConstants.RightMouseDown, 
+                EventConstants.RightMouseUp,
+                EventConstants.KeyDown,
+                EventConstants.KeyUp
+            };
+            EventsFired = new[]
+            {
+                EventConstants.PlayerPositionUpdated,
+                EventConstants.ViewUpdated
+            };
+            m_eventSourceImpl = new EventSource(EventsFired, true);
         }
 
-        protected override void LoadContent()
+        public override void LoadContent()
         {
-            _aimedBlockModel = _assetManager.AimedBlockModel;
-            _aimedBlockEffect = _assetManager.AimedBlockEffect;
-            _aimedBlockTexture = _assetManager.AimedBlockTexture;
-            _sampleModel = _assetManager.SampleModel;
         }
 
         public override void Update(GameTime gameTime)
         {
-            ProcessPosition(gameTime);
-            ProcessView();
+            var deltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
+            ProcessPosition(deltaTime);
+            ProcessView(deltaTime);
         }
 
-        private void ProcessPosition(GameTime gameTime)
+        private void ProcessPosition(float deltaTime)
         {
-            if (FlyingEnabled) return;
-
-            Velocity.Y += Gravity*(float) gameTime.ElapsedGameTime.TotalSeconds;
-            var footPosition = Position + new Vector3(0f, -1.5f, 0f);
-            Block standingBlock = _blockStorage.BlockAt(footPosition);
-
-            if (standingBlock.Exists) Velocity.Y = 0;
-            Position += Velocity*(float) gameTime.ElapsedGameTime.TotalSeconds;
-        }
-
-        private void ProcessView()
-        {
-            if (FlyingEnabled) return;
-            var rotationMatrix = Matrix.CreateRotationX(_camera.CurrentElevation)*
-                                 Matrix.CreateRotationY(_camera.CurrentRotation);
-            LookVector = Vector3.Transform(Vector3.Forward, rotationMatrix);
-            LookVector.Normalize();
-            FindAimedBlock();
-        }
-
-        public void Jump()
-        {
-            var footPosition = Position + new Vector3(0f, -1.5f, 0f);
-            Block standingBlock = _blockStorage.BlockAt(footPosition);
-
-            if (!standingBlock.Exists && Velocity.Y != 0) return;
-            float amountBelowSurface = ((ushort) footPosition.Y) + 1 - footPosition.Y;
-            Position += new Vector3(0, amountBelowSurface + 0.01f, 0);
-
-            Velocity.Y = JumpVelocity;
-        }
-
-        public void Move(GameTime gameTime, MoveDirection direction)
-        {
-            var moveVector = Vector3.Zero;
-
-            switch (direction)
-            {
-                case MoveDirection.Forward:
-                    moveVector.Z--;
-                    break;
-                case MoveDirection.Backward:
-                    moveVector.Z++;
-                    break;
-                case MoveDirection.Left:
-                    moveVector.X--;
-                    break;
-                case MoveDirection.Right:
-                    moveVector.X++;
-                    break;
-            }
-
-            if (moveVector == Vector3.Zero) return;
-
+            var footPosition = m_position + new Vector3(0f, -1.5f, 0f);
             if (!FlyingEnabled)
             {
-                moveVector *= MoveSpeed*(float) gameTime.ElapsedGameTime.TotalSeconds;
-                var rotation = Matrix.CreateRotationY(_camera.CurrentRotation);
-                var rotatedVector = Vector3.Transform(moveVector, rotation);
-                TryMove(rotatedVector);
+                m_velocity.Y += Gravity * deltaTime;
+                var standingBlock = m_blocks[ChunkCache.BlockIndexByWorldPosition(ref footPosition)];
+                if (standingBlock.Exists)
+                {
+                    if ((m_controlBitVector & Jump) != 0)
+                    {
+                        var amountBelowSurface = ((ushort) footPosition.Y) + 1 - footPosition.Y;
+                        m_position += new Vector3(0, amountBelowSurface + 0.01f, 0);
+                        m_velocity.Y = JumpVelocity;
+                    }
+                    else
+                    {
+                        m_velocity.Y = 0;
+                    }
+                } 
             }
-            else
+            if (m_controlBitVector > Jump)
             {
-                moveVector *= FlySpeed*(float) gameTime.ElapsedGameTime.TotalSeconds;
-                var rotation = Matrix.CreateRotationX(_camera.CurrentElevation)*
-                               Matrix.CreateRotationY(_camera.CurrentRotation);
-                var rotatedVector = Vector3.Transform(moveVector, rotation);
-                Position += (rotatedVector);
+                var moveVector = Vector3.Zero;
+                if ((m_controlBitVector & Forward) != 0)
+                {
+                     moveVector.Z--;
+                }
+                if ((m_controlBitVector & Right) != 0)
+                {
+                    moveVector.X++;
+                }
+                if ((m_controlBitVector & Backward) != 0)
+                {
+                    moveVector.Z++;
+                }
+                if ((m_controlBitVector & Left) != 0)
+                {
+                    moveVector.X--;
+                }
+                if (moveVector != Vector3.Zero)
+                {
+                    if (FlyingEnabled)
+                    {
+                        var rotation = Matrix.CreateRotationY(m_currentLookPolarVector.X) * Matrix.CreateRotationY(m_currentLookPolarVector.Y);
+                        Vector3.Transform(ref moveVector, ref rotation, out moveVector);
+                        m_velocity = moveVector * FlySpeed;
+                    }
+                    else
+                    {
+                         m_velocity.X = moveVector.X * MoveSpeed;
+                         m_velocity.Z = moveVector.Z * MoveSpeed;
+                    }
+                }
+            }
+            if (m_velocity != Vector3.Zero)
+            {
+                var nextPosition = m_position + m_velocity * deltaTime;
+                if (!FlyingEnabled && CheckCollision(ref nextPosition))
+                {
+                    ResolveCollision(ref nextPosition, out nextPosition);
+                }
+                if ((m_position - nextPosition).LengthSquared() > 0)
+                {
+                    m_position = nextPosition;
+                    m_eventSourceImpl.FireEvent(EventConstants.PlayerPositionUpdated, new Vector3Args(m_position));
+                }
             }
         }
 
-        private void TryMove(Vector3 moveVector)
+        private bool CheckCollision(ref Vector3 nextPosition)
         {
-            // build a test move-vector slightly longer than moveVector.
-            Vector3 testVector = moveVector;
-            testVector.Normalize();
-            testVector *= moveVector.Length() + 0.3f;
-            var footPosition = Position + new Vector3(0f, -0.5f, 0f);
-            Vector3 testPosition = footPosition + testVector;
-            if (_blockStorage.BlockAt(testPosition).Exists) return;
+            var index = ChunkCache.BlockIndexByWorldPosition(ref nextPosition);
+            return m_blocks[index].Exists || m_blocks[index + 1].Exists;
+        }
 
-            // There should be some bounding box so his head does not enter a block above ;) /fasbat
-            testPosition -= 2*new Vector3(0f, -0.5f, 0f);
-            if (_blockStorage.BlockAt(testPosition).Exists) return;
+        private void ResolveCollision(ref Vector3 positionIn, out Vector3 positionOut)
+        {
+            var index = ChunkCache.BlockIndexByWorldPosition(ref positionIn);
+            positionOut = positionIn;
+            if ((m_velocity.X > 0 && m_blocks[index + ChunkCache.BlockStepX].Exists) || (m_velocity.X < 0 && m_blocks[index - ChunkCache.BlockStepX].Exists))
+            {
+                positionOut.X = m_position.X;
+            }
+            if ((m_velocity.Y > 0 && m_blocks[index + 1].Exists) || (m_velocity.Y < 0 && m_blocks[index - 1].Exists))
+            {
+                positionOut.Y = m_position.Y;
+            }
+            if ((m_velocity.Z > 0 && m_blocks[index + ChunkCache.BlockStepZ].Exists) || (m_velocity.Z < 0 && m_blocks[index - ChunkCache.BlockStepZ].Exists))
+            {
+                positionOut.Z = m_position.Z;
+            }
+        }
 
-
-            Position += moveVector;
+        private void ProcessView(float deltaTime)
+        {
+            if (m_currentMousePosition != Vector2.Zero)
+            {
+                m_currentLookPolarVector.X += deltaTime * m_currentMousePosition.X * MouseVelocity;
+                m_currentLookPolarVector.Y += deltaTime * m_currentMousePosition.Y * MouseVelocity;
+                var rotationMatrix = Matrix.CreateRotationX(m_currentLookPolarVector.X) * Matrix.CreateRotationY(m_currentLookPolarVector.Y);
+                m_lookVector = Vector3.Transform(Vector3.Forward, rotationMatrix);
+                m_lookVector.Normalize();
+                m_eventSourceImpl.FireEvent(EventConstants.ViewUpdated, new Vector3Args(m_lookVector));
+            }
         }
 
         public void SpawnPlayer(Vector2Int relativePosition)
         {
-            RelativePosition = relativePosition;
-            Position = new Vector3(relativePosition.X * Chunk.SizeInBlocks, 150,
-                                        relativePosition.Z * Chunk.LengthInBlocks);
-            _world.SpawnPlayer(relativePosition);
+            m_position = new Vector3(relativePosition.X * Chunk.SizeInBlocks, 150, relativePosition.Z * Chunk.SizeInBlocks);
+            m_eventSourceImpl.FireEvent(EventConstants.PlayerPositionUpdated, new Vector3Args(m_position));
+            m_eventSourceImpl.FireEvent(EventConstants.ViewUpdated, new Vector3Args(m_lookVector));
+        }
+       
+
+        public bool CanHandleEvent(string eventName)
+        {
+            return m_eventsHandled.Contains(eventName);
         }
 
-        private void FindAimedBlock()
+        public Action<EventArgs> GetHandlerForEvent(string eventName)
         {
-            for (float x = 0.5f; x < 8f; x += 0.1f)
+            switch (eventName)
             {
-                Vector3 target = _camera.Position + (LookVector*x);
+                case EventConstants.KeyDown:
+                    return EventHelper.Wrap<KeyArgs>(OnKeyDown);
+                case EventConstants.KeyUp:
+                    return EventHelper.Wrap<KeyArgs>(OnKeyUp);
+                case EventConstants.MousePositionUpdated:
+                    return EventHelper.Wrap<Vector2Args>(OnMouseUpdated);
+                default:
+                    return null;
+            }
+        }
+
+        private void OnMouseUpdated(Vector2Args obj)
+        {
+            m_currentMousePosition = obj.Vector;
+        }
+
+        private void OnKeyUp(KeyArgs key)
+        {
+            switch (key.KeyCode)
+            {
+                case JumpKey:
+                    m_controlBitVector &= ~Jump;
+                    break;
+                case ForwardKey:
+                    m_controlBitVector &= ~Forward;
+                    break;
+                case RightKey:
+                    m_controlBitVector &= ~Right;
+                    break;
+                case BackwardKey:
+                    m_controlBitVector &= ~Backward;
+                    break;
+                case LeftKey:
+                    m_controlBitVector &= ~Left;
+                    break;
+            }
+        }
+
+        private void OnKeyDown(KeyArgs key)
+        {
+            switch (key.KeyCode)
+            {
+                case JumpKey:
+                    m_controlBitVector |= Jump;
+                    break;
+                case ForwardKey:
+                    m_controlBitVector |= Forward;
+                    break;
+                case RightKey:
+                    m_controlBitVector |= Right;
+                    break;
+                case BackwardKey:
+                    m_controlBitVector |= Backward;
+                    break;
+                case LeftKey:
+                    m_controlBitVector |= Left;
+                    break;
+            }
+        }
+
+        public IEnumerable<string> EventsFired { get; private set; }
+        public bool EventsEnabled
+        {
+            get { return m_eventSourceImpl.EventsEnabled; }
+            set { m_eventSourceImpl.EventsEnabled = value; }
+        }
+
+        public void Register(string eventName, Action<EventArgs> handler)
+        {
+            m_eventSourceImpl.Register(eventName, handler);
+        }
+
+        public void Unregister(string eventName, Action<EventArgs> handler)
+        {
+            m_eventSourceImpl.Unregister(eventName, handler);
+        }
+
+        public override void Draw(GameTime gameTime)
+        {
+            //TODO : render held tool
+            //if (AimedSolidBlock.HasValue) RenderAimedBlock();
+        }
+
+        /* private void FindAimedBlock()
+        {
+            for (var x = 0.5f; x < 8f; x += 0.1f)
+            {
+                var target = _camera.Position + (LookVector*x);
                 var block = _blockStorage.BlockAt(target);
                 if (!block.Exists) AimedEmptyBlock = new PositionedBlock(new Vector3Int(target), block);
                 else
@@ -180,14 +299,10 @@ namespace _4DMonoEngine.Core.Universe
             }
 
             AimedSolidBlock = null;
-        }
+        }*/
 
-        public override void Draw(GameTime gameTime)
-        {
-            if (AimedSolidBlock.HasValue) RenderAimedBlock();
-        }
 
-        private void RenderAimedBlock()
+        /*private void RenderAimedBlock()
         {
             Game.GraphicsDevice.BlendState = BlendState.NonPremultiplied;
                 // allows any transparent pixels in original PNG to draw transparent
@@ -195,7 +310,7 @@ namespace _4DMonoEngine.Core.Universe
 
             var position = AimedSolidBlock.Value.Position.AsVector3() + new Vector3(0.5f, 0.5f, 0.5f);
             Matrix matrix_a, matrix_b;
-            Matrix identity = Matrix.Identity; // setup the matrix prior to translation and scaling  
+            var identity = Matrix.Identity; // setup the matrix prior to translation and scaling  
             Matrix.CreateTranslation(ref position, out matrix_a);
                 // translate the position a half block in each direction
             Matrix.CreateScale(0.505f, out matrix_b);
@@ -208,13 +323,13 @@ namespace _4DMonoEngine.Core.Universe
             _aimedBlockEffect.Texture = _aimedBlockTexture;
             _aimedBlockEffect.TextureEnabled = true;
 
-            foreach (EffectPass pass in _aimedBlockEffect.CurrentTechnique.Passes)
+            foreach (var pass in _aimedBlockEffect.CurrentTechnique.Passes)
             {
                 pass.Apply();
 
-                for (int i = 0; i < _aimedBlockModel.Meshes[0].MeshParts.Count; i++)
+                for (var i = 0; i < _aimedBlockModel.Meshes[0].MeshParts.Count; i++)
                 {
-                    ModelMeshPart parts = _aimedBlockModel.Meshes[0].MeshParts[i];
+                    var parts = _aimedBlockModel.Meshes[0].MeshParts[i];
                     if (parts.NumVertices == 0) continue;
 
                     Game.GraphicsDevice.Indices = parts.IndexBuffer;
@@ -223,19 +338,6 @@ namespace _4DMonoEngine.Core.Universe
                                                               parts.StartIndex, parts.PrimitiveCount);
                 }
             }
-        }
-
-        public void ToggleFlyForm()
-        {
-            FlyingEnabled = !FlyingEnabled;
-        }
-    }
-
-    public enum MoveDirection
-    {
-        Forward,
-        Backward,
-        Left,
-        Right,
+        }*/
     }
 }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using _4DMonoEngine.Core.Common.Logging;
+using _4DMonoEngine.Core.Logging;
 
 namespace _4DMonoEngine.Core.Debugging.Console
 {
@@ -36,10 +36,6 @@ namespace _4DMonoEngine.Core.Debugging.Console
             }
         }
 
-        /// <summary>
-        /// Parses a given line from console as a command if any.
-        /// </summary>
-        /// <param name="line">The line to be parsed.</param>
         public static string Parse(string line)
         {
             var output = string.Empty;
@@ -135,7 +131,7 @@ namespace _4DMonoEngine.Core.Debugging.Console
                     if (group != pair.Key.Name)
                         continue;
 
-                    if (command == string.Empty)
+                    if (command.Length == 0)
                         return pair.Key.Help;
 
                     output = pair.Value.GetHelp(command);

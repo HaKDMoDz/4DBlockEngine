@@ -1,5 +1,5 @@
 ﻿using System;
-using _4DMonoEngine.Core.Common.Enums;
+using _4DMonoEngine.Core.Common.AbstractClasses;
 
 namespace _4DMonoEngine.Core.Blocks.Dynamic
 {

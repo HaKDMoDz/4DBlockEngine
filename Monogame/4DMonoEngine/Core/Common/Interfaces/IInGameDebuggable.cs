@@ -1,11 +1,11 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using _4DMonoEngine.Core.Graphics;
 
-namespace _4DMonoEngine.Core.Common.Enums
+namespace _4DMonoEngine.Core.Common.Interfaces
 {
-    internal interface IInGameDebuggable
+    public interface IInGameDebuggable
     {
-        void DrawInGameDebugVisual(GraphicsDevice graphicsDevice, ICamera camera, SpriteBatch spriteBatch,
+        void DrawInGameDebugVisual(GraphicsDevice graphicsDevice, Camera camera, SpriteBatch spriteBatch,
                                    SpriteFont spriteFont);
     }
 }

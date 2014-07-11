@@ -1,47 +1,70 @@
-﻿
-
-/* Code based on: http://code.google.com/p/xnagameconsole/ */
-
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace _4DMonoEngine.Core.Debugging.Console
 {
-    public class GameConsole
+    public class GameConsole : DrawableGameComponent
     {
-        public GameConsoleOptions Options { get { return GameConsoleOptions.Options; } }
+        private readonly GameConsoleOptions m_options;
         public bool Enabled { get; set; }
-
-        /// <summary>
-        /// Indicates whether the console is currently opened
-        /// </summary>
-        public bool Opened { get { return console.IsOpen; } }
-
-        private readonly GameConsoleComponent console;
-
-        public GameConsole(Game game, SpriteBatch spriteBatch) :this(game,spriteBatch,new GameConsoleOptions()){}
-
-        public GameConsole(Game game, SpriteBatch spriteBatch, GameConsoleOptions options) 
+        public bool Opened
         {
-            if (options.Font == null)
+            get
             {
-                options.Font = game.Content.Load<SpriteFont>("ConsoleFont");
+                return m_renderer.IsOpen;
             }
-            options.RoundedCorner = game.Content.Load<Texture2D>(@"Textures/roundedCorner");
-            GameConsoleOptions.Options = options;
+        }
+        private readonly SpriteBatch m_spriteBatch;
+        private readonly InputProcessor m_inputProcesser;
+        private readonly Renderer m_renderer;
+        
+        public GameConsole(Game game, SpriteBatch spriteBatch, GameConsoleOptions options) 
+            : base(game)
+        {
+            m_options = options;
             Enabled = true;
-            console = new GameConsoleComponent(this, game, spriteBatch);
-            game.Services.AddService(typeof(GameConsole), this);
-            game.Components.Add(console); 
+            m_spriteBatch = spriteBatch;
+            m_inputProcesser = new InputProcessor(new CommandProcesser(), m_options);
+            m_inputProcesser.Open += (s, e) => m_renderer.Open();
+            m_inputProcesser.Close += (s, e) => m_renderer.Close();
+            m_renderer = new Renderer(game, spriteBatch, m_inputProcesser, m_options);
         }
 
-        /// <summary>
-        /// Write directly to the output stream of the console
-        /// </summary>
-        /// <param name="text"></param>
+        public override void Initialize()
+        {
+            base.Initialize();
+            if (m_options.Font == null)
+            {
+                m_options.Font = Game.Content.Load<SpriteFont>("ConsoleFont");
+            }
+            m_options.RoundedCorner = Game.Content.Load<Texture2D>(@"Textures/roundedCorner");
+        }
+
+        public override void Draw(GameTime gameTime)
+        {
+            if (!Enabled)
+            {
+                return;
+            }
+            m_spriteBatch.Begin();
+            m_renderer.Draw(gameTime);
+            m_spriteBatch.End();
+            base.Draw(gameTime);
+        }
+
+        public override void Update(GameTime gameTime)
+        {
+            if (!Enabled)
+            {
+                return;
+            }
+            m_renderer.Update(gameTime);
+            base.Update(gameTime);
+        }
+
         public void WriteLine(string text)
         {
-            console.WriteLine(text);
+            m_inputProcesser.AddToOutput(text);
         }
     }
 }

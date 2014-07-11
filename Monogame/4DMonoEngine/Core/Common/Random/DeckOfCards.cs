@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace _4DMonoEngine.Core.Common.Random
 {
@@ -19,7 +17,7 @@ namespace _4DMonoEngine.Core.Common.Random
         public bool AutoShuffle { get; set; }
         public int IterationsPerShuffle { get; set; }
 
-        public DeckOfCards(IEnumerable<T> items, int seed, int iterationsPerShuffle = 1, bool autoShuffle = true)
+        public DeckOfCards(IEnumerable<T> items, uint seed, int iterationsPerShuffle = 1, bool autoShuffle = true)
         {
             m_random = new FastRandom(seed);
             m_discard = new Stack<T>();

@@ -89,12 +89,12 @@ namespace _4DMonoEngine.Core.Debugging.Console
             return output.Substring(0, output.Length - 2) + ".";
         }
 
-        protected SubcommandAttribute GetDefaultSubcommand()
+        private SubcommandAttribute GetDefaultSubcommand()
         {
             return m_commands.Keys.First();
         }
 
-        protected SubcommandAttribute GetSubcommand(string name)
+        private SubcommandAttribute GetSubcommand(string name)
         {
             return m_commands.Keys.FirstOrDefault(command => command.Name == name);
         }

@@ -1,6 +1,4 @@
-﻿
-
-/* Code based on: http://code.google.com/p/xnagameconsole/ */
+﻿/* Code based on: http://code.google.com/p/xnagameconsole/ */
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -35,8 +33,6 @@ namespace _4DMonoEngine.Core.Debugging.Console
         public SpriteFont Font { get; set; }
 
         internal Texture2D RoundedCorner { get; set; }
-
-        internal static GameConsoleOptions Options { get; set; }
 
         public GameConsoleOptions()
         {

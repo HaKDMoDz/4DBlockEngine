@@ -1,5 +1,4 @@
-﻿using Microsoft.Xna.Framework;
-using System;
+﻿using System;
 
 namespace _4DMonoEngine.Core.Common
 {
@@ -40,6 +39,11 @@ namespace _4DMonoEngine.Core.Common
         public static int FastFloor(float f)
         {
             return f > 0 ? (int)f : (int)f - 1;
+        }
+
+        public static int FastFloor(double d)
+        {
+            return d > 0 ? (int)d : (int)d - 1;
         }
 
         public static int FastRound(float f)

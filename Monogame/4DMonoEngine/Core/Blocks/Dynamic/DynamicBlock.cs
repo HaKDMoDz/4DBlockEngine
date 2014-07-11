@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
-using _4DMonoEngine.Core.Common.Enums;
+using _4DMonoEngine.Core.Common.AbstractClasses;
 
 namespace _4DMonoEngine.Core.Blocks.Dynamic
 {
-    public class DynamicBlock : Updateable, IDisposable
+    public class DynamicBlock : Updateable
     {
-        protected List<DynamicBlockComponent> m_components; 
+        private readonly List<DynamicBlockComponent> m_components; 
         
         public DynamicBlock(List<DynamicBlockComponent> components)
         {

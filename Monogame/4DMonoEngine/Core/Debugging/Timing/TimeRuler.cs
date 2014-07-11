@@ -1,11 +1,8 @@
-﻿
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
-using _4DMonoEngine.Core.Assets;
 using _4DMonoEngine.Core.Common.Extensions;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -52,12 +49,10 @@ namespace _4DMonoEngine.Core.Debugging.Timing
     /// </remarks>
     public class TimeRuler : DrawableGameComponent
     {
-        private SpriteBatch spriteBatch;
-        public Texture2D texture;
-        public SpriteFont debugFont;
-
-        private AssetManager _assetManager;
-
+        private SpriteBatch m_spriteBatch;
+        private Texture2D m_texture;
+        private SpriteFont m_debugFont;
+        
         #region Constants
 
         /// <summary>
@@ -117,7 +112,7 @@ namespace _4DMonoEngine.Core.Debugging.Timing
         /// <summary>
         /// Gets/Sets TimeRuler rendering position.
         /// </summary>
-        public Vector2 Position { get { return position; } set { position = value; } }
+        public Vector2 Position { get { return m_position; } set { m_position = value; } }
 
         /// <summary>
         /// Gets/Sets timer ruler width.
@@ -147,11 +142,11 @@ namespace _4DMonoEngine.Core.Debugging.Timing
         private class MarkerCollection
         {
             // Marker collection.
-            public Marker[] Markers = new Marker[MaxSamples];
+            public readonly Marker[] Markers = new Marker[MaxSamples];
             public int MarkCount;
 
             // Marker nest information.
-            public int[] MarkerNests = new int[MaxNestCall];
+            public readonly int[] MarkerNests = new int[MaxNestCall];
             public int NestCount;
         }
 
@@ -160,13 +155,13 @@ namespace _4DMonoEngine.Core.Debugging.Timing
         /// </summary>
         private class FrameLog
         {
-            public MarkerCollection[] Bars;
+            public readonly MarkerCollection[] Bars;
 
             public FrameLog()
             {
                 // Initialize markers.
                 Bars = new MarkerCollection[MaxBars];
-                for (int i = 0; i < MaxBars; ++i)
+                for (var i = 0; i < MaxBars; ++i)
                     Bars[i] = new MarkerCollection();
             }
         }
@@ -177,10 +172,10 @@ namespace _4DMonoEngine.Core.Debugging.Timing
         private class MarkerInfo
         {
             // Name of marker.
-            public string Name;
+            public readonly string Name;
 
             // Marker log.
-            public MarkerLog[] Logs = new MarkerLog[MaxBars];
+            public readonly MarkerLog[] Logs = new MarkerLog[MaxBars];
 
             public MarkerInfo(string name)
             {
@@ -193,8 +188,6 @@ namespace _4DMonoEngine.Core.Debugging.Timing
         /// </summary>
         private struct MarkerLog
         {
-            public float SnapMin;
-            public float SnapMax;
             public float SnapAvg;
 
             public float Min;
@@ -209,44 +202,44 @@ namespace _4DMonoEngine.Core.Debugging.Timing
         }
 
         // Logs for each frames.
-        FrameLog[] logs;
+        FrameLog[] m_logs;
 
         // Previous frame log.
-        FrameLog prevLog;
+        FrameLog m_prevLog;
 
         // Current log.
-        FrameLog curLog;
+        FrameLog m_curLog;
 
         // Current frame count.
-        int frameCount;
+        int m_frameCount;
 
         // Stopwatch for measure the time.
-        Stopwatch stopwatch = new Stopwatch();
+        readonly Stopwatch m_stopwatch = new Stopwatch();
 
         // Marker information array.
-        List<MarkerInfo> markers = new List<MarkerInfo>();
+        readonly List<MarkerInfo> m_markers = new List<MarkerInfo>();
 
         // Dictionary that maps from marker name to marker id.
-        Dictionary<string, int> markerNameToIdMap = new Dictionary<string, int>();
+        readonly Dictionary<string, int> m_markerNameToIdMap = new Dictionary<string, int>();
 
         // Display frame adjust counter.
-        int frameAdjust;
+        int m_frameAdjust;
 
         // Current display frame count.
-        int sampleFrames;
+        int m_sampleFrames;
 
         // Marker log string.
-        StringBuilder logString = new StringBuilder(512);
+        readonly StringBuilder m_logString = new StringBuilder(512);
 
         // You want to call StartFrame at beginning of Game.Update method.
         // But Game.Update gets calls multiple time when game runs slow in fixed time step mode.
         // In this case, we should ignore StartFrame call.
         // To do this, we just keep tracking of number of StartFrame calls until Draw gets called.
-        int updateCount;
+        int m_updateCount;
 
 #endif
         // TimerRuler draw position.
-        Vector2 position;
+        Vector2 m_position;
 
         #endregion
 
@@ -262,22 +255,18 @@ namespace _4DMonoEngine.Core.Debugging.Timing
         public override void Initialize()
         {
 #if TRACE
-            _assetManager = (IAssetManager)Game.Services.GetService(typeof(IAssetManager));
-            if (_assetManager == null)
-                throw new NullReferenceException("Can not find asset manager component.");
-
-            spriteBatch = new SpriteBatch(Game.GraphicsDevice);
-            texture = new Texture2D(Game.GraphicsDevice, 1, 1);
-            Color[] whitePixels = new Color[] { Color.White };
-            texture.SetData<Color>(whitePixels);
-            debugFont = _assetManager.Verdana;
+            m_spriteBatch = new SpriteBatch(Game.GraphicsDevice);
+            m_texture = new Texture2D(Game.GraphicsDevice, 1, 1);
+            Color[] whitePixels = { Color.White };
+            m_texture.SetData(whitePixels);
+            m_debugFont = MainEngine.GetEngineInstance().GetAsset<SpriteFont>("Verdana");
 
             // Initialize Parameters.
-            logs = new FrameLog[2];
-            for (int i = 0; i < logs.Length; ++i)
-                logs[i] = new FrameLog();
+            m_logs = new FrameLog[2];
+            for (var i = 0; i < m_logs.Length; ++i)
+                m_logs[i] = new FrameLog();
 
-            sampleFrames = TargetSampleFrames = 1;
+            m_sampleFrames = TargetSampleFrames = 1;
 
             // Time-Ruler's update method doesn't need to get called.
             Enabled = false;
@@ -290,8 +279,8 @@ namespace _4DMonoEngine.Core.Debugging.Timing
         {
             Width = (int)(GraphicsDevice.Viewport.Width * 0.8f);
 
-            Layout layout = new Layout(GraphicsDevice.Viewport);
-            position = layout.Place(new Vector2(Width, BarHeight),
+            var layout = new Layout(GraphicsDevice.Viewport);
+            m_position = layout.Place(new Vector2(Width, BarHeight),
                                                     0, 0.01f, Alignment.BottomCenter);
 
             base.LoadContent();
@@ -311,26 +300,26 @@ namespace _4DMonoEngine.Core.Debugging.Timing
             lock (this)
             {
                 // We skip reset frame when this method gets called multiple times.
-                int count = Interlocked.Increment(ref updateCount);
+                var count = Interlocked.Increment(ref m_updateCount);
                 if (Visible && (1 < count && count < MaxSampleFrames))
                     return;
 
                 // Update current frame log.
-                prevLog = logs[frameCount++ & 0x1];
-                curLog = logs[frameCount & 0x1];
+                m_prevLog = m_logs[m_frameCount++ & 0x1];
+                m_curLog = m_logs[m_frameCount & 0x1];
 
-                float endFrameTime = (float)stopwatch.Elapsed.TotalMilliseconds;
+                var endFrameTime = (float)m_stopwatch.Elapsed.TotalMilliseconds;
 
                 // Update marker and create a log.
-                for (int barIdx = 0; barIdx < prevLog.Bars.Length; ++barIdx)
+                for (var barIdx = 0; barIdx < m_prevLog.Bars.Length; ++barIdx)
                 {
-                    MarkerCollection prevBar = prevLog.Bars[barIdx];
-                    MarkerCollection nextBar = curLog.Bars[barIdx];
+                    var prevBar = m_prevLog.Bars[barIdx];
+                    var nextBar = m_curLog.Bars[barIdx];
 
                     // Re-open marker that didn't get called EndMark in previous frame.
-                    for (int nest = 0; nest < prevBar.NestCount; ++nest)
+                    for (var nest = 0; nest < prevBar.NestCount; ++nest)
                     {
-                        int markerIdx = prevBar.MarkerNests[nest];
+                        var markerIdx = prevBar.MarkerNests[nest];
 
                         prevBar.Markers[markerIdx].EndTime = endFrameTime;
 
@@ -343,13 +332,13 @@ namespace _4DMonoEngine.Core.Debugging.Timing
                     }
 
                     // Update marker log.
-                    for (int markerIdx = 0; markerIdx < prevBar.MarkCount; ++markerIdx)
+                    for (var markerIdx = 0; markerIdx < prevBar.MarkCount; ++markerIdx)
                     {
-                        float duration = prevBar.Markers[markerIdx].EndTime -
+                        var duration = prevBar.Markers[markerIdx].EndTime -
                                             prevBar.Markers[markerIdx].BeginTime;
 
-                        int markerId = prevBar.Markers[markerIdx].MarkerId;
-                        MarkerInfo m = markers[markerId];
+                        var markerId = prevBar.Markers[markerIdx].MarkerId;
+                        var m = m_markers[markerId];
 
                         m.Logs[barIdx].Color = prevBar.Markers[markerIdx].Color;
 
@@ -372,8 +361,6 @@ namespace _4DMonoEngine.Core.Debugging.Timing
 
                             if (m.Logs[barIdx].Samples++ >= LogSnapDuration)
                             {
-                                m.Logs[barIdx].SnapMin = m.Logs[barIdx].Min;
-                                m.Logs[barIdx].SnapMax = m.Logs[barIdx].Max;
                                 m.Logs[barIdx].SnapAvg = m.Logs[barIdx].Avg;
                                 m.Logs[barIdx].Samples = 0;
                             }
@@ -385,8 +372,8 @@ namespace _4DMonoEngine.Core.Debugging.Timing
                 }
 
                 // Start measuring.
-                stopwatch.Reset();
-                stopwatch.Start();
+                m_stopwatch.Reset();
+                m_stopwatch.Start();
             }
 #endif
         }
@@ -395,7 +382,7 @@ namespace _4DMonoEngine.Core.Debugging.Timing
         /// Start measure time.
         /// </summary>
         /// <param name="markerName">name of marker.</param>
-        /// <param name="color">color/param>
+        /// <param name="color"/>color/param>
         [Conditional("TRACE")]
         public void BeginMark(string markerName, Color color)
         {
@@ -409,7 +396,7 @@ namespace _4DMonoEngine.Core.Debugging.Timing
         /// </summary>
         /// <param name="barIndex">index of bar</param>
         /// <param name="markerName">name of marker.</param>
-        /// <param name="color">color/param>
+        /// <param name="color">color</param>
         [Conditional("TRACE")]
         public void BeginMark(int barIndex, string markerName, Color color)
         {
@@ -419,7 +406,7 @@ namespace _4DMonoEngine.Core.Debugging.Timing
                 if (barIndex < 0 || barIndex >= MaxBars)
                     throw new ArgumentOutOfRangeException("barIndex");
 
-                MarkerCollection bar = curLog.Bars[barIndex];
+                var bar = m_curLog.Bars[barIndex];
 
                 if (bar.MarkCount >= MaxSamples)
                 {
@@ -439,12 +426,12 @@ namespace _4DMonoEngine.Core.Debugging.Timing
 
                 // Gets registered marker.
                 int markerId;
-                if (!markerNameToIdMap.TryGetValue(markerName, out markerId))
+                if (!m_markerNameToIdMap.TryGetValue(markerName, out markerId))
                 {
                     // Register this if this marker is not registered.
-                    markerId = markers.Count;
-                    markerNameToIdMap.Add(markerName, markerId);
-                    markers.Add(new MarkerInfo(markerName));
+                    markerId = m_markers.Count;
+                    m_markerNameToIdMap.Add(markerName, markerId);
+                    m_markers.Add(new MarkerInfo(markerName));
                 }
 
                 // Start measuring.
@@ -454,7 +441,7 @@ namespace _4DMonoEngine.Core.Debugging.Timing
                 bar.Markers[bar.MarkCount].MarkerId = markerId;
                 bar.Markers[bar.MarkCount].Color = color;
                 bar.Markers[bar.MarkCount].BeginTime =
-                                        (float)stopwatch.Elapsed.TotalMilliseconds;
+                                        (float)m_stopwatch.Elapsed.TotalMilliseconds;
 
                 bar.Markers[bar.MarkCount].EndTime = -1;
 
@@ -489,7 +476,7 @@ namespace _4DMonoEngine.Core.Debugging.Timing
                 if (barIndex < 0 || barIndex >= MaxBars)
                     throw new ArgumentOutOfRangeException("barIndex");
 
-                MarkerCollection bar = curLog.Bars[barIndex];
+                var bar = m_curLog.Bars[barIndex];
 
                 if (bar.NestCount <= 0)
                 {
@@ -498,7 +485,7 @@ namespace _4DMonoEngine.Core.Debugging.Timing
                 }
 
                 int markerId;
-                if (!markerNameToIdMap.TryGetValue(markerName, out markerId))
+                if (!m_markerNameToIdMap.TryGetValue(markerName, out markerId))
                 {
                     throw new InvalidOperationException(
                         String.Format("Maker '{0}' is not registered." +
@@ -507,7 +494,7 @@ namespace _4DMonoEngine.Core.Debugging.Timing
                             markerName));
                 }
 
-                int markerIdx = bar.MarkerNests[--bar.NestCount];
+                var markerIdx = bar.MarkerNests[--bar.NestCount];
                 if (bar.Markers[markerIdx].MarkerId != markerId)
                 {
                     throw new InvalidOperationException(
@@ -518,7 +505,7 @@ namespace _4DMonoEngine.Core.Debugging.Timing
                 }
 
                 bar.Markers[markerIdx].EndTime =
-                    (float)stopwatch.Elapsed.TotalMilliseconds;
+                    (float)m_stopwatch.Elapsed.TotalMilliseconds;
             }
 #endif
         }
@@ -537,8 +524,8 @@ namespace _4DMonoEngine.Core.Debugging.Timing
 
             float result = 0;
             int markerId;
-            if (markerNameToIdMap.TryGetValue(markerName, out markerId))
-                result = markers[markerId].Logs[barIndex].Avg;
+            if (m_markerNameToIdMap.TryGetValue(markerName, out markerId))
+                result = m_markers[markerId].Logs[barIndex].Avg;
 
             return result;
 #else
@@ -555,13 +542,11 @@ namespace _4DMonoEngine.Core.Debugging.Timing
 #if TRACE
             lock (this)
             {
-                foreach (MarkerInfo markerInfo in markers)
+                foreach (var markerInfo in m_markers)
                 {
-                    for (int i = 0; i < markerInfo.Logs.Length; ++i)
+                    for (var i = 0; i < markerInfo.Logs.Length; ++i)
                     {
                         markerInfo.Logs[i].Initialized = false;
-                        markerInfo.Logs[i].SnapMin = 0;
-                        markerInfo.Logs[i].SnapMax = 0;
                         markerInfo.Logs[i].SnapAvg = 0;
 
                         markerInfo.Logs[i].Min = 0;
@@ -582,21 +567,21 @@ namespace _4DMonoEngine.Core.Debugging.Timing
         public override void Draw(GameTime gameTime)
         {
 
-            Draw(position, Width);
+            Draw(m_position, Width);
             base.Draw(gameTime);
         }
 
         [Conditional("TRACE")]
-        public void Draw(Vector2 position, int width)
+        private void Draw(Vector2 position, int width)
         {
 #if TRACE
             // Reset update count.
-            Interlocked.Exchange(ref updateCount, 0);            
+            Interlocked.Exchange(ref m_updateCount, 0);            
 
             // Adjust size and position based of number of bars we should draw.
-            int height = 0;
+            var height = 0;
             float maxTime = 0;
-            foreach (MarkerCollection bar in prevLog.Bars)
+            foreach (var bar in m_prevLog.Bars)
             {
                 if (bar.MarkCount > 0)
                 {
@@ -610,54 +595,54 @@ namespace _4DMonoEngine.Core.Debugging.Timing
             // For example, if the entire process of frame doesn't finish in less than 16.6ms
             // thin it will adjust display frame duration as 33.3ms.
             const float frameSpan = 1.0f / 60.0f * 1000f;
-            float sampleSpan = (float)sampleFrames * frameSpan;
+            var sampleSpan = m_sampleFrames * frameSpan;
 
             if (maxTime > sampleSpan)
-                frameAdjust = Math.Max(0, frameAdjust) + 1;
+                m_frameAdjust = Math.Max(0, m_frameAdjust) + 1;
             else
-                frameAdjust = Math.Min(0, frameAdjust) - 1;
+                m_frameAdjust = Math.Min(0, m_frameAdjust) - 1;
 
-            if (Math.Abs(frameAdjust) > AutoAdjustDelay)
+            if (Math.Abs(m_frameAdjust) > AutoAdjustDelay)
             {
-                sampleFrames = Math.Min(MaxSampleFrames, sampleFrames);
-                sampleFrames =
+                m_sampleFrames = Math.Min(MaxSampleFrames, m_sampleFrames);
+                m_sampleFrames =
                     Math.Max(TargetSampleFrames, (int)(maxTime / frameSpan) + 1);
 
-                frameAdjust = 0;
+                m_frameAdjust = 0;
             }
 
             // Compute factor that converts from ms to pixel.
-            float msToPs = (float)width / sampleSpan;
+            var msToPs = width / sampleSpan;
 
             // Draw start position.
-            int startY = (int)position.Y - (height - BarHeight);
+            var startY = (int)position.Y - (height - BarHeight);
 
             // Current y position.
-            int y = startY;
+            var y = startY;
 
-            spriteBatch.Begin();
+            m_spriteBatch.Begin();
 
             // Draw transparency background.
-            Rectangle rc = new Rectangle((int)position.X, y, width, height);
-            spriteBatch.Draw(texture, rc, new Color(0, 0, 0, 128));
+            var rc = new Rectangle((int)position.X, y, width, height);
+            m_spriteBatch.Draw(m_texture, rc, new Color(0, 0, 0, 128));
 
             // Draw markers for each bars.
             rc.Height = BarHeight;
-            foreach (MarkerCollection bar in prevLog.Bars)
+            foreach (var bar in m_prevLog.Bars)
             {
                 rc.Y = y + BarPadding;
                 if (bar.MarkCount > 0)
                 {
-                    for (int j = 0; j < bar.MarkCount; ++j)
+                    for (var j = 0; j < bar.MarkCount; ++j)
                     {
-                        float bt = bar.Markers[j].BeginTime;
-                        float et = bar.Markers[j].EndTime;
-                        int sx = (int)(position.X + bt * msToPs);
-                        int ex = (int)(position.X + et * msToPs);
+                        var bt = bar.Markers[j].BeginTime;
+                        var et = bar.Markers[j].EndTime;
+                        var sx = (int)(position.X + bt * msToPs);
+                        var ex = (int)(position.X + et * msToPs);
                         rc.X = sx;
                         rc.Width = Math.Max(ex - sx, 1);
 
-                        spriteBatch.Draw(texture, rc, bar.Markers[j].Color);
+                        m_spriteBatch.Draw(m_texture, rc, bar.Markers[j].Color);
                     }
                 }
 
@@ -666,75 +651,75 @@ namespace _4DMonoEngine.Core.Debugging.Timing
 
             // Draw grid lines.
             // Each grid represents ms.
-            rc = new Rectangle((int)position.X, (int)startY, 1, height);
-            for (float t = 1.0f; t < sampleSpan; t += 1.0f)
+            rc = new Rectangle((int)position.X, startY, 1, height);
+            for (var t = 1.0f; t < sampleSpan; t += 1.0f)
             {
                 rc.X = (int)(position.X + t * msToPs);
-                spriteBatch.Draw(texture, rc, Color.Gray);
+                m_spriteBatch.Draw(m_texture, rc, Color.Gray);
             }
 
             // Draw frame grid.
-            for (int i = 0; i <= sampleFrames; ++i)
+            for (var i = 0; i <= m_sampleFrames; ++i)
             {
-                rc.X = (int)(position.X + frameSpan * (float)i * msToPs);
-                spriteBatch.Draw(texture, rc, Color.White);
+                rc.X = (int)(position.X + frameSpan * i * msToPs);
+                m_spriteBatch.Draw(m_texture, rc, Color.White);
             }
 
             // Draw log.
             if (ShowLog)
             {
                 // Generate log string.
-                y = startY - debugFont.LineSpacing;
-                logString.Length = 0;
-                foreach (MarkerInfo markerInfo in markers)
+                y = startY - m_debugFont.LineSpacing;
+                m_logString.Length = 0;
+                foreach (var markerInfo in m_markers)
                 {
-                    for (int i = 0; i < MaxBars; ++i)
+                    for (var i = 0; i < MaxBars; ++i)
                     {
                         if (markerInfo.Logs[i].Initialized)
                         {
-                            if (logString.Length > 0)
-                                logString.Append("\n");
+                            if (m_logString.Length > 0)
+                                m_logString.Append("\n");
 
-                            logString.Append(" Bar ");
-                            logString.AppendNumber(i);
-                            logString.Append(" ");
-                            logString.Append(markerInfo.Name);
+                            m_logString.Append(" Bar ");
+                            m_logString.AppendNumber(i);
+                            m_logString.Append(" ");
+                            m_logString.Append(markerInfo.Name);
 
-                            logString.Append(" Avg.:");
-                            logString.AppendNumber(markerInfo.Logs[i].SnapAvg);
-                            logString.Append("ms ");
+                            m_logString.Append(" Avg.:");
+                            m_logString.AppendNumber(markerInfo.Logs[i].SnapAvg);
+                            m_logString.Append("ms ");
 
-                            y -= debugFont.LineSpacing;
+                            y -= m_debugFont.LineSpacing;
                         }
                     }
                 }
 
                 // Compute background size and draw it.
-                Vector2 size = debugFont.MeasureString(logString);
-                rc = new Rectangle((int)position.X, (int)y, (int)size.X + 12, (int)size.Y);
-                spriteBatch.Draw(texture, rc, new Color(0, 0, 0, 128));
+                var size = m_debugFont.MeasureString(m_logString);
+                rc = new Rectangle((int)position.X, y, (int)size.X + 12, (int)size.Y);
+                m_spriteBatch.Draw(m_texture, rc, new Color(0, 0, 0, 128));
 
                 // Draw log string.
-                spriteBatch.DrawString(debugFont, logString,
+                m_spriteBatch.DrawString(m_debugFont, m_logString,
                                         new Vector2(position.X + 12, y), Color.White);
 
 
                 // Draw log color boxes.
-                y += (int)((float)debugFont.LineSpacing * 0.3f);
+                y += (int)(m_debugFont.LineSpacing * 0.3f);
                 rc = new Rectangle((int)position.X + 4, y, 10, 10);
-                Rectangle rc2 = new Rectangle((int)position.X + 5, y + 1, 8, 8);
-                foreach (MarkerInfo markerInfo in markers)
+                var rc2 = new Rectangle((int)position.X + 5, y + 1, 8, 8);
+                foreach (var markerInfo in m_markers)
                 {
-                    for (int i = 0; i < MaxBars; ++i)
+                    for (var i = 0; i < MaxBars; ++i)
                     {
                         if (markerInfo.Logs[i].Initialized)
                         {
                             rc.Y = y;
                             rc2.Y = y + 1;
-                            spriteBatch.Draw(texture, rc, Color.White);
-                            spriteBatch.Draw(texture, rc2, markerInfo.Logs[i].Color);
+                            m_spriteBatch.Draw(m_texture, rc, Color.White);
+                            m_spriteBatch.Draw(m_texture, rc2, markerInfo.Logs[i].Color);
 
-                            y += debugFont.LineSpacing;
+                            y += m_debugFont.LineSpacing;
                         }
                     }
                 }
@@ -742,7 +727,7 @@ namespace _4DMonoEngine.Core.Debugging.Timing
 
             }
 
-            spriteBatch.End();
+            m_spriteBatch.End();
 #endif
         }
 

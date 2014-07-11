@@ -1,89 +1,68 @@
 ﻿using System;
-using _4DMonoEngine.Core.Assets;
-using _4DMonoEngine.Core.Chunks;
-using _4DMonoEngine.Core.Common.Logging;
-using _4DMonoEngine.Core.Graphics;
-using _4DMonoEngine.Core.Universe;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using _4DMonoEngine.Core.Common.Interfaces;
+using _4DMonoEngine.Core.Graphics;
 
 namespace _4DMonoEngine.Core.Debugging.Ingame
 {
-    public interface IInGameDebuggerService
+    public sealed class InGameDebugger : DrawableGameComponent
     {
-        void ToggleInGameDebugger();
-    }
-    
-    
+        private SpriteBatch m_spriteBatch;
+        private SpriteFont m_spriteFont;
+        private readonly Camera m_camera;
+        private bool m_active;
 
-    public sealed class InGameDebugger : DrawableGameComponent, IInGameDebuggerService
-    {
-        private SpriteBatch _spriteBatch;
-        private SpriteFont _spriteFont;
-        private bool _active = false;
+        private readonly List<WeakReference<IInGameDebuggable>> m_debugList;
 
-        // required services.
-        private ICamera _camera;
-        private IWorld _world;
-        private IPlayer _player;
-        private IChunkStorage _chunkStorage;
-        private IAssetManager _assetManager;
-
-        /// <summary>
-        /// Logging facility.
-        /// </summary>
-        private static readonly Logger Logger = LogManager.GetOrCreateLogger();
-
-        public InGameDebugger(Game game)
+        public InGameDebugger(Game game, Camera camera)
             : base(game)
         {
-            game.Services.AddService(typeof (IInGameDebuggerService), this); // export service.
+            m_debugList = new List<WeakReference<IInGameDebuggable>>();
+            m_camera = camera;
         }
 
         public override void Initialize()
         {
-            Logger.Trace("init()");
-
-            // import required service.
-            _camera = (ICamera) Game.Services.GetService(typeof (ICamera));
-            _world = (IWorld) Game.Services.GetService(typeof (IWorld));
-            _player = (IPlayer) Game.Services.GetService(typeof (IPlayer));
-            _chunkStorage = (IChunkStorage) Game.Services.GetService(typeof (IChunkStorage));
-            _assetManager = (IAssetManager)Game.Services.GetService(typeof(IAssetManager));
-            
-            if (_assetManager == null)
-                throw new NullReferenceException("Can not find asset manager component.");
-
-            _spriteFont = _assetManager.Verdana;
-            _spriteBatch = new SpriteBatch(Game.GraphicsDevice);
+            m_spriteBatch = new SpriteBatch(Game.GraphicsDevice);
+            m_spriteFont = MainEngine.GetEngineInstance().GetAsset<SpriteFont>("Verdana");
         }
 
         public override void Draw(GameTime gameTime)
         {
-            if (!_active) return;
-            var viewFrustrum = new BoundingFrustum(_camera.View*_camera.Projection);
+            if (m_active)
+            {
+                m_spriteBatch.Begin();
+                foreach (var weakReference in m_debugList)
+                {
+                    IInGameDebuggable debuggable;
+                    if (weakReference.TryGetTarget(out debuggable))
+                    {
+                        debuggable.DrawInGameDebugVisual(Game.GraphicsDevice, m_camera, m_spriteBatch, m_spriteFont);
+                    }
+                }
+                m_spriteBatch.End();
+            }
+        }
 
-            _spriteBatch.Begin();
-            
-            //foreach (Chunk chunk in this._chunkStorage.Values)
-            //{
-            //    if (chunk != this._player.CurrentChunk)
-            //        continue;
-
-            //    if (!chunk.BoundingBox.Intersects(viewFrustrum)) 
-            //        continue;
-
-            //    chunk.DrawInGameDebugVisual(Game.GraphicsDevice, _camera, _spriteBatch, _spriteFont);
-            //}
-
-            _player.Weapon.DrawInGameDebugVisual(Game.GraphicsDevice, _camera, _spriteBatch, _spriteFont);
-
-            _spriteBatch.End();
+        public void RegisterInGameDebuggable(IInGameDebuggable debuggable)
+        {
+            foreach (var weakReference in m_debugList)
+            {
+                IInGameDebuggable outDebug;
+                if (!weakReference.TryGetTarget(out outDebug))
+                {
+                    weakReference.SetTarget(debuggable);
+                    return;
+                }
+            }
+            m_debugList.Add(new WeakReference<IInGameDebuggable>(debuggable));
         }
 
         public void ToggleInGameDebugger()
         {
-            _active = !_active;
+            m_active = !m_active;
         }
     }
 }

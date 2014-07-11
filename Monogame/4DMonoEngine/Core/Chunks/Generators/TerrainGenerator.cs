@@ -1,30 +1,32 @@
 ﻿using _4DMonoEngine.Core.Blocks;
-using _4DMonoEngine.Core.Common.Enums;
+using _4DMonoEngine.Core.Chunks.Generators.Regions;
 using _4DMonoEngine.Core.Common.Noise;
 using _4DMonoEngine.Core.Common.Random;
 using Microsoft.Xna.Framework;
-using _4DMonoEngine.Core.Common.Vector;
+using _4DMonoEngine.Core.Common.Structs.Vector;
 
 namespace _4DMonoEngine.Core.Chunks.Generators
 {
-    internal class TerrainGenerator 
+    internal sealed class TerrainGenerator 
     {
-        public int Seed {get; private set;}
-	    protected int m_chunkSize;
-        protected readonly SimplexNoise m_elevation;
-        protected readonly SimplexNoise m_detail;
-        protected readonly SimplexNoise m_detail2;
-        protected readonly SimplexNoise m_volume;
-        protected readonly CellNoise m_voroni;
-        protected readonly BiomeGeneratorCollection m_biomeGenerator;
+        public uint Seed { get; private set; }
+        private readonly int m_chunkSize;
+        private readonly SimplexNoise m_elevation;
+        private readonly SimplexNoise m_detail;
+        private readonly SimplexNoise m_detail2;
+        private readonly SimplexNoise m_volume;
+        private readonly CellNoise m_voroni;
+        private readonly BiomeGeneratorCollection m_biomeGenerator;
+        private readonly ProvinceGeneratorCollection m_provinceGenerator;
+        private readonly Block[] m_blocks;
 
-	    public const float SeaLevel = 64;
-        public const float TemperatureOffset = 0;
-        public const float MountainHeight = 64;
-        public const float DetailScale = 16;
-        public const float SinkHoleDepth = 8;
+        private readonly float m_sealevel;// 64;
+        private readonly float m_mountainHeight;// = 64;
+        private readonly float m_detailScale;// = 16;
+        private readonly float m_sinkHoleDepth;// = 8;
+        private readonly int m_biomeThickness; //16;
 
-        public TerrainGenerator(BlockDictionary blockDictionary, int chunkSize, int seed) 
+        public TerrainGenerator(int chunkSize, Block[] blocks, uint seed) 
 	    {
             var random = new FastRandom(seed);
             Seed = seed;
@@ -33,45 +35,58 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 	        m_detail2 = new SimplexNoise (random.NextUInt());
 	        m_volume = new SimplexNoise (random.NextUInt());
             m_voroni = new CellNoise(random.NextUInt());
-            m_biomeGenerator = new BiomeGeneratorCollection(random.NextUInt(), blockDictionary, GetHeight);
-		    m_chunkSize = chunkSize;
+            m_biomeGenerator = new BiomeGeneratorCollection(random.NextUInt(), GetHeight, MainEngine.GetEngineInstance().GeneralSettings.Biomes);
+            m_provinceGenerator = new ProvinceGeneratorCollection(random.NextUInt(), GetHeight, MainEngine.GetEngineInstance().GeneralSettings.Biomes);
+            m_sealevel = MainEngine.GetEngineInstance().GeneralSettings.SeaLevel;
+            m_mountainHeight = (MainEngine.GetEngineInstance().GeneralSettings.MountainHeight - m_sealevel);
+            m_detailScale = MainEngine.GetEngineInstance().GeneralSettings.DetailScale;
+            m_sinkHoleDepth = MainEngine.GetEngineInstance().GeneralSettings.SinkHoleDepth;
+            m_biomeThickness = MainEngine.GetEngineInstance().GeneralSettings.BiomeThickness;
+            m_chunkSize = chunkSize;
+            m_blocks = blocks;
 	    }
 
-	    public void GenerateDataForChunk(Vector3Int chunkWorldPosition, int chunkW)
-        {
+	    public void GenerateDataForChunk(Chunk chunk, int chunkW)
+	    {
+           chunk.ChunkState = ChunkState.Generating;
+	       var chunkWorldPosition = chunk.Position;
            var cW = chunkW * m_chunkSize;
            for (var x  = 0; x < m_chunkSize; ++x) 
-		    {
+		   {
                 var cX = chunkWorldPosition.X * m_chunkSize + x;
 			    for (var z = 0; z < m_chunkSize; ++z) 
 			    {
                     var cZ = chunkWorldPosition.Z * m_chunkSize + z;
 					var groundLevel = GetHeight(cX, cZ, cW);
-					var detailNoise =  m_detail2.Perlin3DFMB(cX, cZ, cW, 64, 0, 8);
-					var biome = m_biomeGenerator.GetBiomeGenerator(cX, cZ, cW);				
-					var overhangStart = SeaLevel + MathHelper.Clamp(detailNoise * 4, -1, 1) * 2;
+					var detailNoise =  m_detail2.Perlin3Dfmb(cX, cZ, cW, 64, 0, 8);
+                    var overhangStart = m_sealevel + MathHelper.Clamp(detailNoise * 4, -1, 1) * 2;
 					for (var y = 0; y < m_chunkSize; ++y)
 					{
                         var cY = chunkWorldPosition.Y * m_chunkSize + y;
-						if(cY < 2)
-						{
-                            biome.Apply((int)groundLevel, (int)(detailNoise * 2 + 2), cX, cY, cZ, cW);
-						}
-						else if(cY < groundLevel) 
-						{
-							if(cY > overhangStart)
-							{
-                                var density = (MathHelper.Clamp(m_volume.Perlin4DFBM(cX, cY, cZ, cW, 64, 0, 4) * 3, -1, 1) + 1) * 0.5f;
-								if(density > 0.125)
-								{
-                                    biome.Apply((int)groundLevel, (int)(detailNoise * 2 + 2), cX, cY, cZ, cW);
-								}
-							}
-							else
-							{
-                                biome.Apply((int)groundLevel, (int)(detailNoise * 2 + 2), cX, cY, cZ, cW);
-							}
-						}
+					    if (!(cY < groundLevel))
+					    {
+					        continue;
+					    }
+					    Block block;
+					    if (cY >= groundLevel - m_biomeThickness)
+					    {
+					        var biome = m_biomeGenerator.GetRegionGenerator(cX, cZ, cW);
+					        if (cY > overhangStart)
+					        {
+					            var density = (MathHelper.Clamp(m_volume.Perlin4Dfbm(cX, cY, cZ, cW, 64, 0, 4)*3, -1, 1) + 1)*0.5f;
+					            block = density > 0.125 ? biome.Apply((int) groundLevel, cX, cY, cZ, cW) : Block.Empty;
+					        }
+					        else
+					        {
+					            block = biome.Apply((int) groundLevel, cX, cY, cZ, cW);
+					        }
+					    }
+					    else
+					    {
+					        var province = m_provinceGenerator.GetRegionGenerator(cX, cZ, cW);
+					        block = province.Apply((int)groundLevel - m_biomeThickness, cX, cY, cZ, cW);
+					    }
+					    m_blocks[ChunkCache.BlockIndexByWorldPosition(cX, cY, cZ)] = block;
 					}
                     //TODO : fill with water
                     /*
@@ -84,23 +99,28 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 					}*/
 				}
 		    }
+            //TODO : query if chunk has all neighbors loaded so we can run our erosion step
+
+            //TODO : after eroding generate structures
+            chunk.ChunkState = ChunkState.AwaitingLighting;
 	    }
 
-	    public float GetHeight(float x, float z, float w)
+        private float GetHeight(float x, float z, float w)
 	    {
-		    var seaElevation = MathHelper.Clamp(m_elevation.Perlin3DFMB(x, z, w, 512, 0.1715f, 4), -.5f, 0);
-            var elevationGain = MathHelper.Clamp(((MathHelper.Clamp(m_detail.Perlin3DFMB(x, z, w, 256, 0, 2) * 5, -1, 1) + 1) / 2), 0.01f, 1);
-            var elevation0ffset = MathHelper.Clamp(((MathHelper.Clamp(m_detail2.Perlin3DFMB(x, z, w, 256, 0, 2) * 5, -1, 1) + 1) / 2), 0.01f, 1);
-		    var elevationValue = seaElevation < 0 ? seaElevation : m_elevation.RidgedMultiFractal3D (x, z, w, 128, elevation0ffset, elevationGain, 4);
-		    var groundLevel = elevationValue * MountainHeight + SeaLevel;
-		    var detailApplied = groundLevel +  m_detail.Perlin3DFMB(x, z, w, 64, 0, 8) * DetailScale;
-		    if(groundLevel > SeaLevel + SinkHoleDepth)
-		    {
-                var sinkHoleBlend = m_voroni.VoroniFBM(x, z, w, 128.0f, 0, 3);
-			    var sinkHoleOffset = (sinkHoleBlend > 0.08f ? 0 : (0.08f - sinkHoleBlend) / 0.08f) * SinkHoleDepth;	
-			    detailApplied -= sinkHoleOffset;
-		    }
-		    return detailApplied;
+		    var seaElevation = MathHelper.Clamp(m_elevation.Perlin3Dfmb(x, z, w, 512, 0.1715f, 4), -.5f, 0);
+            var gain = MathHelper.Clamp(((MathHelper.Clamp(m_detail.Perlin3Dfmb(x, z, w, 256, 0, 2) * 5, -1, 1) + 1) / 2), 0.01f, 1);
+            var offset = MathHelper.Clamp(((MathHelper.Clamp(m_detail2.Perlin3Dfmb(x, z, w, 256, 0, 2) * 5, -1, 1) + 1) / 2), 0.01f, 1);
+		    var elevationValue = seaElevation < 0 ? seaElevation : m_elevation.RidgedMultiFractal3D (x, z, w, 128, offset, gain, 4);
+            var groundLevel = elevationValue * m_mountainHeight + m_sealevel;
+		    var detailApplied = groundLevel +  m_detail.Perlin3Dfmb(x, z, w, 64, 0, 8) * m_detailScale;
+            if (!(groundLevel > m_sealevel + m_sinkHoleDepth))
+            {
+                return detailApplied;
+            }
+            var sinkHoleBlend = m_voroni.VoroniFBM(x, z, w, 128.0f, 0, 3);
+            var sinkHoleOffset = (sinkHoleBlend > 0.08f ? 0 : (0.08f - sinkHoleBlend) / 0.08f) * m_sinkHoleDepth;	
+            detailApplied -= sinkHoleOffset;
+            return detailApplied;
 	    }
     }
 }

@@ -7,7 +7,7 @@
             int i;
             string[] suffixes = { "B", "KB", "MB", "GB", "TB" };
             double dblSByte = 0;
-            for (i = 0; (int)(value / 1024) > 0; i++, value /= 1024) dblSByte = value / 1024.0;
+            for (i = 0; (value / 1024) > 0; i++, value /= 1024) dblSByte = value / 1024.0;
             return dblSByte.ToString("0.00") + suffixes[i];
         }
 

@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace _4DMonoEngine.Core.Common.Random
 {
@@ -13,7 +11,7 @@ namespace _4DMonoEngine.Core.Common.Random
         protected Dictionary<T, float> m_probabilities;
         protected Func<T, float> m_probabilityFunction;
 
-        public BallInBin(IEnumerable<T> items, Func<T, float> probabilityFunction, int seed)
+        public BallInBin(IEnumerable<T> items, Func<T, float> probabilityFunction, uint seed)
         {
             m_random = new FastRandom(seed);
             m_bins = new List<T>(items);

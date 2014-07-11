@@ -25,7 +25,7 @@ namespace _4DMonoEngine.Core.Debugging.Console
             }
             
             var args = buffer.Substring(firstSpace, buffer.Length - firstSpace).Split(' ');
-            return args.Where(a => a != "").ToArray();
+            return args.Where(a => a.Length != 0).ToArray();
         }
     }
 }

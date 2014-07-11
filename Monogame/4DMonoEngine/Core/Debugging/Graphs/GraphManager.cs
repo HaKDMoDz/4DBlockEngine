@@ -1,8 +1,4 @@
-﻿
-
-using System;
-using System.Collections.Generic;
-using _4DMonoEngine.Core.Assets;
+﻿using System.Collections.Generic;
 using _4DMonoEngine.Core.Debugging.Graphs.Implementations;
 using _4DMonoEngine.Core.Debugging.Graphs.Implementations.ChunkGraphs;
 using _4DMonoEngine.Core.Graphics.Drawing;
@@ -23,56 +19,51 @@ namespace _4DMonoEngine.Core.Debugging.Graphs
     public class GraphManager : DrawableGameComponent, IGraphManager
     {
         // stuff needed for drawing.
-        public bool GraphsEnabled { get; set; }
-        private PrimitiveBatch _primitiveBatch;
-        private SpriteBatch _spriteBatch;
-        private SpriteFont _spriteFont;
-        private Matrix _localProjection;
-        private Matrix _localView;
+        private bool GraphsEnabled { get; set; }
 
-        private IAssetManager _assetManager;
+        private PrimitiveBatch m_primitiveBatch;
+        private SpriteBatch m_spriteBatch;
+        private SpriteFont m_spriteFont;
+        private Matrix m_localProjection;
+        private Matrix m_localView;
 
-        private readonly List<DebugGraph> _graphs=new List<DebugGraph>(); // the current graphs list.
+        private readonly List<DebugGraph> m_graphs=new List<DebugGraph>(); // the current graphs list.
 
-        public GraphManager(Game game, bool enabled)
+        public GraphManager(Game game)
             : base(game)
         {
             game.Services.AddService(typeof(IGraphManager), this); // export the service.
-            GraphsEnabled = enabled;
+            GraphsEnabled = false;
         }
 
         public override void Initialize()
         {
             // create the graphs modules.
-            _graphs.Add(new FPSGraph(Game, new Rectangle(Core.Core.Instance.Configuration.Graphics.Width - 280, 50, 270, 35)));
-            _graphs.Add(new MemGraph(Game, new Rectangle(Core.Core.Instance.Configuration.Graphics.Width - 280, 105, 270, 35)));
-            _graphs.Add(new GenerateQ(Game, new Rectangle(Core.Core.Instance.Configuration.Graphics.Width - 280, 160, 270, 35)));
-            _graphs.Add(new LightenQ(Game, new Rectangle(Core.Core.Instance.Configuration.Graphics.Width - 280, 215, 270, 35)));
-            _graphs.Add(new BuildQ(Game, new Rectangle(Core.Core.Instance.Configuration.Graphics.Width - 280, 270, 270, 35)));
-            _graphs.Add(new ReadyQ(Game, new Rectangle(Core.Core.Instance.Configuration.Graphics.Width - 280, 325, 270, 35)));
-            _graphs.Add(new RemoveQ(Game, new Rectangle(Core.Core.Instance.Configuration.Graphics.Width - 280, 380, 270, 35)));
-
-            // import required services.
-            _assetManager = (IAssetManager)Game.Services.GetService(typeof(IAssetManager));
-            if (_assetManager == null)
-                throw new NullReferenceException("Can not find asset manager component.");
-
+            var width = MainEngine.GetEngineInstance().Game.GraphicsDevice.Viewport.Width;
+            m_graphs.Add(new FpsGraph(Game, new Rectangle(width - 280, 50, 270, 35)));
+            m_graphs.Add(new MemGraph(Game, new Rectangle(width - 280, 105, 270, 35)));
+            m_graphs.Add(new GenerateQ(Game, new Rectangle(width - 280, 160, 270, 35)));
+            m_graphs.Add(new LightenQ(Game, new Rectangle(width - 280, 215, 270, 35)));
+            m_graphs.Add(new BuildQ(Game, new Rectangle(width - 280, 270, 270, 35)));
+            m_graphs.Add(new ReadyQ(Game, new Rectangle(width - 280, 325, 270, 35)));
+            m_graphs.Add(new RemoveQ(Game, new Rectangle(width - 280, 380, 270, 35)));
+            
             base.Initialize();
         }
 
         protected override void LoadContent()
         {
             // init the drawing related objects.
-            _primitiveBatch = new PrimitiveBatch(GraphicsDevice, 1000);
-            _spriteBatch = new SpriteBatch(GraphicsDevice);
-            _spriteFont = _assetManager.Verdana;
-            _localProjection = Matrix.CreateOrthographicOffCenter(0f, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 0f, 0f, 1f);
-            _localView = Matrix.Identity;           
+            m_primitiveBatch = new PrimitiveBatch(GraphicsDevice, 1000);
+            m_spriteBatch = new SpriteBatch(GraphicsDevice);
+            m_spriteFont = MainEngine.GetEngineInstance().GetAsset<SpriteFont>("Verdana");
+            m_localProjection = Matrix.CreateOrthographicOffCenter(0f, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 0f, 0f, 1f);
+            m_localView = Matrix.Identity;           
             
             // attach the drawing objects to the graph modules.
-            foreach (var graph in _graphs)
+            foreach (var graph in m_graphs)
             {
-                graph.AttachGraphics(_primitiveBatch, _spriteBatch, _spriteFont, _localProjection, _localView);
+                graph.AttachGraphics(m_primitiveBatch, m_spriteBatch, m_spriteFont);
             }
 
             base.LoadContent();
@@ -90,23 +81,23 @@ namespace _4DMonoEngine.Core.Debugging.Graphs
                 Game.GraphicsDevice.RasterizerState = RasterizerState.CullNone;
                 Game.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
-                _primitiveBatch.Begin(_localProjection, _localView); // initialize the primitive batch.
+                m_primitiveBatch.Begin(m_localProjection, m_localView); // initialize the primitive batch.
 
-                foreach (var graph in _graphs)
+                foreach (var graph in m_graphs)
                 {
-                    graph.DrawGraph(gameTime); // let the graphs draw their primitives.
+                    graph.DrawGraph(); // let the graphs draw their primitives.
                 }
 
-                _primitiveBatch.End(); // end the batch.
+                m_primitiveBatch.End(); // end the batch.
 
-                _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend); // initialize the sprite batch.
+                m_spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend); // initialize the sprite batch.
 
-                foreach (var graph in _graphs)
+                foreach (var graph in m_graphs)
                 {
-                    graph.DrawStrings(gameTime); // let the graphs draw their sprites.
+                    graph.DrawStrings(); // let the graphs draw their sprites.
                 }
 
-                _spriteBatch.End(); // end the batch.
+                m_spriteBatch.End(); // end the batch.
 
                 // restore old states.
                 Game.GraphicsDevice.RasterizerState = previousRasterizerState;
@@ -119,12 +110,10 @@ namespace _4DMonoEngine.Core.Debugging.Graphs
         {
             if (GraphsEnabled)
             {
-
-                foreach (var graph in _graphs)
+                foreach (var graph in m_graphs)
                 {
-                    graph.Update(gameTime); // let the graphs update themself.
+                    graph.Update(); // let the graphs update themself.
                 }
-
             }
             base.Update(gameTime);
         }

@@ -61,7 +61,7 @@ namespace _4DMonoEngine.Core.Common.Random
         /// tick count and thus obtain the same seed, that approach can result in extreme biases occuring 
         /// in some cases depending on how the RNG is used.
         /// </summary>
-        private static readonly FastRandom __seedRng = new FastRandom((int)Environment.TickCount);
+        private static readonly FastRandom __seedRng = new FastRandom((uint) Environment.TickCount);
 
         /// <summary>
         /// Creates a static FastRandom instance.
@@ -88,7 +88,7 @@ namespace _4DMonoEngine.Core.Common.Random
         /// </summary>
         public FastRandom()
         {
-            Reinitialise(__seedRng.NextInt());
+            Reinitialise(__seedRng.NextUInt());
         }
 
         /// <summary>
@@ -96,7 +96,7 @@ namespace _4DMonoEngine.Core.Common.Random
         /// This constructor signature is provided to maintain compatibility with
         /// System.Random
         /// </summary>
-        public FastRandom(int seed)
+        public FastRandom(uint seed)
         {
             Reinitialise(seed);
         }
@@ -108,18 +108,18 @@ namespace _4DMonoEngine.Core.Common.Random
         /// <summary>
         /// Reinitialises using an int value as a seed.
         /// </summary>
-        public void Reinitialise(int seed)
+        public void Reinitialise(uint seed)
         {
             // The only stipulation stated for the xorshift RNG is that at least one of
             // the seeds x,y,z,w is non-zero. We fulfill that requirement by only allowing
             // resetting of the x seed
-            _x = (uint)seed;
+            _x = seed;
             _y = Y;
             _z = Z;
             _w = W;
 
-            _bitBuffer = 0;
-            _bitMask = 1;
+            m_bitBuffer = 0;
+            m_bitMask = 1;
         }
 
         #endregion
@@ -370,8 +370,8 @@ namespace _4DMonoEngine.Core.Common.Random
 
         // Buffer 32 bits in bitBuffer, return 1 at a time, keep track of how many have been returned
         // with bitMask.
-        private uint _bitBuffer;
-        private uint _bitMask;
+        private uint m_bitBuffer;
+        private uint m_bitMask;
 
         /// <summary>
         /// Generates a single random bit.
@@ -380,21 +380,21 @@ namespace _4DMonoEngine.Core.Common.Random
         /// </summary>
         public bool NextBool()
         {
-            if (0 == _bitMask)
+            if (0 == m_bitMask)
             {
                 // Generate 32 more bits.
                 uint t = _x ^ (_x << 11);
                 _x = _y;
                 _y = _z;
                 _z = _w;
-                _bitBuffer = _w = (_w ^ (_w >> 19)) ^ (t ^ (t >> 8));
+                m_bitBuffer = _w = (_w ^ (_w >> 19)) ^ (t ^ (t >> 8));
 
                 // Reset the bitMask that tells us which bit to read next.
-                _bitMask = 0x80000000;
-                return (_bitBuffer & _bitMask) == 0;
+                m_bitMask = 0x80000000;
+                return (m_bitBuffer & m_bitMask) == 0;
             }
 
-            return (_bitBuffer & (_bitMask >>= 1)) == 0;
+            return (m_bitBuffer & (m_bitMask >>= 1)) == 0;
         }
 
         // Buffer of random bytes. A single UInt32 is used to buffer 4 bytes.
