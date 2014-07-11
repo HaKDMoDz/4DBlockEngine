@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<local-project language="dotnet" associate="file:/c:/structure101-repository/VoxelEngine" version="4.1.5311" xml-version="3" flavor="dotNet">
+  <property name="show-as-module" value="true" />
+  <property name="relative-to" value="const(THIS_FILE)" />
+  <property name="action-set-mod" value="1" />
+  <property name="detail-mode" value="true" />
+  <property name="publish-architecture-artifacts" value="true" />
+  <property name="hide-externals" value="true" />
+  <assemblyList>
+    <assembly kind="lib" path="../Monogame/4DMonoEngine/bin/Windows/Debug/4DMonoEngine.exe" />
+  </assemblyList>
+  <restructuring>
+    <set version="3" name="Model 1" hiview="Codemap" active="true" todo="false" list="0" />
+  </restructuring>
+</local-project>
+

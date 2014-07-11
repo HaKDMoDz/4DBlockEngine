@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<s101addin-properties>
+  <isEnabled value="True" />
+  <onDemand value="False" />
+  <repository value="C:\structure101-repository" />
+  <project value="VoxelEngine" />
+  <snapshot value="(most recent)" />
+  <violationsSeverity value="Warn" />
+  <newViolationsSeverity value="Warn" />
+  <excludesEnabled value="False" />
+  <excludesPaths value="C:\TEST.DLL;" />
+  <actionsOnly value="False" />
+  <externalIncluded value="True" />
+  <recentRepositories>
+    <repository value="C:\structure101-repository" />
+    <repository value="C:\Users\Kestrel\Documents\4D Voxel Engine\Structure101Project" />
+  </recentRepositories>
+</s101addin-properties>
