@@ -8,7 +8,7 @@ using _4DMonoEngine.Core.Utils;
 
 namespace _4DMonoEngine.Core.Chunks.Generators.Regions
 {
-    internal class BiomeGeneratorCollection : WorldRegionGeneratorCollection<Biome>
+    internal class BiomeGeneratorCollection : WorldRegionGeneratorCollection<BiomeData>
     {
         private readonly int m_sealevel; // 64;
         private readonly int m_mountainHeight; // 64;
@@ -22,7 +22,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
 
         protected override WorldRegionTerrainGenerator GeneratorBuilder(SimplexNoise noise, WorldRegionData data)
         {
-            return new BiomeGenerator(noise, (Biome)data);
+            return new BiomeGenerator(noise, (BiomeData)data);
         }
 
         protected override RegionData InternalGetRegionData(float x, float y, float z, Vector3 centroid)

@@ -7,10 +7,10 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
     internal class BiomeGenerator : WorldRegionTerrainGenerator
     {
         public float FoliageDensity { get; private set; }
-        public BiomeGenerator(SimplexNoise noise, Biome biome)
-            : base(noise, biome.Name, biome.Layers, biome.Parameters)
+        public BiomeGenerator(SimplexNoise noise, BiomeData biomeData)
+            : base(noise, biomeData.Name, biomeData.Layers, biomeData.Parameters)
         {
-            FoliageDensity = biome.FoliageDensity;
+            FoliageDensity = biomeData.FoliageDensity;
         }
 
         public override Block Apply(int upperBound, int worldPositionX, int worldPositionY, int worldPositionZ, int worldPositionW)

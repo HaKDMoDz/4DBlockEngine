@@ -51,6 +51,8 @@
     <Compile Include="Core\Chunks\Generators\Regions\WorldRegionGeneratorCollection.cs" />
     <Compile Include="Core\Chunks\Generators\Regions\WorldRegionTerrainGenerator.cs" />
     <Compile Include="Core\Commands\RasterizerCommand.cs" />
+    <Compile Include="Core\Config\BlockData.cs" />
+    <Compile Include="Core\Config\BlockTexture.cs" />
     <Compile Include="Core\Enums\FaceDirection.cs" />
     <Compile Include="Core\Helpers\EventHelper.cs" />
     <Compile Include="Core\Interfaces\IAction.cs" />
@@ -62,7 +64,6 @@
     <Compile Include="Core\Blocks\Dynamic\BlockMetaObject.cs" />
     <Compile Include="Core\Blocks\Dynamic\DynamicBlockComponent.cs" />
     <Compile Include="Core\Blocks\Dynamic\DynamicBlock.cs" />
-    <Compile Include="Core\Blocks\PositionedBlock.cs" />
     <Compile Include="Core\Chunks\Chunk.cs" />
     <Compile Include="Core\Chunks\ChunkCache.cs" />
     <Compile Include="Core\Chunks\Generators\Regions\BiomeGeneratorCollection.cs" />
@@ -70,10 +71,10 @@
     <Compile Include="Core\Chunks\Generators\Structures\PathGenerator.cs" />
     <Compile Include="Core\Chunks\Generators\Structures\PlantPopulator.cs" />
     <Compile Include="Core\Structs\ContolData.cs" />
-    <Compile Include="Core\Config\Biome.cs" />
+    <Compile Include="Core\Config\BiomeData.cs" />
     <Compile Include="Core\Config\DataContainerPathRegistry.cs" />
     <Compile Include="Core\Config\General.cs" />
-    <Compile Include="Core\Config\Province.cs" />
+    <Compile Include="Core\Config\ProvinceData.cs" />
     <Compile Include="Core\Config\WorldRegionData.cs" />
     <Compile Include="Core\Config\WorldRegionLayer.cs" />
     <Compile Include="Core\Config\WorldRegionParameter.cs" />

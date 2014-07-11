@@ -155,19 +155,19 @@ namespace _4DMonoEngine.Core.Chunks
                     for (var y = 0; y < SizeInBlocks; ++y)
                     {
                         var samplePosition = ChunkCache.BlockIndexByWorldPosition(worldPositionX, Position.Y + y, worldPositionZ);
-                        if (m_blocks[samplePosition].Exists)
+                        if (!m_blocks[samplePosition].Exists)
                         {
-                            foundBlockZ = true;
-                            if (y > upperBoundY)
-                            {
-                                upperBoundY = y;
-                            }
-                            else if (y < lowerBoundY)
-                            {
-                                lowerBoundY = y;
-                            }
+                            continue;
                         }
-
+                        foundBlockZ = true;
+                        if (y > upperBoundY)
+                        {
+                            upperBoundY = y;
+                        }
+                        else if (y < lowerBoundY)
+                        {
+                            lowerBoundY = y;
+                        }
                     }
                     if (foundBlockZ)
                     {
@@ -182,16 +182,17 @@ namespace _4DMonoEngine.Core.Chunks
                     }
                     foundBlockX |= foundBlockZ;
                 }
-                if (foundBlockX)
+                if (!foundBlockX)
                 {
-                    if (x > upperBoundX)
-                    {
-                        upperBoundX = x;
-                    }
-                    else if (x < lowerBoundZ)
-                    {
-                        lowerBoundX = x;
-                    }
+                    continue;
+                }
+                if (x > upperBoundX)
+                {
+                    upperBoundX = x;
+                }
+                else if (x < lowerBoundZ)
+                {
+                    lowerBoundX = x;
                 }
             }
             BoundingBox.Min.X = lowerBoundX + Position.X;

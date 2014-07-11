@@ -6,7 +6,7 @@ using _4DMonoEngine.Core.Config;
 
 namespace _4DMonoEngine.Core.Chunks.Generators.Regions
 {
-    internal class ProvinceGeneratorCollection : WorldRegionGeneratorCollection<Province>
+    internal class ProvinceGeneratorCollection : WorldRegionGeneratorCollection<ProvinceData>
     {
         private readonly int m_sealevel; // 64;
         private readonly int m_mountainHeight; // 64;
@@ -20,7 +20,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
 
         protected override WorldRegionTerrainGenerator GeneratorBuilder(SimplexNoise noise, WorldRegionData data)
         {
-            return new ProvinceGenerator(noise, (Province)data);
+            return new ProvinceGenerator(noise, (ProvinceData)data);
         }
 
         protected override RegionData InternalGetRegionData(float x, float y, float z, Vector3 centroid)

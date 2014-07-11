@@ -3,51 +3,52 @@ using Microsoft.Xna.Framework;
 using _4DMonoEngine.Core.Chunks;
 using _4DMonoEngine.Core.Interfaces;
 using _4DMonoEngine.Core.Structs.Vector;
+using _4DMonoEngine.Core.Utils;
 
 namespace _4DMonoEngine.Core.Processors
 {
     internal class CellularLighting<T> where T : ILightable
     {
+        public delegate int MappingFunction(int x, int z);
+
         private const float SDropoff = 0.9375f;
         private readonly Queue<LightQueueContainer> m_lightQueueToAdd;
         private readonly Queue<SunQueueContainer> m_sunQueueToAdd;
         private readonly Queue<LightQueueContainer> m_lightQueueToRemove;
         private readonly Queue<SunQueueContainer> m_sunQueueToRemove;
         private readonly T[] m_blockSource;
+        private readonly MappingFunction m_mappingFunction;
+        private readonly int m_chunkSize;
 
-        internal CellularLighting(T[] blockSource)
+        internal CellularLighting(T[] blockSource, MappingFunction mappingFunction, int chunkSize)
         {
             m_blockSource = blockSource;
+            m_mappingFunction = mappingFunction;
+            m_chunkSize = chunkSize;
             m_sunQueueToAdd = new Queue<SunQueueContainer>();
             m_lightQueueToAdd = new Queue<LightQueueContainer>();
             m_sunQueueToRemove = new Queue<SunQueueContainer>();
             m_lightQueueToRemove = new Queue<LightQueueContainer>();
         }
 
-        //TODO : remove the dependencies on Chunk and ChunkCache
-        internal void Process(Chunk chunk)
+        internal void Process(SparseArray3D<Vector3Byte> lights)
         {
-            if (chunk.ChunkState == ChunkState.AwaitingLighting)
-            {
-                chunk.ChunkState = ChunkState.Lighting;
-                ResetLight(chunk);
-                PropogateFromSunSources();
-                PropogateFromLights();
-                chunk.ChunkState = ChunkState.AwaitingBuild;
-            }
+            ResetLight(lights);
+            PropogateFromSunSources();
+            PropogateFromLights();
         }
 
-        private void ResetLight(Chunk chunk)
+        private void ResetLight(SparseArray3D<Vector3Byte> lights)
         {
-            for (byte x = 0; x < Chunk.SizeInBlocks; ++x)
+            for (byte x = 0; x < m_chunkSize; ++x)
             {
-                for (byte z = 0; z < Chunk.SizeInBlocks; ++z)
+                for (byte z = 0; z < m_chunkSize; ++z)
                 {
-                    var offset = ChunkCache.BlockIndexByRelativePosition(chunk, x, 0, z);
-                    for (var y = Chunk.SizeInBlocks - 1; y > 0; --y)
+                    var offset = m_mappingFunction(x, z);//ChunkCache.BlockIndexByRelativePosition(chunk, x, 0, z);
+                    for (var y = m_chunkSize - 1; y > 0; --y)
                     {
                         var blockIndex = offset + y;
-                        if (y == Chunk.SizeInBlocks - 1)
+                        if (y == m_chunkSize - 1)
                         {
                             if (m_blockSource[blockIndex].Opacity < 1)
                             {
@@ -56,9 +57,9 @@ namespace _4DMonoEngine.Core.Processors
                         }
                         else
                         {
-                            if (chunk.LightSources.ContainsKey(x, y, z))
+                            if (lights.ContainsKey(x, y, z))
                             {
-                                PropogateFromLight(blockIndex, chunk.LightSources[x, y, z]);
+                                PropogateFromLight(blockIndex, lights[x, y, z]);
                             }
                             m_blockSource[blockIndex].LightSun = 0;
                             m_blockSource[blockIndex].LightRed = 0;
@@ -70,31 +71,10 @@ namespace _4DMonoEngine.Core.Processors
             }
         }
 
-        public void AddBlock(Chunk chunk, int x, int y, int z)
-        {
-            AddBlock(ChunkCache.BlockIndexByRelativePosition(chunk, x, y, z));
-        }
-
-        public void AddBlock(int x, int y, int z)
-        {
-            AddBlock(ChunkCache.BlockIndexByWorldPosition(x, y, z));
-        }
-
         public void AddBlock(int blockIndex)
         {
             ClearCellOrAddLight(blockIndex);
             ClearCellOrAddSunSource(blockIndex);
-            
-        }
-
-        public void RemoveBlock(Chunk chunk, int x, int y, int z)
-        {
-            RemoveBlock(ChunkCache.BlockIndexByRelativePosition(chunk, x, y, z));
-        }
-
-        public void RemoveBlock(int x, int y, int z)
-        {
-            RemoveBlock(ChunkCache.BlockIndexByWorldPosition(x, y, z));
         }
 
         public void RemoveBlock(int blockIndex)

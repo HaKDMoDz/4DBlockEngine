@@ -6,7 +6,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
 {
     internal class ProvinceGenerator : WorldRegionTerrainGenerator
     {
-        public ProvinceGenerator(SimplexNoise noise, Province biome) 
+        public ProvinceGenerator(SimplexNoise noise, ProvinceData biome) 
             : base( noise, biome.Name, biome.Layers, biome.Parameters)
         {}
 

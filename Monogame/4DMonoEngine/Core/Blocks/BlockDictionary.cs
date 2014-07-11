@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework.Graphics.PackedVector;
+using _4DMonoEngine.Core.Config;
 using _4DMonoEngine.Core.Enums;
 
 namespace _4DMonoEngine.Core.Blocks
@@ -14,17 +15,18 @@ namespace _4DMonoEngine.Core.Blocks
 
         private static BlockDictionary s_instance;
 
-        private readonly Dictionary<ushort, StaticBlockData> m_dict;
+        private readonly Dictionary<ushort, BlockData> m_dict;
         private readonly Dictionary<String, ushort> m_blockNameMap;
-        private readonly Dictionary<ushort, BlockTexture> m_texturDictonary;
+        private readonly Dictionary<ushort, BlockTexture> m_textureDictonary;
         private readonly Dictionary<string, ushort[]> m_blockTypeMap;
         private readonly Dictionary<int, HalfVector2[]> m_blockTextureMappings;
 
         private BlockDictionary()
         {
-            m_dict = new Dictionary<ushort, StaticBlockData>();
+            m_dict = new Dictionary<ushort, BlockData>();
             m_blockNameMap = new Dictionary<string, ushort>();
             m_blockTypeMap = new Dictionary<string, ushort[]>();
+            m_textureDictonary = new Dictionary<ushort, BlockTexture>();
             m_blockTextureMappings = new Dictionary<int, HalfVector2[]>();
         }
 
@@ -35,7 +37,7 @@ namespace _4DMonoEngine.Core.Blocks
 
         private HalfVector2[] GetBlockTextureMapping(float xOffset, float yOffset, float unitSize)
         {
-            var mapping = new HalfVector2[6]; // contains texture mapping for the two triangles contained.
+            var mapping = new HalfVector2[4]; // contains texture mapping for the two triangles contained.
             mapping[0] = new HalfVector2(xOffset, yOffset); // 0,0
             mapping[1] = new HalfVector2(xOffset + unitSize, yOffset); // 1,0
             mapping[2] = new HalfVector2(xOffset, yOffset + unitSize); // 0, 1
@@ -63,7 +65,7 @@ namespace _4DMonoEngine.Core.Blocks
             return m_dict.ContainsKey(blockId);
         }
 
-        public StaticBlockData GetStaticData(ushort blockId)
+        public BlockData GetStaticData(ushort blockId)
         {
             return m_dict[blockId];
         }
@@ -71,33 +73,6 @@ namespace _4DMonoEngine.Core.Blocks
         public HalfVector2[] GetTextureMapping(ushort blockType, FaceDirection faceDir)
         {
             return m_blockTextureMappings[(int) ((blockType << 3) + faceDir)];
-        }
-    }
-
-
-
-    public struct StaticBlockData
-    {
-        public string Biome;
-        public uint BlockStructureId;
-        public float Opacity;
-        public float Durability;
-        public float Elasticity;
-        public float Adhesion;
-        public float Mass;
-    }
-
-    public struct BlockTexture
-    {
-        private readonly int[] m_faceTextureIds;
-        public BlockTexture(int[] faceTextureIds)
-        {
-            m_faceTextureIds = faceTextureIds;
-        }
-
-        public int GetTextureForFace(FaceDirection facing)
-        {
-            return m_faceTextureIds[(int) facing];
         }
     }
 }

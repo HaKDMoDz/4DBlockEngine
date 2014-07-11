@@ -5,7 +5,7 @@ namespace _4DMonoEngine.Core.Config
     [DataContract]
     [KnownType(typeof(WorldRegionParameter))]
     [KnownType(typeof(WorldRegionLayer))]
-    internal class Biome : WorldRegionData
+    internal class BiomeData : WorldRegionData
     {
        // [DataMember]
        // public string[] ValidProvinces { get; set; }

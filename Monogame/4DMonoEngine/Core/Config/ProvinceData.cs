@@ -5,7 +5,7 @@ namespace _4DMonoEngine.Core.Config
     [DataContract]
     [KnownType(typeof(WorldRegionParameter))]
     [KnownType(typeof(WorldRegionLayer))]
-    internal class Province : WorldRegionData
+    internal class ProvinceData : WorldRegionData
     {
 
     }

@@ -38,9 +38,11 @@ namespace _4DMonoEngine.Core.Chunks
         private const int CacheSizeInBlocks = (CacheRange*2 + 1)*Chunk.SizeInBlocks;
         public const int BlockStepX = Chunk.SizeInBlocks*Chunk.SizeInBlocks;
         public const int BlockStepZ = Chunk.SizeInBlocks;
-
+#if DEBUG
         public int ChunksDrawn;
         public int ChunksLoaded { get { return m_chunkStorage.Count; } }
+        public Dictionary<ChunkState, int> StateStatistics { get; private set; }
+#endif
 
         // assets & resources
         private Effect m_blockEffect; // block effect.
@@ -55,7 +57,6 @@ namespace _4DMonoEngine.Core.Chunks
 
         private bool m_cacheThreadStarted;
 
-        public Dictionary<ChunkState, int> StateStatistics { get; private set; }
         public Vector4 CachePosition { get { return m_cacheCenterPosition; } }
 
         public Block[] Blocks { get; private set; }
@@ -67,11 +68,12 @@ namespace _4DMonoEngine.Core.Chunks
             Debug.Assert(graphicsDevice != null);
             Blocks = new Block[CacheSizeInBlocks * CacheSizeInBlocks * CacheSizeInBlocks];
             m_generator = new TerrainGenerator(Chunk.SizeInBlocks, Blocks, seed);
-            m_lightingEngine = new CellularLighting<Block>(Blocks);
+            m_lightingEngine = new CellularLighting<Block>(Blocks, MappingFunction, Chunk.SizeInBlocks);
             m_vertexBuilder = new VertexBuilder<Block>(Blocks, BlockIndexByWorldPosition, graphicsDevice);
             m_chunkStorage = new SparseArray3D<Chunk>(CacheRange * 2 + 1, CacheRange * 2 + 1);
             m_cacheCenterPosition = new Vector4();
             m_cacheThreadStarted = false;
+#if DEBUG
             StateStatistics = new Dictionary<ChunkState, int> // init. the debug stastics.
                                        {
                                            {ChunkState.AwaitingGenerate, 0},
@@ -83,6 +85,12 @@ namespace _4DMonoEngine.Core.Chunks
                                            {ChunkState.Ready, 0},
                                            {ChunkState.AwaitingRemoval, 0},
                                        };
+#endif
+        }
+
+        private int MappingFunction(int i, int i1)
+        {
+            throw new NotImplementedException();
         }
 
         public override void Initialize(GraphicsDevice graphicsDevice, Camera camera, GetTimeOfDay getTimeOfDay, GetFogVector getFogVector)
@@ -237,20 +245,23 @@ namespace _4DMonoEngine.Core.Chunks
         private void RecacheChunks()
         {
             m_currentChunk = GetChunkByWorldPosition((int)m_cacheCenterPosition.X, (int)m_cacheCenterPosition.Y, (int)m_cacheCenterPosition.Z);
-            if (m_currentChunk != null)
+            if (m_currentChunk == null)
             {
-                for (var z = -CacheRange; z <= CacheRange; z++)
+                return;
+            }
+            for (var z = -CacheRange; z <= CacheRange; z++)
+            {
+                for (var y = -CacheRange; y <= CacheRange; y++)
                 {
-                    for (var y = -CacheRange; y <= CacheRange; y++)
+                    for (var x = -CacheRange; x <= CacheRange; x++)
                     {
-                        for (var x = -CacheRange; x <= CacheRange; x++)
+                        if (m_chunkStorage.ContainsKey(m_currentChunk.RelativePosition.X + x,
+                            m_currentChunk.RelativePosition.Y + y, m_currentChunk.RelativePosition.Z + z))
                         {
-                            if (!m_chunkStorage.ContainsKey(m_currentChunk.RelativePosition.X + x, m_currentChunk.RelativePosition.Y + y, m_currentChunk.RelativePosition.Z + z))
-                            {
-                                var chunk = new Chunk(new Vector3Int(m_currentChunk.RelativePosition.X + x, m_currentChunk.RelativePosition.Y + y, m_currentChunk.RelativePosition.Z + z), Blocks);
-                                m_chunkStorage[chunk.RelativePosition.X, chunk.RelativePosition.Y, chunk.RelativePosition.Z] = chunk;
-                            }
+                            continue;
                         }
+                        var chunk = new Chunk(new Vector3Int(m_currentChunk.RelativePosition.X + x, m_currentChunk.RelativePosition.Y + y, m_currentChunk.RelativePosition.Z + z), Blocks);
+                        m_chunkStorage[chunk.RelativePosition.X, chunk.RelativePosition.Y, chunk.RelativePosition.Z] = chunk;
                     }
                 }
             }
@@ -272,7 +283,9 @@ namespace _4DMonoEngine.Core.Chunks
                     m_generator.GenerateDataForChunk(chunk, 0);
                     break;
                 case ChunkState.AwaitingLighting:
-                    m_lightingEngine.Process(chunk);
+                    chunk.ChunkState = ChunkState.Lighting;
+                    m_lightingEngine.Process(chunk.LightSources);
+                    chunk.ChunkState = ChunkState.AwaitingBuild;
                     break;
                 case ChunkState.AwaitingBuild:
                     chunk.ChunkState = ChunkState.Building; // set chunk state to building.
@@ -312,8 +325,9 @@ namespace _4DMonoEngine.Core.Chunks
             m_blockEffect.Parameters["FogNear"].SetValue(m_getFogVector().X);
             m_blockEffect.Parameters["FogFar"].SetValue(m_getFogVector().Y);
 
-
+#if DEBUG
             ChunksDrawn = 0;
+#endif
             foreach (var pass in m_blockEffect.CurrentTechnique.Passes)
             {
                 pass.Apply();
@@ -348,11 +362,12 @@ namespace _4DMonoEngine.Core.Chunks
                     Game.GraphicsDevice.SetVertexBuffer(chunk.VertexBuffer);
                     Game.GraphicsDevice.Indices = chunk.IndexBuffer;
                     Game.GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, chunk.VertexBuffer.VertexCount, 0, chunk.IndexBuffer.IndexCount/3);
-
+#if DEBUG
                     ChunksDrawn++;
+#endif
                 }
             }
-
+#if DEBUG
             StateStatistics[ChunkState.AwaitingGenerate] = m_chunkStorage.Values.Count(chunk => chunk.ChunkState == ChunkState.AwaitingGenerate);
             StateStatistics[ChunkState.Generating] = m_chunkStorage.Values.Count(chunk => chunk.ChunkState == ChunkState.Generating);
             StateStatistics[ChunkState.AwaitingLighting] = m_chunkStorage.Values.Count(chunk => chunk.ChunkState == ChunkState.AwaitingLighting);
@@ -361,6 +376,7 @@ namespace _4DMonoEngine.Core.Chunks
             StateStatistics[ChunkState.Building] = m_chunkStorage.Values.Count(chunk => chunk.ChunkState == ChunkState.Building);
             StateStatistics[ChunkState.Ready] = m_chunkStorage.Values.Count(chunk => chunk.ChunkState == ChunkState.Ready);
             StateStatistics[ChunkState.AwaitingRemoval] = m_chunkStorage.Values.Count(chunk => chunk.ChunkState == ChunkState.AwaitingRemoval);
+#endif
         }
 
         public Chunk GetChunkByWorldPosition(int x, int y, int z)

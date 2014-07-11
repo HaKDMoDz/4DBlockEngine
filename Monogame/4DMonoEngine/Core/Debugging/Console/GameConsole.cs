@@ -6,7 +6,6 @@ namespace _4DMonoEngine.Core.Debugging.Console
     public class GameConsole : DrawableGameComponent
     {
         private readonly GameConsoleOptions m_options;
-        public bool Enabled { get; set; }
         public bool Opened
         {
             get
