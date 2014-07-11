@@ -8,8 +8,8 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
     //TODO : all of this really
     public class PathGenerator
     {
-        protected static float s_riverEndMaxHeight = 64;
-        protected static float s_riversStartMinHeight = 92;
+        protected static float RiverEndMaxHeight = 64;
+        protected static float RiversStartMinHeight = 92;
         protected static float s_pathSectionNoiseScale = 1 / 64f;
 
         protected List<List<PathData>> activePaths;

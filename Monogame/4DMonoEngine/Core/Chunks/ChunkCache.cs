@@ -259,9 +259,9 @@ namespace _4DMonoEngine.Core.Chunks
 
         private void ProcessChunkInCacheRange(Chunk chunk)
         {
-            if (chunk.ChunkState == ChunkState.AwaitingGenerate || chunk.ChunkState == ChunkState.Generating)
+            if (chunk.ChunkState == ChunkState.AwaitingGenerate)
             {
-                m_generator.GenerateDataForChunk(chunk.Position, 0);
+                m_generator.GenerateDataForChunk(chunk, 0);
             }
         }
 
@@ -270,7 +270,7 @@ namespace _4DMonoEngine.Core.Chunks
             switch (chunk.ChunkState) // switch on the chunk state.
             {
                 case ChunkState.AwaitingGenerate:
-                    m_generator.GenerateDataForChunk(chunk.Position, 0);
+                    m_generator.GenerateDataForChunk(chunk, 0);
                     break;
                 case ChunkState.AwaitingLighting:
                     m_lightingEngine.Process(chunk);
