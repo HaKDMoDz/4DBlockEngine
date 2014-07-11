@@ -29,24 +29,23 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
 
         public bool Filter(string parameter, float value)
         {
-            return m_parameters.ContainsKey(parameter) && value >= m_parameters[parameter].Min && value < m_parameters[parameter].Max;
+            return !m_parameters.ContainsKey(parameter) || value >= m_parameters[parameter].Min && value < m_parameters[parameter].Max;
         }
 
         public float ParamaterDistance(IDictionary parameterList)
         {
             float distance = 0;
+            //The LINQ expression produces a stupidly long line of code that I think is less readable
+// ReSharper disable once LoopCanBeConvertedToQuery
             foreach (DictionaryEntry dictionaryEntry in parameterList)
             {
                 var key = (string)dictionaryEntry.Key;
-                if (m_parameters.ContainsKey(key))
+                if (!m_parameters.ContainsKey(key))
                 {
-                    var d = (float)dictionaryEntry.Value - (m_parameters[key].Min + m_parameters[key].Max) / 2;
-                    distance += d * d;
+                    continue;
                 }
-                else
-                {
-                    distance += 1;
-                }
+                var d = (float)dictionaryEntry.Value - (m_parameters[key].Min + m_parameters[key].Max) / 2;
+                distance += d * d;
             }
             return distance;
         }

@@ -20,11 +20,12 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
             foreach (var worldRegionLayer in Layers)
             {
                 accumulator += (worldRegionLayer.Thickness) * Noise.Perlin4Dfbm(worldPositionX, worldRegionLayer.Id, worldPositionZ, worldPositionW,worldRegionLayer.NoiseScale,worldRegionLayer.NoiseOffset, 2);
-                if (accumulator > (upperBound - worldPositionY))
+                if (accumulator < (upperBound - worldPositionY))
                 {
-                    layer = worldRegionLayer;
-                    break;
+                    continue;
                 }
+                layer = worldRegionLayer;
+                break;
             }
             return new Block(BlockDictionary.GetInstance().GetBlockIdForName(layer.BlockName), 0);
         }

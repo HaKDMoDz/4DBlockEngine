@@ -60,15 +60,6 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
 
         public RegionData GetRegionData(float x, float y, float z)
         {
-            if (m_lazyInitializer != null)
-            {
-                foreach (var future in m_lazyInitializer)
-                {
-                    var regionData = future.Result;
-                    m_generators.Add(regionData.GetKey(), GeneratorBuilder(SimplexNoise, regionData));
-                }
-                m_lazyInitializer = null;
-            }
             var data = m_cellNoise.Voroni(x / m_centroidSampleScale, y / m_centroidSampleScale, z / m_centroidSampleScale);
             if (!m_biomes.ContainsKey(data.Id))
             {
@@ -85,6 +76,16 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
         public WorldRegionTerrainGenerator GetRegionGenerator(float x, float y, float z)
         {
             var biome = GetRegionData(x, y, z);
+            if (m_lazyInitializer == null)
+            {
+                return m_generators[biome.Type];
+            }
+            foreach (var future in m_lazyInitializer)
+            {
+                var regionData = future.Result;
+                m_generators.Add(regionData.GetKey(), GeneratorBuilder(SimplexNoise, regionData));
+            }
+            m_lazyInitializer = null;
             return m_generators[biome.Type];
         }
 

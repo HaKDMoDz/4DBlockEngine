@@ -1,4 +1,5 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Collections.Generic;
+using System.Runtime.Serialization;
 using _4DMonoEngine.Core.Interfaces;
 
 namespace _4DMonoEngine.Core.Config
@@ -24,6 +25,11 @@ namespace _4DMonoEngine.Core.Config
         public int BiomeSampleRescale { get; set; }
         [DataMember]
         public int BiomeThickness { get; set; }
+        [DataMember]
+        public Dictionary<string, string[]> BlockTypeMap { get; set; }
+        [DataMember]
+        public float BlockTileMapUnitSize { get; set; }
+
 
         public string GetKey()
         {

@@ -10,6 +10,8 @@ namespace _4DMonoEngine.Core.Config
         {
                 {typeof (BiomeData), "Biomes/"}, 
                 {typeof (ProvinceData), "Province/"}, 
+                {typeof (BlockData), "Blocks/"},
+                {typeof (BlockTextureData), "Blocks/"},
                 {typeof (General), ""}, 
         };
         public static string PathPrefix<T>()
