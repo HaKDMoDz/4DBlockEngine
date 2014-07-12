@@ -6,52 +6,52 @@ namespace _4DMonoEngine.Core.Random
     class BallInBin<T>
     {
         //TODO : since this object is stateful, it will likely need a serialize function
-        protected FastRandom m_random;
-        protected List<T> m_bins;
-        protected Dictionary<T, float> m_probabilities;
-        protected Func<T, float> m_probabilityFunction;
+        private readonly FastRandom m_random;
+        private readonly List<T> m_bins;
+        private Dictionary<T, float> m_probabilities;
+        private readonly Func<T, float> m_probabilityFunction;
 
         public BallInBin(IEnumerable<T> items, Func<T, float> probabilityFunction, uint seed)
         {
             m_random = new FastRandom(seed);
             m_bins = new List<T>(items);
             m_probabilityFunction = probabilityFunction;
-
             UpdateProbabilities();
         }
 
         public T Toss()
         {
-            T ret = default(T);
-            double randomRoll = m_random.NextDouble();
+            var ret = default(T);
+            var randomRoll = m_random.NextDouble();
             double cumulativePercentages = 0;
-            foreach (T element in m_bins)
+            foreach (var element in m_bins)
             {
                 cumulativePercentages += m_probabilities[element];
-                if (cumulativePercentages >= randomRoll)
+                if (!(cumulativePercentages >= randomRoll))
                 {
-                    ret = element;
-                    break;
+                    continue;
                 }
+                ret = element;
+                break;
             }
             return ret;
         }
 
         public void UpdateProbabilities()
         {
-            Dictionary<T, float> probabilities = new Dictionary<T, float>();
+            m_probabilities = new Dictionary<T, float>();
             float total = 0;
-            foreach (T element in m_bins)
+            foreach (var element in m_bins)
             {
-                float prob = m_probabilityFunction(element);
+                var prob = m_probabilityFunction(element);
                 total += prob;
-                probabilities.Add(element, prob);
+                m_probabilities.Add(element, prob);
             }
-            foreach (T element in m_bins)
+            foreach (var element in m_bins)
             {
-                probabilities[element] = probabilities[element] / total;
+                m_probabilities[element] = m_probabilities[element] / total;
             }
-            m_bins.Sort((x, y) => (int)(probabilities[x] - probabilities[y]));            
+            m_bins.Sort((x, y) => (int)(m_probabilities[x] - m_probabilities[y]));            
         }
     }
 }

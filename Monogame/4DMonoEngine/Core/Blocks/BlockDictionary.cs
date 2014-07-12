@@ -58,7 +58,7 @@ namespace _4DMonoEngine.Core.Blocks
             }
         }
 
-        private HalfVector2[] GetBlockTextureMapping(float xOffset, float yOffset, float unitSize)
+        private static HalfVector2[] GetBlockTextureMapping(float xOffset, float yOffset, float unitSize)
         {
             var mapping = new HalfVector2[4]; // contains texture mapping for the two triangles contained.
             mapping[0] = new HalfVector2(xOffset, yOffset); // 0,0

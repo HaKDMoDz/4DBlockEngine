@@ -1,9 +1,4 @@
-﻿#region Using Statements
-
-using System;
-
-#endregion
-
+﻿using System;
 namespace _4DMonoEngine.Client
 {
     public static class Program
@@ -11,8 +6,8 @@ namespace _4DMonoEngine.Client
         [STAThread]
         static void Main()
         {
-            using (var game = new MainGame())
-                game.Run();
+            var game = new MainGame();
+             game.Run();
         }
     }
 }
