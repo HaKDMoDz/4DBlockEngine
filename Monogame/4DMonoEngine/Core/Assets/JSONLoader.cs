@@ -22,17 +22,17 @@ namespace _4DMonoEngine.Core.Assets
             m_loadedData = new Dictionary<string, IDataContainer>();
         }
 
-        public async Task<T> Load<T>(string filename, string recordName)
+        public async Task<T> Load<T>(string filename, string recordName) where T : IDataContainer
         {
-            Debug.Assert(typeof(T).IsAssignableFrom(typeof(IDataContainer)));
             if (m_loadedData.ContainsKey(recordName))
             {
                 return (T) m_loadedData[filename];
             }
-            Debug.Assert(File.Exists(m_directory + filename + ".json"));
+            var path = m_directory + DataContainerPathRegistry.PathPrefix<T>() + filename + ".json";
+            Debug.Assert(File.Exists(path), "The path: " + path + " does not exist.");
             var t = Task.Run(() =>
             {
-                var fileStream = new FileStream(m_directory + DataContainerPathRegistry.PathPrefix<T>() + filename + ".json", FileMode.Open);
+                var fileStream = new FileStream(path, FileMode.Open);
                 var type = typeof (T);
                 if (!m_serializers.ContainsKey(type))
                 {

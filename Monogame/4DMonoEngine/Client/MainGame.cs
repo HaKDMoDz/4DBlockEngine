@@ -13,7 +13,9 @@ namespace _4DMonoEngine.Client
 
         public MainGame()
         {
-            Content.RootDirectory = "Content"; // set content root directory.
+            Content.RootDirectory = "Content"; // set content root directory
+            var graphicsDeviceManager = new GraphicsDeviceManager(this);
+           // Services.AddService(typeof (IGraphicsDeviceManager), graphicsDeviceManager);
             m_timeRuler = new TimeRuler(this)
             {
                 Visible = true, 
