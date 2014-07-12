@@ -224,11 +224,11 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
+    <PreBuildEvent>Xcopy "$(ProjectDir)..\ContentBuilderProject\bin\PSM\Content\*" "$(ProjectDir)\$(OutDir)\Content" /s /r /y /i</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>Xcopy "$(ProjectDir)..\ContentBuilderProject\bin\PSM\Content\*" "$(ProjectDir)\$(OutDir)\Content" /s /r /y /i</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
