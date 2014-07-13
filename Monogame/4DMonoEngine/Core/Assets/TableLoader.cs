@@ -36,9 +36,9 @@ namespace _4DMonoEngine.Core.Assets
                 var records = csv.GetRecords<T>().ToDictionary(record => record.GetKey());
                 m_loadedData.Add(filename, records);
                 fileStream.Close();
+                return records;
             });
-            await t;
-            return (Dictionary<string, T>)m_loadedData[filename];
+            return await t;
         }
 
         public void Unload()
