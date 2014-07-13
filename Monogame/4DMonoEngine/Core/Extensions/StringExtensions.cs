@@ -9,16 +9,16 @@ namespace _4DMonoEngine.Core.Extensions
         public static string ZipCompress(this string value)
         {
             //Transform string into byte[]  
-            byte[] byteArray = new byte[value.Length];
-            int indexBA = 0;
-            foreach (char item in value.ToCharArray())
+            var byteArray = new byte[value.Length];
+            var indexBa = 0;
+            foreach (var item in value.ToCharArray())
             {
-                byteArray[indexBA++] = (byte)item;
+                byteArray[indexBa++] = (byte)item;
             }
 
             //Prepare for compress
-            MemoryStream ms = new MemoryStream();
-            GZipStream sw = new GZipStream(ms,
+            var ms = new MemoryStream();
+            var sw = new GZipStream(ms,
                 CompressionMode.Compress);
 
             //Compress
@@ -28,50 +28,44 @@ namespace _4DMonoEngine.Core.Extensions
 
             //Transform byte[] zip data to string
             byteArray = ms.ToArray();
-            StringBuilder sB = new StringBuilder(byteArray.Length);
-            foreach (byte item in byteArray)
+            var sB = new StringBuilder(byteArray.Length);
+            foreach (var item in byteArray)
             {
                 sB.Append((char)item);
             }
-            ms.Close();
-            sw.Dispose();
-            ms.Dispose();
             return sB.ToString();
         }
 
         public static string UnZipCompress(this string value)
         {
             //Transform string into byte[]
-            byte[] byteArray = new byte[value.Length];
-            int indexBA = 0;
-            foreach (char item in value.ToCharArray())
+            var byteArray = new byte[value.Length];
+            var indexBa = 0;
+            foreach (var item in value.ToCharArray())
             {
-                byteArray[indexBA++] = (byte)item;
+                byteArray[indexBa++] = (byte)item;
             }
 
             //Prepare for decompress
-            MemoryStream ms = new MemoryStream(byteArray);
-            GZipStream sr = new GZipStream(ms,
+            var ms = new MemoryStream(byteArray);
+            var sr = new GZipStream(ms,
                 CompressionMode.Decompress);
 
             //Reset variable to collect uncompressed result
             byteArray = new byte[byteArray.Length];
 
             //Decompress
-            int rByte = sr.Read(byteArray, 0, byteArray.Length);
+            var rByte = sr.Read(byteArray, 0, byteArray.Length);
 
             //Transform byte[] unzip data to string
-            StringBuilder sB = new StringBuilder(rByte);
+            var sB = new StringBuilder(rByte);
             //Read the number of bytes GZipStream red and do not a for each bytes in
             //resultByteArray;
-            for (int i = 0; i < rByte; i++)
+            for (var i = 0; i < rByte; i++)
             {
                 sB.Append((char)byteArray[i]);
             }
             sr.Close();
-            ms.Close();
-            sr.Dispose();
-            ms.Dispose();
             return sB.ToString();
         }
     }

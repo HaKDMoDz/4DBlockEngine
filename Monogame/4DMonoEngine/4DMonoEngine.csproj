@@ -169,6 +169,7 @@
     <Compile Include="Core\Input\InputManager.cs" />
     <Compile Include="Core\UI\UserInterface.cs" />
     <Compile Include="Core\Universe\CloudTarget.cs" />
+    <Compile Include="Core\Universe\FluidSimulation.cs" />
     <Compile Include="Core\Universe\Sky.cs" />
     <Compile Include="Core\Commands\FlyCommand.cs" />
     <Compile Include="Core\Universe\Player.cs" />
@@ -221,6 +222,12 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ContentBuilderProject\ContentBuilderProject.csproj">
+      <Project>{ec86500f-c72b-4e78-a427-d4be8d7b7c22}</Project>
+      <Name>ContentBuilderProject</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
