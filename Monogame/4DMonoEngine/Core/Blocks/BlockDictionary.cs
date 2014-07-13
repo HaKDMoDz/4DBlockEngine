@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework.Graphics.PackedVector;
 using _4DMonoEngine.Core.Config;
@@ -27,9 +28,14 @@ namespace _4DMonoEngine.Core.Blocks
             m_blockNameMap = new Dictionary<string, ushort>();
             m_blockTypeMap = new Dictionary<string, ushort[]>();
             m_blockTextureMappings = new Dictionary<int, HalfVector2[]>();
-            
-            var typeMapping = MainEngine.GetEngineInstance().GeneralSettings.BlockTypeMap;
-            var textureUnitSize = MainEngine.GetEngineInstance().GeneralSettings.BlockTileMapUnitSize;
+            Initialze();
+        }
+
+        private async void Initialze()
+        {
+            var settings = await MainEngine.GetEngineInstance().GeneralSettings;
+            var typeMapping = settings.BlockTypeMap;
+            var textureUnitSize = settings.BlockTileMapUnitSize;
             var textureInitializer = new Dictionary<int, Task<BlockTextureData>>();
             foreach (var strings in typeMapping)
             {

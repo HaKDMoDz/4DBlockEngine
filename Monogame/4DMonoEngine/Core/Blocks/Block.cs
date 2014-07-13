@@ -8,18 +8,16 @@ namespace _4DMonoEngine.Core.Blocks
     public struct Block : ILightable
     {
         private const ushort None = 0;
-        private DynamicBlock m_dynamicBlockData;
-        private ushort m_metaObjectId;
+        //private DynamicBlock m_dynamicBlockData;
         private readonly ushort m_type;
         private byte m_lightSun;
         private byte m_lightRed;
         private byte m_lightGreen;
         private byte m_lightBlue;
-        public Block(ushort type, ushort metaObjectId)
+        public Block(ushort type)
         {
-            m_dynamicBlockData = null;
+          //  m_dynamicBlockData = null;
             m_type = type;
-            m_metaObjectId = metaObjectId;
             m_lightSun = 255;
             m_lightRed = 0;
             m_lightGreen = 0;
@@ -28,7 +26,7 @@ namespace _4DMonoEngine.Core.Blocks
 
         public static Block Empty
         {
-            get { return new Block(None, 0); }
+            get { return new Block(None); }
         }
 
         public byte LightSun

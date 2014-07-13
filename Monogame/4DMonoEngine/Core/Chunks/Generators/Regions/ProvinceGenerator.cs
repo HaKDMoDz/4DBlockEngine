@@ -26,7 +26,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
                     break;
                 }
             }
-            return new Block(BlockDictionary.GetInstance().GetBlockIdForName(layer.BlockName), 0);
+            return new Block(BlockDictionary.GetInstance().GetBlockIdForName(layer.BlockName));
         }
     }
 }

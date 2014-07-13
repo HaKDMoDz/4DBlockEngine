@@ -21,8 +21,7 @@ namespace _4DMonoEngine.Core
         public DebugManager DebugOnlyDebugManager { get; private set; }
 #endif
         private AssetManager m_assetProvider;
-        private Task<General> m_settingsFuture;
-        private General m_settings;
+        private Task<General>  m_settings;
 
         public static MainEngine GetEngineInstance()
         {
@@ -46,16 +45,10 @@ namespace _4DMonoEngine.Core
         public Camera Camera { get; private set; }
         public EventDispatcher CentralDispatch { get; private set; }
 
-        public General GeneralSettings
+        public Task<General> GeneralSettings
         {
             get
             {
-                if (m_settings != null)
-                {
-                    return m_settings;
-                }
-                m_settings = m_settingsFuture.Result;
-                m_settingsFuture = null;
                 return m_settings;
             }
         }
@@ -64,7 +57,7 @@ namespace _4DMonoEngine.Core
         {
             Game = game;
             m_assetProvider = new AssetManager(game.Content);
-            m_settingsFuture = GetConfig<General>("GeneralSettings");
+            m_settings = GetConfig<General>("GeneralSettings");
             Simulation = new Simulation(game, seed);
             game.Components.Add(Simulation);
             Camera = new Camera(game.GraphicsDevice.Viewport.AspectRatio);

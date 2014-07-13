@@ -19,6 +19,8 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
 
     internal abstract class WorldRegionGeneratorCollection<T> where T : WorldRegionData
     {
+        protected readonly int m_seaLevel; // 64;
+        protected readonly int m_mountainHeight; // 64;
         private readonly int m_centroidSampleScale; // 16;
         protected readonly int BiomeSampleRescale; // 512;
 
@@ -31,10 +33,12 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
         private List<Task<T>> m_lazyInitializer; 
         public delegate float GetHeight(float x, float z, float w);
 
-        protected WorldRegionGeneratorCollection(ulong seed, GetHeight getHeightFunction, IEnumerable<string> regions)
+        protected WorldRegionGeneratorCollection(ulong seed, GetHeight getHeightFunction, IEnumerable<string> regions, int centeiodSampleScale, int biomeSampleRescale, int seaLevel, int mountainHeight)
         {
-            m_centroidSampleScale = MainEngine.GetEngineInstance().GeneralSettings.BiomeCentroidSampleScale;
-            BiomeSampleRescale = MainEngine.GetEngineInstance().GeneralSettings.BiomeSampleRescale;
+            m_centroidSampleScale = centeiodSampleScale;
+            BiomeSampleRescale = biomeSampleRescale;
+            m_seaLevel = seaLevel;
+            m_mountainHeight = mountainHeight;
 
             m_cellNoise = new CellNoise(seed);
             SimplexNoise = new SimplexNoise(seed);

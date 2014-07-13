@@ -231,7 +231,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>Xcopy "$(ProjectDir)..\ContentBuilderProject\bin\PSM\Content\*" "$(ProjectDir)\$(OutDir)\Content" /s /r /y /i</PreBuildEvent>
+    <PreBuildEvent>Xcopy "$(ProjectDir)..\ContentBuilderProject\bin\PSM\Content\*" "$(ProjectDir)\$(OutDir)\Content" /s /r /y /i
+Xcopy "$(ProjectDir)..\..\Data\*" "$(ProjectDir)\$(OutDir)\Content\Config" /s /r /y /i</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PostBuildEvent>

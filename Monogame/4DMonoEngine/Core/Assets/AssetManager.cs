@@ -20,13 +20,15 @@ namespace _4DMonoEngine.Core.Assets
             m_contentManager = contentManager;
             m_pathDictionary = new Dictionary<Type, string>
             {
-                {typeof (Model), "Models/"}, 
-                {typeof (Effect), "Effects/"}, 
-                {typeof (Texture2D), "Textures/"}, 
-                {typeof (SpriteFont), "Fonts/"}
+                {typeof (Model), "Models\\"}, 
+                {typeof (Effect), "Effects\\"}, 
+                {typeof (Texture2D), "Textures\\"}, 
+                {typeof (SpriteFont), "Fonts\\"}
             };
-            m_jsonLoader = new JsonLoader(contentManager.RootDirectory + "/Config/Json/");
-            m_csvLoader = new TableLoader(contentManager.RootDirectory + "/Config/Tables/");
+            var absoluteDirPath =
+                (System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().GetName().CodeBase) + "\\" + contentManager.RootDirectory + "\\").Substring(6);
+            m_jsonLoader = new JsonLoader(absoluteDirPath + "Config\\Json\\");
+            m_csvLoader = new TableLoader(absoluteDirPath + "Config\\Tables\\");
         }
 
         public T GetAsset<T>(string assetId)

@@ -10,40 +10,48 @@ namespace _4DMonoEngine.Core.Chunks.Generators
     {
         public uint Seed { get; private set; }
         private readonly int m_chunkSize;
-        private readonly SimplexNoise m_elevation;
-        private readonly SimplexNoise m_detail;
-        private readonly SimplexNoise m_detail2;
-        private readonly SimplexNoise m_volume;
-        private readonly CellNoise m_voroni;
-        private readonly BiomeGeneratorCollection m_biomeGenerator;
-        private readonly ProvinceGeneratorCollection m_provinceGenerator;
+        private SimplexNoise m_elevation;
+        private SimplexNoise m_detail;
+        private SimplexNoise m_detail2;
+        private SimplexNoise m_volume;
+        private CellNoise m_voroni;
+        private BiomeGeneratorCollection m_biomeGenerator;
+        private ProvinceGeneratorCollection m_provinceGenerator;
         private readonly Block[] m_blocks;
 
-        private readonly float m_sealevel;// 64;
-        private readonly float m_mountainHeight;// = 64;
-        private readonly float m_detailScale;// = 16;
-        private readonly float m_sinkHoleDepth;// = 8;
-        private readonly int m_biomeThickness; //16;
+        private int m_sealevel;
+        private int m_mountainHeight;
+        private float m_detailScale;
+        private float m_sinkHoleDepth;
+        private int m_biomeThickness;
 
         public TerrainGenerator(int chunkSize, Block[] blocks, uint seed) 
 	    {
-            var random = new FastRandom(seed);
             Seed = seed;
-            m_elevation = new SimplexNoise(random.NextUInt());
-	        m_detail = new SimplexNoise (random.NextUInt());
-	        m_detail2 = new SimplexNoise (random.NextUInt());
-	        m_volume = new SimplexNoise (random.NextUInt());
-            m_voroni = new CellNoise(random.NextUInt());
-            m_biomeGenerator = new BiomeGeneratorCollection(random.NextUInt(), GetHeight, MainEngine.GetEngineInstance().GeneralSettings.Biomes);
-            m_provinceGenerator = new ProvinceGeneratorCollection(random.NextUInt(), GetHeight, MainEngine.GetEngineInstance().GeneralSettings.Biomes);
-            m_sealevel = MainEngine.GetEngineInstance().GeneralSettings.SeaLevel;
-            m_mountainHeight = (MainEngine.GetEngineInstance().GeneralSettings.MountainHeight - m_sealevel);
-            m_detailScale = MainEngine.GetEngineInstance().GeneralSettings.DetailScale;
-            m_sinkHoleDepth = MainEngine.GetEngineInstance().GeneralSettings.SinkHoleDepth;
-            m_biomeThickness = MainEngine.GetEngineInstance().GeneralSettings.BiomeThickness;
             m_chunkSize = chunkSize;
             m_blocks = blocks;
+            Initialize();
 	    }
+
+        private async void Initialize()
+        {
+            var random = new FastRandom(Seed);
+            var settings = await MainEngine.GetEngineInstance().GeneralSettings;
+            m_elevation = new SimplexNoise(random.NextUInt());
+            m_detail = new SimplexNoise(random.NextUInt());
+            m_detail2 = new SimplexNoise(random.NextUInt());
+            m_volume = new SimplexNoise(random.NextUInt());
+            m_voroni = new CellNoise(random.NextUInt());
+            m_sealevel = settings.SeaLevel;
+            m_mountainHeight = settings.MountainHeight - m_sealevel;
+            var centroidScale = settings.BiomeCentroidSampleScale;
+            var rescale = settings.BiomeSampleRescale;
+            m_biomeGenerator = new BiomeGeneratorCollection(random.NextUInt(), GetHeight, settings.Biomes, centroidScale, rescale, m_sealevel, m_mountainHeight);
+            m_provinceGenerator = new ProvinceGeneratorCollection(random.NextUInt(), GetHeight, settings.Provinces, centroidScale, rescale, m_sealevel, m_mountainHeight);
+            m_detailScale = settings.DetailScale;
+            m_sinkHoleDepth = settings.SinkHoleDepth;
+            m_biomeThickness = settings.BiomeThickness;
+        }
 
 	    public void GenerateDataForChunk(Chunk chunk, int chunkW)
 	    {

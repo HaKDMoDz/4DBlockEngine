@@ -10,15 +10,10 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
 {
     internal class BiomeGeneratorCollection : WorldRegionGeneratorCollection<BiomeData>
     {
-        private readonly int m_sealevel; // 64;
-        private readonly int m_mountainHeight; // 64;
 
-        public BiomeGeneratorCollection(ulong seed, GetHeight getHeightFunction, IEnumerable<string> biomes)
-            : base(seed, getHeightFunction, biomes)
-        {
-            m_sealevel = MainEngine.GetEngineInstance().GeneralSettings.SeaLevel;
-            m_mountainHeight = (MainEngine.GetEngineInstance().GeneralSettings.MountainHeight - m_sealevel);
-        }
+        public BiomeGeneratorCollection(ulong seed, GetHeight getHeightFunction, IEnumerable<string> biomes, int centeiodSampleScale, int biomeSampleRescale, int seaLevel, int mountainHeight)
+            : base(seed, getHeightFunction, biomes, centeiodSampleScale, biomeSampleRescale, seaLevel, mountainHeight)
+        {}
 
         protected override WorldRegionTerrainGenerator GeneratorBuilder(SimplexNoise noise, WorldRegionData data)
         {
@@ -29,7 +24,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
         {
             var region = new RegionData();
             var centroidHeight = GetHeightFunction(centroid.X, centroid.Y, centroid.Z);
-            var heightRatio = MathHelper.Clamp((centroidHeight - m_sealevel) / m_mountainHeight, 0, 1);
+            var heightRatio = MathHelper.Clamp((centroidHeight - m_seaLevel) / m_mountainHeight, 0, 1);
             region.Temperature = (MathHelper.Clamp(SimplexNoise.Perlin3Dfmb(centroid.X, centroid.Y, centroid.Z, BiomeSampleRescale, 0, 3) * 5, -1, 1) + 1) / 2;
             //Adjust temperature with elevation based on atmospheric pressure (http://tinyurl.com/macaquk)
             region.Temperature *= (float)Math.Pow(1 - 0.3158078f * heightRatio, 5.25588f);

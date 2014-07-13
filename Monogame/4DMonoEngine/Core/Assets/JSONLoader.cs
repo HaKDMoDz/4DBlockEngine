@@ -24,19 +24,29 @@ namespace _4DMonoEngine.Core.Assets
 
         public async Task<T> Load<T>(string filename, string recordName) where T : IDataContainer
         {
+            //records that have the same filename as they do record name are single record files
+            if (filename == recordName)
+            {
+                return await LoadSingle<T>(recordName);
+            }
+            return await LoadArray<T>(filename, recordName);
+        }
+
+        private async Task<T> LoadArray<T>(string filename, string recordName) where T : IDataContainer
+        {
             if (m_loadedData.ContainsKey(recordName))
             {
-                return (T) m_loadedData[filename];
+                return (T)m_loadedData[recordName];
             }
             var path = m_directory + DataContainerPathRegistry.PathPrefix<T>() + filename + ".json";
             Debug.Assert(File.Exists(path), "The path: " + path + " does not exist.");
             var t = Task.Run(() =>
             {
                 var fileStream = new FileStream(path, FileMode.Open);
-                var type = typeof (T);
+                var type = typeof(T);
                 if (!m_serializers.ContainsKey(type))
                 {
-                    m_serializers.Add(type, new DataContractJsonSerializer(typeof (T[])));
+                    m_serializers.Add(type, new DataContractJsonSerializer(typeof(T[])));
                 }
                 var serializer = m_serializers[type];
                 var response = (IDataContainer[])serializer.ReadObject(fileStream);
@@ -45,10 +55,36 @@ namespace _4DMonoEngine.Core.Assets
                     m_loadedData[dataContainer.GetKey()] = dataContainer;
                 }
                 fileStream.Close();
+                return (T)m_loadedData[recordName];
             });
-            await t;
-            return (T)m_loadedData[filename];
+            return await t;
         }
+
+        private async Task<T> LoadSingle<T>( string recordName) where T : IDataContainer
+        {
+            if (m_loadedData.ContainsKey(recordName))
+            {
+                return (T)m_loadedData[recordName];
+            }
+            var path = m_directory + DataContainerPathRegistry.PathPrefix<T>() + recordName + ".json";
+            Debug.Assert(File.Exists(path), "The path: " + path + " does not exist.");
+            var t = Task.Run(() =>
+            {
+                var fileStream = new FileStream(path, FileMode.Open);
+                var type = typeof(T);
+                if (!m_serializers.ContainsKey(type))
+                {
+                    m_serializers.Add(type, new DataContractJsonSerializer(type));
+                }
+                var serializer = m_serializers[type];
+                var response = (IDataContainer)serializer.ReadObject(fileStream);
+                m_loadedData[response.GetKey()] = response;
+                fileStream.Close();
+                return (T) response;
+            });
+            return await t;
+        }
+
 
 
         public void Unload()
