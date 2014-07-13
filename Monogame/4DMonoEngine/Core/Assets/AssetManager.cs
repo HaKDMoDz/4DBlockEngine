@@ -36,7 +36,7 @@ namespace _4DMonoEngine.Core.Assets
             Debug.Assert(!string.IsNullOrEmpty(assetId));
             Debug.Assert(m_pathDictionary.ContainsKey(typeof (T)));
             var path = m_pathDictionary[typeof (T)];
-            return m_contentManager.Load<T>(path + assetId);
+            return m_contentManager.Load<T>(assetId);
         }
 
         public async Task<Dictionary<string, T>> GetTable<T>(string tableName) where T : IDataContainer

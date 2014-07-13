@@ -119,11 +119,11 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Fonts\Verdana.spritefont">
+    <Content Include="Fonts\Verdana.spritefont">
       <Name>Verdana</Name>
       <Importer>FontDescriptionImporter</Importer>
       <Processor>FontDescriptionProcessor</Processor>
-    </Compile>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Textures\roundedCorner.png">
