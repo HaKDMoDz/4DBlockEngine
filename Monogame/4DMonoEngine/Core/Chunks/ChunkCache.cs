@@ -68,7 +68,7 @@ namespace _4DMonoEngine.Core.Chunks
             Debug.Assert(graphicsDevice != null);
             Blocks = new Block[CacheSizeInBlocks * CacheSizeInBlocks * CacheSizeInBlocks];
             m_generator = new TerrainGenerator(Chunk.SizeInBlocks, Blocks, seed);
-            m_lightingEngine = new CellularLighting<Block>(Blocks, MappingFunction, Chunk.SizeInBlocks);
+            m_lightingEngine = new CellularLighting<Block>(Blocks, MappingFunction, Chunk.SizeInBlocks, BlockStepX, 1, BlockStepZ);
             m_vertexBuilder = new VertexBuilder<Block>(Blocks, BlockIndexByWorldPosition, graphicsDevice);
             m_chunkStorage = new SparseArray3D<Chunk>(CacheRange * 2 + 1, CacheRange * 2 + 1);
             m_cacheCenterPosition = new Vector4();
@@ -88,9 +88,9 @@ namespace _4DMonoEngine.Core.Chunks
 #endif
         }
 
-        private int MappingFunction(int i, int i1)
+        private int MappingFunction(int x, int z)
         {
-            throw new NotImplementedException();
+            return BlockIndexByWorldPosition(x, 0, z);
         }
 
         public override void Initialize(GraphicsDevice graphicsDevice, Camera camera, GetTimeOfDay getTimeOfDay, GetFogVector getFogVector)

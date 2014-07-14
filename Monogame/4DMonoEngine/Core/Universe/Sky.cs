@@ -76,7 +76,7 @@ namespace _4DMonoEngine.Core.Universe
 
         private int CloudIndexByWorldPosition(int x, int y, int z)
         {
-            throw new NotImplementedException();
+            return x*Size + z;
         }
 
 

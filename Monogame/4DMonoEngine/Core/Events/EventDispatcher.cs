@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace _4DMonoEngine.Core.Events
 {
-    public class EventDispatcher : IEventDispatcher
+    public sealed class EventDispatcher : IEventDispatcher
     {
         private readonly Dictionary<string, List<WeakReference<Action<EventArgs>>>> m_registeredHandlers;
         private readonly Dictionary<string, Action<EventArgs>> m_handlerWrappers;

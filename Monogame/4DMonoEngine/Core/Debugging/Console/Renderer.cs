@@ -1,6 +1,4 @@
-﻿
-
-/* Code based on: http://code.google.com/p/xnagameconsole/ */
+﻿/* Code based on: http://code.google.com/p/xnagameconsole/ */
 
 using System;
 using System.Collections.Generic;
