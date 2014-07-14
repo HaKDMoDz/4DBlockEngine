@@ -223,16 +223,16 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ContentBuilderProject\ContentBuilderProject.csproj">
-      <Project>{ec86500f-c72b-4e78-a427-d4be8d7b7c22}</Project>
-      <Name>ContentBuilderProject</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>Xcopy "$(ProjectDir)..\ContentBuilderProject\bin\PSM\Content\*" "$(ProjectDir)\$(OutDir)\Content" /s /r /y /i
-Xcopy "$(ProjectDir)..\..\Data\*" "$(ProjectDir)\$(OutDir)\Content\Config" /s /r /y /i</PreBuildEvent>
+    <PreBuildEvent>cd "$(ProjectDir)..\Data\Assets\Effects\"
+for %25%25F in (*.fx) do 2MGFX.exe %25%25F %25%25~nF.mgfxo
+cd "$(ProjectDir)"
+Xcopy "$(ProjectDir)..\Data\Assets\*" "$(ProjectDir)\$(OutDir)\Content" /s /r /y /i /exclude:XCopyExclude.dat
+Xcopy "$(ProjectDir)..\Data\Config\*" "$(ProjectDir)\$(OutDir)\Content\Config" /s /r /y /i
+cd "$(ProjectDir)..\Data\Assets\Effects\"
+for %25%25F in (*.mgfxo) do del %25%25F
+cd "$(ProjectDir)"</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PostBuildEvent>

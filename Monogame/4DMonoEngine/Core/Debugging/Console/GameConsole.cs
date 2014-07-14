@@ -29,16 +29,6 @@ namespace _4DMonoEngine.Core.Debugging.Console
             m_renderer = new Renderer(game, spriteBatch, m_inputProcesser, m_options);
         }
 
-        public override void Initialize()
-        {
-            base.Initialize();
-            if (m_options.Font == null)
-            {
-                m_options.Font = Game.Content.Load<SpriteFont>("ConsoleFont");
-            }
-            m_options.RoundedCorner = Game.Content.Load<Texture2D>(@"Textures/roundedCorner");
-        }
-
         public override void Draw(GameTime gameTime)
         {
             if (!Enabled)

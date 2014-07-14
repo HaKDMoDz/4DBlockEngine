@@ -56,13 +56,13 @@ namespace _4DMonoEngine.Core
         public void Initialize(Game game, uint seed)
         {
             Game = game;
-            m_assetProvider = new AssetManager(game.Content);
+            m_assetProvider = new AssetManager(game.Content, game.GraphicsDevice);
             m_settings = GetConfig<General>("GeneralSettings");
             Simulation = new Simulation(game, seed);
             game.Components.Add(Simulation);
             Camera = new Camera(game.GraphicsDevice.Viewport.AspectRatio);
 #if DEBUG
-            DebugOnlyDebugManager = new DebugManager(game, Camera, Simulation.ChunkCache, GetAsset<SpriteFont>("Veranda"));
+            DebugOnlyDebugManager = new DebugManager(game, Camera, Simulation.ChunkCache, GetAsset<SpriteFont>("Verdana"));
             game.Components.Add(DebugOnlyDebugManager);
 #endif
             var player = Simulation.Player;

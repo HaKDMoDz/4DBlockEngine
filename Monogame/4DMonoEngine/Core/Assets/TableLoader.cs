@@ -28,10 +28,11 @@ namespace _4DMonoEngine.Core.Assets
             {
                 return (Dictionary<string, T>) m_loadedData[filename];
             }
-            Debug.Assert(File.Exists(m_directory + filename + ".csv"));
+            var path = Path.Combine(m_directory, filename + ".csv");
+            Debug.Assert(File.Exists(path));
             var t = Task.Run(() => 
             {
-                var fileStream = new FileStream(m_directory + filename + ".csv", FileMode.Open);
+                var fileStream = new FileStream(path, FileMode.Open);
                 var csv = new CsvReader(new StreamReader(fileStream));
                 var records = csv.GetRecords<T>().ToDictionary(record => record.GetKey());
                 m_loadedData.Add(filename, records);

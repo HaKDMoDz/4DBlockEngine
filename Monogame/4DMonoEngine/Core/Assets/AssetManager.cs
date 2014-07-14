@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -14,29 +15,33 @@ namespace _4DMonoEngine.Core.Assets
         private readonly Dictionary<Type, string> m_pathDictionary;
         private readonly JsonLoader m_jsonLoader;
         private readonly TableLoader m_csvLoader;
+        private readonly GraphicsDevice m_graphicsDevice;
 
-        public AssetManager(ContentManager contentManager)
+        public AssetManager(ContentManager contentManager, GraphicsDevice graphicsDevice)
         {
+            var executableDir = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().GetName().CodeBase);
+            Debug.Assert(!String.IsNullOrEmpty(executableDir));
+            var absoluteDirPath = Path.Combine(executableDir, contentManager.RootDirectory).Substring(6);
             m_contentManager = contentManager;
+            m_graphicsDevice = graphicsDevice;
             m_pathDictionary = new Dictionary<Type, string>
             {
-                {typeof (Model), "Models\\"}, 
-                {typeof (Effect), "Effects\\"}, 
-                {typeof (Texture2D), "Textures\\"}, 
-                {typeof (SpriteFont), "Fonts\\"}
+                {typeof (Model), "Models"}, 
+                {typeof (Effect), "Effects"}, 
+                {typeof (Texture2D), "Textures"}, 
+                {typeof (SpriteFont), "Fonts"}
             };
-            var absoluteDirPath =
-                (System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().GetName().CodeBase) + "\\" + contentManager.RootDirectory + "\\").Substring(6);
-            m_jsonLoader = new JsonLoader(absoluteDirPath + "Config\\Json\\");
-            m_csvLoader = new TableLoader(absoluteDirPath + "Config\\Tables\\");
+            m_jsonLoader = new JsonLoader(Path.Combine(absoluteDirPath, "Config\\Json"));
+            m_csvLoader = new TableLoader(Path.Combine(absoluteDirPath, "Config\\Tables"));
+            //new Effect()
         }
 
         public T GetAsset<T>(string assetId)
         {
             Debug.Assert(!string.IsNullOrEmpty(assetId));
             Debug.Assert(m_pathDictionary.ContainsKey(typeof (T)));
-            var path = m_pathDictionary[typeof (T)];
-            return m_contentManager.Load<T>(assetId);
+            var path = Path.Combine(m_pathDictionary[typeof (T)], assetId);
+            return m_contentManager.Load<T>(path);
         }
 
         public async Task<Dictionary<string, T>> GetTable<T>(string tableName) where T : IDataContainer

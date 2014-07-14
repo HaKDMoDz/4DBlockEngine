@@ -38,7 +38,7 @@ namespace _4DMonoEngine.Core.Assets
             {
                 return (T)m_loadedData[recordName];
             }
-            var path = m_directory + DataContainerPathRegistry.PathPrefix<T>() + filename + ".json";
+            var path = Path.Combine(m_directory, DataContainerPathRegistry.PathPrefix<T>(), filename + ".json");
             Debug.Assert(File.Exists(path), "The path: " + path + " does not exist.");
             var t = Task.Run(() =>
             {
@@ -66,7 +66,7 @@ namespace _4DMonoEngine.Core.Assets
             {
                 return (T)m_loadedData[recordName];
             }
-            var path = m_directory + DataContainerPathRegistry.PathPrefix<T>() + recordName + ".json";
+            var path = Path.Combine(m_directory, DataContainerPathRegistry.PathPrefix<T>(), recordName + ".json");
             Debug.Assert(File.Exists(path), "The path: " + path + " does not exist.");
             var t = Task.Run(() =>
             {

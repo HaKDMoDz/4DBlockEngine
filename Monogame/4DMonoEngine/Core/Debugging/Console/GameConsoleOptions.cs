@@ -31,9 +31,7 @@ namespace _4DMonoEngine.Core.Debugging.Console
         public int Margin { get; set; }
         public bool OpenOnWrite { get; set; }
         public SpriteFont Font { get; set; }
-
-        internal Texture2D RoundedCorner { get; set; }
-
+        
         public GameConsoleOptions()
         {
             //Default options

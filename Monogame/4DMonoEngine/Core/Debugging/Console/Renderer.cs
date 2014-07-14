@@ -68,11 +68,11 @@ namespace _4DMonoEngine.Core.Debugging.Console
         {
             m_currentState = State.Closed;
             m_width = game.GraphicsDevice.Viewport.Width;
-            m_position = m_closedPosition = new Vector2(m_options.Margin, -m_options.Height - m_options.RoundedCorner.Height);
+            m_options = options;
+            m_position = m_closedPosition = new Vector2(m_options.Margin, -m_options.Height);
             m_openedPosition = new Vector2(m_options.Margin, 0);
             m_spriteBatch = spriteBatch;
             m_inputProcessor = inputProcessor;
-            m_options = options;
             m_pixel = new Texture2D(game.GraphicsDevice, 1, 1,false, SurfaceFormat.Color);
             m_pixel.SetData(new[] { Color.White });
             m_firstCommandPositionOffset = Vector2.Zero;
@@ -116,12 +116,8 @@ namespace _4DMonoEngine.Core.Debugging.Console
 
         void DrawRoundedEdges()
         {
-            //Bottom-left edge
-            m_spriteBatch.Draw(m_options.RoundedCorner, new Vector2(m_position.X, m_position.Y + m_options.Height), null, m_options.BackgroundColor, 0, Vector2.Zero, 1, SpriteEffects.None, 1);
-            //Bottom-right edge 
-            m_spriteBatch.Draw(m_options.RoundedCorner, new Vector2(m_position.X + Bounds.Width - m_options.RoundedCorner.Width, m_position.Y + m_options.Height), null, m_options.BackgroundColor, 0, Vector2.Zero, 1, SpriteEffects.FlipHorizontally, 1);
             //connecting bottom-rectangle
-            m_spriteBatch.Draw(m_pixel, new Rectangle(Bounds.X + m_options.RoundedCorner.Width, Bounds.Y + m_options.Height, Bounds.Width - m_options.RoundedCorner.Width * 2, m_options.RoundedCorner.Height), m_options.BackgroundColor);
+            m_spriteBatch.Draw(m_pixel, new Rectangle(Bounds.X, Bounds.Y + m_options.Height, Bounds.Width, 3), m_options.BackgroundColor);
         }
 
         void DrawCursor(Vector2 pos, GameTime gameTime)

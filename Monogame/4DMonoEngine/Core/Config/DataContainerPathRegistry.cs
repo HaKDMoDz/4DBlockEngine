@@ -8,10 +8,10 @@ namespace _4DMonoEngine.Core.Config
     {
         private static readonly Dictionary<Type, String> PathDictionary = new Dictionary<Type, string>()
         {
-                {typeof (BiomeData), "Biomes/"}, 
-                {typeof (ProvinceData), "Province/"}, 
-                {typeof (BlockData), "Blocks/"},
-                {typeof (BlockTextureData), "Blocks/"},
+                {typeof (BiomeData), "Biomes"}, 
+                {typeof (ProvinceData), "Province"}, 
+                {typeof (BlockData), "Blocks"},
+                {typeof (BlockTextureData), "Blocks"},
                 {typeof (General), ""}, 
         };
         public static string PathPrefix<T>()

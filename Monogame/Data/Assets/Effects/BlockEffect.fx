@@ -3,7 +3,6 @@ float4x4 View; // the camera-view matrix.
 float4x4 Projection; // the camera-projection.
 float3 CameraPosition; // the camera-position.
 
-
 float TimeOfDay; // Time of day.
 
 float4 HorizonColor; // Horizon color used for fogging.
