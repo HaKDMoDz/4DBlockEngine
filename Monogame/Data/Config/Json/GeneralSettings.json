@@ -11,8 +11,8 @@
     "BlockTypeMap" :
     [
     	{
-    		"Key":"terrain",
-    		"Value":["grass"]
+    		"Key":"Terrain",
+    		"Value":["Grass","Dirt","Stone"]
     	}
     ],
     "BlockTileMapUnitSize" : 0.25

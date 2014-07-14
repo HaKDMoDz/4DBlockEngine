@@ -47,7 +47,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
             m_lazyInitializer = new List<Task<T>>();
             foreach (var region in regions)
             {
-                var fileName = "base";
+                var fileName = "Base";
                 var recordName = region;
                 if (region.Contains(","))
                 {

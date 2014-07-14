@@ -1,4 +1,5 @@
-﻿using _4DMonoEngine.Core.Blocks;
+﻿using System;
+using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Noise;
 using _4DMonoEngine.Core.Config;
 
@@ -15,11 +16,24 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
 
         public override Block Apply(int upperBound, int worldPositionX, int worldPositionY, int worldPositionZ, int worldPositionW)
         {
-            var accumulator = 0.0f;
+            var accumulator = 0;
             var layer = Layers[Layers.Count - 1];
             foreach (var worldRegionLayer in Layers)
             {
-                accumulator += (worldRegionLayer.Thickness) * Noise.Perlin4Dfbm(worldPositionX, worldRegionLayer.Id, worldPositionZ, worldPositionW,worldRegionLayer.NoiseScale,worldRegionLayer.NoiseOffset, 2);
+                int step;
+                if (worldRegionLayer.Thickness <= 1)
+                {
+                    step = 1;
+                }
+                else
+                {
+                    step = (int)Math.Ceiling(worldRegionLayer.Thickness*
+                                        Noise.Perlin4Dfbm(worldPositionX, worldRegionLayer.Id, worldPositionZ,
+                                            worldPositionW,
+                                            worldRegionLayer.NoiseScale, worldRegionLayer.NoiseOffset, 2));
+                }
+
+                accumulator += step;
                 if (accumulator < (upperBound - worldPositionY))
                 {
                     continue;

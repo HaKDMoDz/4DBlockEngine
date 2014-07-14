@@ -34,11 +34,11 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
             region.GeologicalActivity = ((MathHelper.Clamp(SimplexNoise.Perlin3Dfmb(centroid.X, centroid.Y, centroid.Z, BiomeSampleRescale * 8, 0, 5) * 5, -1, 1) + 1) / 2);
             var parameters = new OrderedDictionary
             {
-                {"rarity", (MathHelper.Clamp(SimplexNoise2.Perlin3Dfmb(centroid.X, centroid.Y, centroid.Z, BiomeSampleRescale * 8, 0, 5) * 5, -1, 1) + 1) / 2},
-                {"temperature", region.Temperature},
-                {"humidity", region.Humidity},
-                {"elevation", heightRatio},
-                {"geologicalActivity", region.GeologicalActivity}
+                {"Rarity", (MathHelper.Clamp(SimplexNoise2.Perlin3Dfmb(centroid.X, centroid.Y, centroid.Z, BiomeSampleRescale * 8, 0, 5) * 5, -1, 1) + 1) / 2},
+                {"Temperature", region.Temperature},
+                {"Humidity", region.Humidity},
+                {"Elevation", heightRatio},
+                {"GeologicalActivity", region.GeologicalActivity}
             };
             region.Type = GetRegionType(parameters);
             return region;

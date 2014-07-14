@@ -1,0 +1,31 @@
+[
+	{
+		"Name" : "Grassland",
+		"FoliageDensity" : 0.5,
+		"Parameters" : 
+		[
+			{
+				"Name" : "Temperature",
+				"Min" : 0,
+				"Max" : 1
+			}
+		],
+		"Layers" :
+		[
+			{
+				"Id" : 0,
+				"BlockName" : "Grass",
+				"Thickness" : 1,
+				"NoiseOffset" : 0,
+				"NoiseScale" : 0
+			},
+			{
+				"Id" : 1,
+				"BlockName" : "Dirt",
+				"Thickness" : 5,
+				"NoiseOffset" : 0,
+				"NoiseScale" : 16
+			}
+		]
+	}
+]

@@ -9,7 +9,7 @@ namespace _4DMonoEngine.Core.Config
         private static readonly Dictionary<Type, String> PathDictionary = new Dictionary<Type, string>()
         {
                 {typeof (BiomeData), "Biomes"}, 
-                {typeof (ProvinceData), "Province"}, 
+                {typeof (ProvinceData), "Provinces"}, 
                 {typeof (BlockData), "Blocks"},
                 {typeof (BlockTextureData), "Blocks"},
                 {typeof (General), ""}, 

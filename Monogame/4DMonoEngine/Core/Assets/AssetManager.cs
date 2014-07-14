@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -11,6 +12,7 @@ namespace _4DMonoEngine.Core.Assets
 {
     internal class AssetManager
     {
+        private readonly Hashtable m_assetCache;  
         private readonly ContentManager m_contentManager;
         private readonly Dictionary<Type, string> m_pathDictionary;
         private readonly JsonLoader m_jsonLoader;
@@ -33,23 +35,32 @@ namespace _4DMonoEngine.Core.Assets
             };
             m_jsonLoader = new JsonLoader(Path.Combine(absoluteDirPath, "Config\\Json"));
             m_csvLoader = new TableLoader(Path.Combine(absoluteDirPath, "Config\\Tables"));
-            //new Effect()
+            m_assetCache = new Hashtable();
         }
 
         public T GetAsset<T>(string assetId)
         {
+            var type = typeof (T);
             Debug.Assert(!string.IsNullOrEmpty(assetId));
-            Debug.Assert(m_pathDictionary.ContainsKey(typeof (T)));
-            var path = Path.Combine(m_pathDictionary[typeof (T)], assetId);
+            Debug.Assert(m_pathDictionary.ContainsKey(type));
+            var path = Path.Combine(m_pathDictionary[type], assetId);
+            if (type == typeof (SpriteFont))
+            {
+                return m_contentManager.Load<T>(path);
+            }
+            if (m_assetCache.ContainsKey(assetId))
+            {
+                return (T)m_assetCache[assetId];
+            }
             if (typeof (T) == typeof (Texture2D))
             {
-                return (T)GetTexture(path);
+                m_assetCache[assetId] = GetTexture(path);
             }
             if (typeof (T) == typeof (Effect))
             {
-                return (T) GetEffect(path);
+                m_assetCache[assetId] = GetEffect(path);
             }
-            return m_contentManager.Load<T>(path);
+            return (T)m_assetCache[assetId];
         }
 
         private Object GetTexture(string path)
@@ -92,8 +103,11 @@ namespace _4DMonoEngine.Core.Assets
             return await m_jsonLoader.Load<T>(fileName, recordId);
         }
 
+        //TODO : allow unloading of specific files
+
         public void Unload()
         {
+            m_assetCache.Clear();
             m_contentManager.Unload();
             m_csvLoader.Unload();
             m_jsonLoader.Unload();

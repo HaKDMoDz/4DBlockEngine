@@ -1,0 +1,31 @@
+[
+	{
+		"Name" : "Platform",
+		"FoliageDensity" : 0.5,
+		"Parameters" : 
+		[
+			{
+				"Name" : "GeologicalActivity",
+				"Min" : 0,
+				"Max" : 1
+			}
+		],
+		"Layers" :
+		[
+			{
+				"Id" : 0,
+				"BlockName" : "Stone",
+				"Thickness" : 5,
+				"NoiseOffset" : 0,
+				"NoiseScale" : 16
+			},
+			{
+				"Id" : 1,
+				"BlockName" : "Dirt",
+				"Thickness" : 5,
+				"NoiseOffset" : 0,
+				"NoiseScale" : 16
+			}
+		]
+	}
+]

@@ -12,8 +12,6 @@ namespace _4DMonoEngine.Core.Config
         [DataMember]
         public int Thickness { get; set; }
         [DataMember]
-        public string NoiseGenerator { get; set; }
-        [DataMember]
         public float NoiseOffset { get; set; }
         [DataMember]
         public float NoiseScale { get; set; }

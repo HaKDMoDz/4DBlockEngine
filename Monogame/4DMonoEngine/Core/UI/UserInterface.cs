@@ -19,8 +19,8 @@ namespace _4DMonoEngine.Core.UI
         public override void Initialize()
         {
             m_spriteBatch = new SpriteBatch(Game.GraphicsDevice);
-            m_currentCrosshair = MainEngine.GetEngineInstance().GetAsset<Texture2D>("CrossHairNormal");
-            m_aimTextures["CrossHairNormal"] = m_currentCrosshair;
+            m_currentCrosshair = MainEngine.GetEngineInstance().GetAsset<Texture2D>("Normal");
+            m_aimTextures["Normal"] = m_currentCrosshair;
         }
 
         public override void Draw(GameTime gameTime)
