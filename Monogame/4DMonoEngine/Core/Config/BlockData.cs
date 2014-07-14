@@ -13,10 +13,6 @@ namespace _4DMonoEngine.Core.Config
         [DataMember]
         public string[] TextureNames { get; set; }
         [DataMember]
-        public string Biome { get; set; }
-        [DataMember]
-        public uint BlockStructureId { get; set; }
-        [DataMember]
         public float Opacity { get; set; }
         [DataMember]
         public float Durability { get; set; }

@@ -4,6 +4,7 @@ using _4DMonoEngine.Core.Blocks;
 
 namespace _4DMonoEngine.Core.Chunks.Generators.Structures
 {
+    //TODO : refactor this into a proper structure system
     public class PlantPopulator
     {
         private readonly Dictionary<string, List<PlantData>> m_biomeMapping;
@@ -20,9 +21,9 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
             //we iterate over leaves because a trunk must have leaves, but a leaf may not have a trunk (which would make it a bush)
             foreach (var leaf in leaves)
             {
-                var leafBlock = blockDictionary.GetStaticData(leaf);
+               /* var leafBlock = blockDictionary.GetStaticData(leaf);
                 var blockStructureId = leafBlock.BlockStructureId;
-                string biome = leafBlock.Biome;
+                string biome = "";//leafBlock.Biome;
                 var validTrunks = trunks.Where(trunk => blockDictionary.GetStaticData(trunk).BlockStructureId == blockStructureId);
                 var enumerable = validTrunks as ushort[] ?? validTrunks.ToArray();
                 if (enumerable.Any())
@@ -35,7 +36,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
                 else
                 {
                     GetPlantDataListForBiome(biome).Add(new PlantData(PlantType.Bush, 0, leaf));
-                }
+                }*/
             }
         }
 
