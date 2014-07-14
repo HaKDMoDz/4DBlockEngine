@@ -30,7 +30,6 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
         protected readonly SimplexNoise SimplexNoise2;
         private readonly Dictionary<ulong, RegionData> m_biomes;
         protected readonly GetHeight GetHeightFunction;
-        private List<Task<T>> m_lazyInitializer; 
         public delegate float GetHeight(float x, float z, float w);
 
         protected WorldRegionGeneratorCollection(ulong seed, GetHeight getHeightFunction, IEnumerable<string> regions, int centeiodSampleScale, int biomeSampleRescale, int seaLevel, int mountainHeight)
@@ -44,7 +43,13 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
             SimplexNoise = new SimplexNoise(seed);
             SimplexNoise2 = new SimplexNoise(seed + 0x8fd3952e35bb901f); // the 2 generators just need to be offset by some arbitrary value
             m_generators = new Dictionary<string, WorldRegionTerrainGenerator>();
-            m_lazyInitializer = new List<Task<T>>();
+            InitializeAsync(regions);
+            GetHeightFunction = getHeightFunction;
+            m_biomes = new Dictionary<ulong, RegionData>();
+        }
+
+        private async void InitializeAsync(IEnumerable<string> regions)
+        {
             foreach (var region in regions)
             {
                 var fileName = "Base";
@@ -55,11 +60,9 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
                     fileName = parts[0];
                     recordName = parts[1];
                 }
-                m_lazyInitializer.Add(MainEngine.GetEngineInstance().GetConfig<T>(fileName, recordName));
+                var regionData = await MainEngine.GetEngineInstance().GetConfig<T>(fileName, recordName);
+                m_generators.Add(regionData.GetKey(), GeneratorBuilder(SimplexNoise, regionData));
             }
-
-            GetHeightFunction = getHeightFunction;
-            m_biomes = new Dictionary<ulong, RegionData>();
         }
 
         public RegionData GetRegionData(float x, float y, float z)
@@ -80,16 +83,6 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
         public WorldRegionTerrainGenerator GetRegionGenerator(float x, float y, float z)
         {
             var biome = GetRegionData(x, y, z);
-            if (m_lazyInitializer == null)
-            {
-                return m_generators[biome.Type];
-            }
-            foreach (var future in m_lazyInitializer)
-            {
-                var regionData = future.Result;
-                m_generators.Add(regionData.GetKey(), GeneratorBuilder(SimplexNoise, regionData));
-            }
-            m_lazyInitializer = null;
             return m_generators[biome.Type];
         }
 

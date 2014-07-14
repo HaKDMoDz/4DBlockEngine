@@ -28,15 +28,14 @@ namespace _4DMonoEngine.Core.Blocks
             m_blockNameMap = new Dictionary<string, ushort>();
             m_blockTypeMap = new Dictionary<string, ushort[]>();
             m_blockTextureMappings = new Dictionary<int, HalfVector2[]>();
-            Initialze();
+            InitialzeAsync();
         }
 
-        private async void Initialze()
+        private async void InitialzeAsync()
         {
             var settings = await MainEngine.GetEngineInstance().GeneralSettings;
             var typeMapping = settings.BlockTypeMap;
             var textureUnitSize = settings.BlockTileMapUnitSize;
-            var textureInitializer = new Dictionary<int, Task<BlockTextureData>>();
             foreach (var strings in typeMapping)
             {
                 var type = strings.Key;
@@ -44,23 +43,19 @@ namespace _4DMonoEngine.Core.Blocks
                 var idList = new List<ushort>();
                 foreach (var blockName in blockNameList)
                 {
-                    var blockData = MainEngine.GetEngineInstance().GetConfig<BlockData>(type, blockName).Result;
+                    var blockData = await MainEngine.GetEngineInstance().GetConfig<BlockData>(type, blockName);
                     idList.Add(blockData.BlockId);
                     m_dict.Add(blockData.BlockId, blockData);
                     m_blockNameMap.Add(blockName, blockData.BlockId);
                     for (var faceIndex = 0; faceIndex < 6; faceIndex++)
                     {
                         var textureName = blockData.TextureNames[faceIndex];
-                        textureInitializer.Add(((blockData.BlockId << 3) + faceIndex), MainEngine.GetEngineInstance().GetConfig<BlockTextureData>("textures", textureName));
+                        var textureIndex = (blockData.BlockId << 3) + faceIndex;
+                        var textureData = await MainEngine.GetEngineInstance().GetConfig<BlockTextureData>("textures", textureName);
+                        m_blockTextureMappings.Add(textureIndex, GetBlockTextureMapping(textureData.TileU, textureData.TileV, textureUnitSize));
                     }
                 }
                 m_blockTypeMap.Add(type, idList.ToArray());
-            }
-            foreach (var pair in textureInitializer)
-            {
-                var blockId = pair.Key;
-                var textureData = pair.Value.Result;
-                m_blockTextureMappings.Add(blockId, GetBlockTextureMapping(textureData.TileU, textureData.TileV, textureUnitSize));
             }
         }
 

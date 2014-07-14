@@ -30,10 +30,10 @@ namespace _4DMonoEngine.Core.Chunks.Generators
             Seed = seed;
             m_chunkSize = chunkSize;
             m_blocks = blocks;
-            Initialize();
+            InitializeAsync();
 	    }
 
-        private async void Initialize()
+        private async void InitializeAsync()
         {
             var random = new FastRandom(Seed);
             var settings = await MainEngine.GetEngineInstance().GeneralSettings;
