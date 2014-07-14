@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using _4DMonoEngine.Core.Assets;
+using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Interfaces;
 using _4DMonoEngine.Core.Config;
 using _4DMonoEngine.Core.Events;
@@ -51,6 +52,8 @@ namespace _4DMonoEngine.Core
             Game = game;
             m_assetProvider = new AssetManager(game.Content, game.GraphicsDevice);
             GeneralSettings = GetConfig<General>("GeneralSettings");
+            //TODO : This next line fixes a race condition in the dumbest way... build initialization manager
+            BlockDictionary.GetInstance();
             Simulation = new Simulation(game, seed);
             game.Components.Add(Simulation);
             Camera = new Camera(game.GraphicsDevice.Viewport.AspectRatio);

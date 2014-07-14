@@ -1,0 +1,28 @@
+[
+	{
+		"Name" : "Grass",
+		"TileU" : 0,
+		"TileV" : 0
+	},
+	{
+		"Name" : "Dirt",
+		"TileU" : 0.125,
+		"TileV" : 0
+	},
+	{
+		"Name" : "Stone",
+		"TileU" : 0.0625,
+		"TileV" : 0
+	},
+	{
+		"Name" : "Cloud",
+		"TileU" : 0.125,
+		"TileV" : 0.25
+	},
+	{
+		"Name" : "Empty",
+		"TileU" : 0.1875,
+		"TileV" : 0.25
+	}
+]
+]

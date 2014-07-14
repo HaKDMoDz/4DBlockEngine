@@ -10,6 +10,7 @@ namespace _4DMonoEngine.Core.Blocks
 {
     public class BlockDictionary
     {
+        //TODO : make this not static
         public static BlockDictionary GetInstance()
         {
             return s_instance ?? (s_instance = new BlockDictionary());
@@ -51,7 +52,7 @@ namespace _4DMonoEngine.Core.Blocks
                     {
                         var textureName = blockData.TextureNames[faceIndex];
                         var textureIndex = (blockData.BlockId << 3) + faceIndex;
-                        var textureData = await MainEngine.GetEngineInstance().GetConfig<BlockTextureData>("textures", textureName);
+                        var textureData = await MainEngine.GetEngineInstance().GetConfig<BlockTextureData>("Textures", textureName);
                         m_blockTextureMappings.Add(textureIndex, GetBlockTextureMapping(textureData.TileU, textureData.TileV, textureUnitSize));
                     }
                 }
@@ -65,7 +66,7 @@ namespace _4DMonoEngine.Core.Blocks
             mapping[0] = new HalfVector2(xOffset, yOffset); // 0,0
             mapping[1] = new HalfVector2(xOffset + unitSize, yOffset); // 1,0
             mapping[2] = new HalfVector2(xOffset, yOffset + unitSize); // 0, 1
-            mapping[4] = new HalfVector2(xOffset + unitSize, yOffset + unitSize); // 1,1
+            mapping[3] = new HalfVector2(xOffset + unitSize, yOffset + unitSize); // 1,1
             return mapping;
         }
 

@@ -13,7 +13,11 @@
     	{
     		"Key":"Terrain",
     		"Value":["Grass","Dirt","Stone"]
-    	}
+    	},
+        {
+            "Key":"Special",
+            "Value":["Cloud"]
+        }
     ],
-    "BlockTileMapUnitSize" : 0.25
+    "BlockTileMapUnitSize" : 0.0625
 }

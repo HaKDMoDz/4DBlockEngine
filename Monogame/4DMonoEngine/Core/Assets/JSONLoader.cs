@@ -34,9 +34,10 @@ namespace _4DMonoEngine.Core.Assets
 
         private async Task<T> LoadArray<T>(string filename, string recordName) where T : IDataContainer
         {
-            if (m_loadedData.ContainsKey(recordName))
+            var key = filename + "_" + recordName;
+            if (m_loadedData.ContainsKey(key))
             {
-                return (T)m_loadedData[recordName];
+                return (T)m_loadedData[key];
             }
             var path = Path.Combine(m_directory, DataContainerPathRegistry.PathPrefix<T>(), filename + ".json");
             Debug.Assert(File.Exists(path), "The path: " + path + " does not exist.");
@@ -52,10 +53,10 @@ namespace _4DMonoEngine.Core.Assets
                 var response = (IDataContainer[])serializer.ReadObject(fileStream);
                 foreach (var dataContainer in response)
                 {
-                    m_loadedData[dataContainer.GetKey()] = dataContainer;
+                    m_loadedData[filename + "_" + dataContainer.GetKey()] = dataContainer;
                 }
                 fileStream.Close();
-                return (T)m_loadedData[recordName];
+                return (T)m_loadedData[key];
             });
             return await t;
         }

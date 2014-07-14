@@ -35,7 +35,7 @@ namespace _4DMonoEngine.Core.Universe
             get { return m_type != 0; }
         }
 
-        public static readonly CloudBlock Cloud = new CloudBlock(BlockDictionary.GetInstance().GetBlockIdForName("cloud"));
+        public static readonly CloudBlock Cloud = new CloudBlock(BlockDictionary.GetInstance().GetBlockIdForName("Cloud"));
         public static readonly CloudBlock Empty = new CloudBlock(0);
     }
 
@@ -45,7 +45,7 @@ namespace _4DMonoEngine.Core.Universe
         private readonly CloudBlock[] m_clouds;
         private readonly SimplexNoise m_noise;
         private  VertexBuilder<CloudBlock> m_vertexBuilder;
-        private CloudTarget m_cloudVertexTarget;
+        private readonly CloudTarget m_cloudVertexTarget;
         public float CloudSpeed { get; set; }
 
         //private bool m_meshBuilt;
@@ -57,7 +57,7 @@ namespace _4DMonoEngine.Core.Universe
         {
             m_noise = new SimplexNoise(seed);
             m_clouds = new CloudBlock[Size * Size];
-            m_cloudVertexTarget = new CloudTarget(new Vector3Int(), Size);
+            m_cloudVertexTarget = new CloudTarget(new Vector3Int(), Size, 1, Size);
 
             CloudSpeed = 0.1f;
         }
@@ -76,7 +76,7 @@ namespace _4DMonoEngine.Core.Universe
 
         private int CloudIndexByWorldPosition(int x, int y, int z)
         {
-            return x*Size + z;
+            return x * Size + z;
         }
 
 

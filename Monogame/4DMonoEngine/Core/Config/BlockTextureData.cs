@@ -10,8 +10,6 @@ namespace _4DMonoEngine.Core.Config
         [DataMember]
         public string Name { get; set; }
         [DataMember]
-        public int[] FaceTextureIds { get; set; }
-        [DataMember]
         public float TileU { get; set; }
         [DataMember]
         public float TileV { get; set; }

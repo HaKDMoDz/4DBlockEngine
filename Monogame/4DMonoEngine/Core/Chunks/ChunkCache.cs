@@ -284,7 +284,7 @@ namespace _4DMonoEngine.Core.Chunks
                     break;
                 case ChunkState.AwaitingLighting:
                     chunk.ChunkState = ChunkState.Lighting;
-                    m_lightingEngine.Process(chunk.LightSources);
+                    m_lightingEngine.Process(chunk.Position.X, chunk.Position.Y, chunk.Position.Z, chunk.LightSources);
                     chunk.ChunkState = ChunkState.AwaitingBuild;
                     break;
                 case ChunkState.AwaitingBuild:

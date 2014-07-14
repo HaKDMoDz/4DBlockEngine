@@ -1,0 +1,22 @@
+[
+	{
+		"Name" : "Empty",
+		"BlockId" : 0,
+		"TextureNames" : ["Empty", "Empty", "Empty", "Empty", "Empty", "Empty"],
+		"Opacity" : 0,
+		"Durability" : 0,
+		"Elasticity" : 0,
+		"Adhesion" : 0,
+		"Mass" : 0
+	},
+	{
+		"Name" : "Cloud",
+		"BlockId" : 4,
+		"TextureNames" : ["Cloud", "Cloud", "Cloud", "Cloud", "Cloud", "Cloud"],
+		"Opacity" : 0.625,
+		"Durability" : 0.01,
+		"Elasticity" : 0.01,
+		"Adhesion" : 0.01,
+		"Mass" : 0.01
+	}
+]
