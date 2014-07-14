@@ -21,15 +21,16 @@ namespace _4DMonoEngine.Core.Events
 
         public void FireEvent(string eventName, EventArgs args)
         {
-            if (EventsEnabled)
+            if (!EventsEnabled)
             {
-                foreach (var registeredHandler in m_registeredHandlers[eventName])
+                return;
+            }
+            foreach (var registeredHandler in m_registeredHandlers[eventName])
+            {
+                Action<EventArgs> handler;
+                if(registeredHandler.TryGetTarget(out handler))
                 {
-                    Action<EventArgs> handler;
-                    if(registeredHandler.TryGetTarget(out handler))
-                    {
-                        handler(args);
-                    }
+                    handler(args);
                 }
             }
         }
@@ -87,7 +88,7 @@ namespace _4DMonoEngine.Core.Events
                 {
                     continue;
                 }
-                handlerReferences.RemoveAt(i--);
+                handlerReferences.RemoveAt(i);
                 break;
             }
         }

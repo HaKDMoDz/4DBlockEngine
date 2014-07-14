@@ -70,6 +70,7 @@
     <Compile Include="Core\Assets\Config\BlockData.cs" />
     <Compile Include="Core\Assets\Config\BlockTextureData.cs" />
     <Compile Include="Core\Common\Enums\FaceDirection.cs" />
+    <Compile Include="Core\Common\Interfaces\IInitializable.cs" />
     <Compile Include="Core\Events\EventHelper.cs" />
     <Compile Include="Core\Common\Interfaces\IAction.cs" />
     <Compile Include="Core\Common\Interfaces\IDataContainer.cs" />
@@ -104,6 +105,7 @@
     <Compile Include="Core\Events\IEventSink.cs" />
     <Compile Include="Core\Events\IEventSource.cs" />
     <Compile Include="Core\Graphics\RenderingConstants.cs" />
+    <Compile Include="Core\Initialization\InitializationController.cs" />
     <Compile Include="Core\Managers\DebugManager.cs" />
     <Compile Include="Core\Managers\EntityManager.cs" />
     <Compile Include="Core\Processors\CellularLghting.cs" />
