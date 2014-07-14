@@ -2,14 +2,14 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Graphics.PackedVector;
-using _4DMonoEngine.Core.AbstractClasses;
 using _4DMonoEngine.Core.Blocks;
-using _4DMonoEngine.Core.Enums;
-using _4DMonoEngine.Core.Interfaces;
-using _4DMonoEngine.Core.Noise;
-using _4DMonoEngine.Core.Structs.Vector;
+using _4DMonoEngine.Core.Common.AbstractClasses;
+using _4DMonoEngine.Core.Common.Enums;
+using _4DMonoEngine.Core.Common.Interfaces;
 using _4DMonoEngine.Core.Graphics;
 using _4DMonoEngine.Core.Processors;
+using _4DMonoEngine.Core.Utils.Noise;
+using _4DMonoEngine.Core.Utils.Vector;
 
 namespace _4DMonoEngine.Core.Universe
 {

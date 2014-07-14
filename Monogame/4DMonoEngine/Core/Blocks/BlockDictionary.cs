@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework.Graphics.PackedVector;
-using _4DMonoEngine.Core.Config;
-using _4DMonoEngine.Core.Enums;
+using _4DMonoEngine.Core.Assets.Config;
+using _4DMonoEngine.Core.Common.Enums;
 
 namespace _4DMonoEngine.Core.Blocks
 {

@@ -1,6 +1,6 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
-using _4DMonoEngine.Core.Interfaces;
+using _4DMonoEngine.Core.Common.Interfaces;
 
 namespace _4DMonoEngine.Core.Managers
 {

@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using _4DMonoEngine.Core.Chunks;
-using _4DMonoEngine.Core.Interfaces;
-using _4DMonoEngine.Core.Structs.Vector;
+using _4DMonoEngine.Core.Common.Interfaces;
 using _4DMonoEngine.Core.Utils;
+using _4DMonoEngine.Core.Utils.Vector;
 
 namespace _4DMonoEngine.Core.Processors
 {

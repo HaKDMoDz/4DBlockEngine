@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using Microsoft.Xna.Framework;
-using _4DMonoEngine.Core.Noise;
+using _4DMonoEngine.Core.Utils.Noise;
 
 namespace _4DMonoEngine.Core.Chunks.Generators.Structures
 {

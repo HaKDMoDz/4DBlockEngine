@@ -1,5 +1,5 @@
 ﻿using System.Linq;
-using _4DMonoEngine.Core.Extensions;
+using _4DMonoEngine.Core.Common.Extensions;
 using _4DMonoEngine.Core.Debugging.Profiling;
 using _4DMonoEngine.Core.Graphics.Drawing;
 using Microsoft.Xna.Framework;

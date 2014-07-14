@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
-using _4DMonoEngine.Core.AbstractClasses;
 using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Chunks.Generators;
-using _4DMonoEngine.Core.Enums;
-using _4DMonoEngine.Core.Helpers;
-using _4DMonoEngine.Core.Structs.Vector;
+using _4DMonoEngine.Core.Common.AbstractClasses;
+using _4DMonoEngine.Core.Common.Enums;
 using _4DMonoEngine.Core.Events;
 using _4DMonoEngine.Core.Events.Args;
 using _4DMonoEngine.Core.Graphics;
@@ -16,6 +14,7 @@ using _4DMonoEngine.Core.Processors;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using _4DMonoEngine.Core.Utils;
+using _4DMonoEngine.Core.Utils.Vector;
 
 namespace _4DMonoEngine.Core.Chunks
 {

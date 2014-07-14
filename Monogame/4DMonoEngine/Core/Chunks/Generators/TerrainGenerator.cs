@@ -1,8 +1,8 @@
 ﻿using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Chunks.Generators.Regions;
-using _4DMonoEngine.Core.Noise;
-using _4DMonoEngine.Core.Random;
 using Microsoft.Xna.Framework;
+using _4DMonoEngine.Core.Utils.Noise;
+using _4DMonoEngine.Core.Utils.Random;
 
 namespace _4DMonoEngine.Core.Chunks.Generators
 {

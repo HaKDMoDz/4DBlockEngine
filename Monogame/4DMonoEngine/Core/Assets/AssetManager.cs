@@ -6,7 +6,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using _4DMonoEngine.Core.Interfaces;
+using _4DMonoEngine.Core.Common.Interfaces;
 
 namespace _4DMonoEngine.Core.Assets
 {

@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
-using _4DMonoEngine.Core.Noise;
-using _4DMonoEngine.Core.Config;
+using _4DMonoEngine.Core.Assets.Config;
+using _4DMonoEngine.Core.Utils.Noise;
 
 namespace _4DMonoEngine.Core.Chunks.Generators.Regions
 {

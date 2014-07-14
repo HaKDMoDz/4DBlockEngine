@@ -4,8 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization.Json;
 using System.Threading.Tasks;
-using _4DMonoEngine.Core.Interfaces;
-using _4DMonoEngine.Core.Config;
+using _4DMonoEngine.Core.Assets.Config;
+using _4DMonoEngine.Core.Common.Interfaces;
 
 namespace _4DMonoEngine.Core.Assets
 {

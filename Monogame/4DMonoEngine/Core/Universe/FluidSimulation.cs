@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
-using _4DMonoEngine.Core.Structs.Vector;
-
 
 //TODO : get this cleaned up and running
+using _4DMonoEngine.Core.Utils.Vector;
+
 namespace _4DMonoEngine.Core.Universe
 {
     public class FluidSimulation
