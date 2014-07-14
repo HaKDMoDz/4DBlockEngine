@@ -226,7 +226,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>cd "$(ProjectDir)..\Data\Assets\Effects\"
-for %25%25F in (*.fx) do 2MGFX.exe %25%25F %25%25~nF.mgfxo
+for %25%25F in (*.fx) do 2MGFX.exe %25%25F %25%25~nF.mgfxo /DX11
 cd "$(ProjectDir)"
 Xcopy "$(ProjectDir)..\Data\Assets\*" "$(ProjectDir)\$(OutDir)\Content" /s /r /y /i /exclude:XCopyExclude.dat
 Xcopy "$(ProjectDir)..\Data\Config\*" "$(ProjectDir)\$(OutDir)\Content\Config" /s /r /y /i

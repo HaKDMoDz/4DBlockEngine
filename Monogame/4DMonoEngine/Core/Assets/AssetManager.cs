@@ -26,9 +26,9 @@ namespace _4DMonoEngine.Core.Assets
             m_graphicsDevice = graphicsDevice;
             m_pathDictionary = new Dictionary<Type, string>
             {
-                {typeof (Model), "Models"}, 
-                {typeof (Effect), "Effects"}, 
-                {typeof (Texture2D), "Textures"}, 
+               // {typeof (Model), "Models"}, 
+                {typeof (Effect), Path.Combine(absoluteDirPath,"Effects")}, 
+                {typeof (Texture2D), Path.Combine(absoluteDirPath,"Textures")}, 
                 {typeof (SpriteFont), "Fonts"}
             };
             m_jsonLoader = new JsonLoader(Path.Combine(absoluteDirPath, "Config\\Json"));
@@ -41,7 +41,42 @@ namespace _4DMonoEngine.Core.Assets
             Debug.Assert(!string.IsNullOrEmpty(assetId));
             Debug.Assert(m_pathDictionary.ContainsKey(typeof (T)));
             var path = Path.Combine(m_pathDictionary[typeof (T)], assetId);
+            if (typeof (T) == typeof (Texture2D))
+            {
+                return (T)GetTexture(path);
+            }
+            if (typeof (T) == typeof (Effect))
+            {
+                return (T) GetEffect(path);
+            }
             return m_contentManager.Load<T>(path);
+        }
+
+        private Object GetTexture(string path)
+        {
+            if (!Path.HasExtension(path))
+            {
+                path += ".png";
+            }
+            Debug.Assert(File.Exists(path), "The path: " + path + " does not exist.");
+            var file = File.OpenRead(path);
+            var texture = Texture2D.FromStream(m_graphicsDevice, file);
+            file.Close();
+            return texture;
+        }
+
+        private Object GetEffect(string path)
+        {
+            if (!Path.HasExtension(path))
+            {
+                path += ".mgfxo";
+            }
+            Debug.Assert(File.Exists(path), "The path: " + path + " does not exist.");
+            var file = File.OpenRead(path);
+            var reader = new BinaryReader(file);
+            var effect = new Effect(m_graphicsDevice, reader.ReadBytes((int)reader.BaseStream.Length));
+            reader.Close();
+            return effect;
         }
 
         public async Task<Dictionary<string, T>> GetTable<T>(string tableName) where T : IDataContainer
