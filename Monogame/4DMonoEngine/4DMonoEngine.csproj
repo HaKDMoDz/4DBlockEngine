@@ -105,7 +105,9 @@
     <Compile Include="Core\Events\IEventSink.cs" />
     <Compile Include="Core\Events\IEventSource.cs" />
     <Compile Include="Core\Graphics\RenderingConstants.cs" />
+    <Compile Include="Core\Initialization\BlockInitializer.cs" />
     <Compile Include="Core\Initialization\InitializationController.cs" />
+    <Compile Include="Core\Initialization\SimulationInitializer.cs" />
     <Compile Include="Core\Managers\DebugManager.cs" />
     <Compile Include="Core\Managers\EntityManager.cs" />
     <Compile Include="Core\Processors\CellularLghting.cs" />

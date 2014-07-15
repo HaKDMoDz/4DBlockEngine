@@ -2,18 +2,18 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using _4DMonoEngine.Core.Common.Interfaces;
 
 namespace _4DMonoEngine.Core.Initialization
 {
-    class InitializationController
+    public class InitializationController
     {
+        public delegate void InitializationHandler();
         private readonly List<IInitializable> m_initializables;
-        private Task m_initializationTask;
         private bool m_isComplete;
+        private InitializationHandler m_initializationHandler;
 
         public InitializationController()
         {
@@ -23,6 +23,11 @@ namespace _4DMonoEngine.Core.Initialization
         public InitializationController(IEnumerable<IInitializable> entries)
         {
             m_initializables = new List<IInitializable>(entries);
+        }
+
+        public void SetInitializationHandler(InitializationHandler handler)
+        {
+            m_initializationHandler = handler;
         }
 
         public void AddEntry(IInitializable entry)
@@ -58,29 +63,40 @@ namespace _4DMonoEngine.Core.Initialization
             }
             if (initializationChain.Count > 0)
             {
-                m_initializationTask = Task.Run(() =>
+                Task.Run(() =>
                 {
-                    IInitializable current = null;
+                    var current = new Dictionary<Type, IInitializable>();
+
                     while (initializationChain.Count > 0)
                     {
-                        if (current != null && !current.IsInitialized())
+                        var dependencies = initializationChain.Peek().Dependencies();
+                        if (!dependencies.All(dep => current[dep].IsInitialized()))
                         {
                             Thread.Sleep(10);
                             continue;
                         }
-                        current = initializationChain.Dequeue();
-                        current.Initialize();
+                        var next = initializationChain.Dequeue();
+                        next.Initialize();
+                        current[next.GetType()] = next;
                     }
-                    Debug.Assert(current != null, "current unexpectedly null");
-                    while (!current.IsInitialized())
+
+                    while (current.Any(pair => !pair.Value.IsInitialized()))
                     {
                         Thread.Sleep(10);
+                    }
+                    if (m_initializationHandler != null)
+                    {
+                        m_initializationHandler();
                     }
                     m_isComplete = true;
                 });
             }
             else
             {
+                if (m_initializationHandler != null)
+                {
+                    m_initializationHandler();
+                }
                 m_isComplete = true;
             }
         }

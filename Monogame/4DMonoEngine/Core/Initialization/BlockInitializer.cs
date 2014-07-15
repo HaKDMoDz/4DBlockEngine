@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Common.Interfaces;
 
 namespace _4DMonoEngine.Core.Initialization
 {
-    class BlockInitializer :IInitializable
+    public sealed class BlockInitializer :IInitializable
     {
         private readonly List<Type> m_dependencies;
         public BlockInitializer()
@@ -23,7 +20,7 @@ namespace _4DMonoEngine.Core.Initialization
 
         public bool IsInitialized()
         {
-            return BlockDictionary.GetInstance().IsValidBlockId(0);
+            return BlockDictionary.GetInstance().IsInitialized;
         }
 
         public void Initialize()

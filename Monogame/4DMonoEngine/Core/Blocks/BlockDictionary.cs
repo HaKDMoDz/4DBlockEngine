@@ -22,6 +22,7 @@ namespace _4DMonoEngine.Core.Blocks
         private readonly Dictionary<String, ushort> m_blockNameMap;
         private readonly Dictionary<string, ushort[]> m_blockTypeMap;
         private readonly Dictionary<int, HalfVector2[]> m_blockTextureMappings;
+        public bool IsInitialized { get; private set; }
 
         private BlockDictionary()
         {
@@ -58,6 +59,7 @@ namespace _4DMonoEngine.Core.Blocks
                 }
                 m_blockTypeMap.Add(type, idList.ToArray());
             }
+            IsInitialized = true;
         }
 
         private static HalfVector2[] GetBlockTextureMapping(float xOffset, float yOffset, float unitSize)

@@ -4,10 +4,10 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using _4DMonoEngine.Core.Assets;
 using _4DMonoEngine.Core.Assets.Config;
-using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Common.Interfaces;
 using _4DMonoEngine.Core.Events;
 using _4DMonoEngine.Core.Graphics;
+using _4DMonoEngine.Core.Initialization;
 using _4DMonoEngine.Core.Logging;
 using _4DMonoEngine.Core.Managers;
 using _4DMonoEngine.Core.Universe;
@@ -46,34 +46,41 @@ namespace _4DMonoEngine.Core
         public EventDispatcher CentralDispatch { get; private set; }
 
         public Task<General> GeneralSettings { get; private set; }
+        private InitializationController m_initializationController;
 
         public void Initialize(Game game, uint seed)
         {
             Game = game;
             m_assetProvider = new AssetManager(game.Content, game.GraphicsDevice);
             GeneralSettings = GetConfig<General>("GeneralSettings");
-            //TODO : This next line fixes a race condition in the dumbest way... build initialization manager
-            BlockDictionary.GetInstance();
-            Simulation = new Simulation(game, seed);
-            game.Components.Add(Simulation);
-            Camera = new Camera(game.GraphicsDevice.Viewport.AspectRatio);
+            m_initializationController = new InitializationController();
+            m_initializationController.AddEntry(new BlockInitializer());
+            var simulationInitializer = new SimulationInitializer(game, seed);
+            m_initializationController.AddEntry(simulationInitializer);
+            m_initializationController.SetInitializationHandler(() =>
+            {
+                Simulation = simulationInitializer.GetSimulation();
+                game.Components.Add(Simulation);
+                var player = Simulation.Player;
+                CentralDispatch.Register(EventConstants.KeyDown, player.GetHandlerForEvent(EventConstants.KeyDown));
+                CentralDispatch.Register(EventConstants.KeyUp, player.GetHandlerForEvent(EventConstants.KeyUp));
+                CentralDispatch.Register(EventConstants.LeftMouseDown, player.GetHandlerForEvent(EventConstants.LeftMouseDown));
+                CentralDispatch.Register(EventConstants.LeftMouseUp, player.GetHandlerForEvent(EventConstants.LeftMouseUp));
+                CentralDispatch.Register(EventConstants.RightMouseDown, player.GetHandlerForEvent(EventConstants.RightMouseDown));
+                CentralDispatch.Register(EventConstants.MousePositionUpdated, player.GetHandlerForEvent(EventConstants.MousePositionUpdated));
 #if DEBUG
-            DebugOnlyDebugManager = new DebugManager(game, Camera, Simulation.ChunkCache, GetAsset<SpriteFont>("Verdana"));
-            game.Components.Add(DebugOnlyDebugManager);
+                DebugOnlyDebugManager = new DebugManager(game, Camera, Simulation.ChunkCache, GetAsset<SpriteFont>("Verdana"));
+                game.Components.Add(DebugOnlyDebugManager);
 #endif
-            var player = Simulation.Player;
-            CentralDispatch.Register(EventConstants.KeyDown, player.GetHandlerForEvent(EventConstants.KeyDown));
-            CentralDispatch.Register(EventConstants.KeyUp, player.GetHandlerForEvent(EventConstants.KeyUp));
-            CentralDispatch.Register(EventConstants.LeftMouseDown, player.GetHandlerForEvent(EventConstants.LeftMouseDown));
-            CentralDispatch.Register(EventConstants.LeftMouseUp, player.GetHandlerForEvent(EventConstants.LeftMouseUp));
-            CentralDispatch.Register(EventConstants.RightMouseDown, player.GetHandlerForEvent(EventConstants.RightMouseDown));
-            CentralDispatch.Register(EventConstants.MousePositionUpdated, player.GetHandlerForEvent(EventConstants.MousePositionUpdated));
-
+            });
+            m_initializationController.Run();
+            Camera = new Camera(game.GraphicsDevice.Viewport.AspectRatio);
             CentralDispatch.Register(EventConstants.PlayerPositionUpdated, Camera.GetHandlerForEvent(EventConstants.PlayerPositionUpdated));
             CentralDispatch.Register(EventConstants.ViewUpdated, Camera.GetHandlerForEvent(EventConstants.ViewUpdated));
             CentralDispatch.Register(EventConstants.ScreenSizeUpdated, Camera.GetHandlerForEvent(EventConstants.ScreenSizeUpdated));
             CentralDispatch.Register(EventConstants.ModalScreenPushed, Camera.GetHandlerForEvent(EventConstants.ModalScreenPushed));
             CentralDispatch.Register(EventConstants.ModalScreenPopped, Camera.GetHandlerForEvent(EventConstants.ModalScreenPopped));
+
         }
 
         public Logger GetLogger(string name = null)
