@@ -12,7 +12,14 @@ namespace _4DMonoEngine.Core.Common.AbstractClasses
         protected GetFogVector m_getFogVector;
         protected GraphicsDevice m_graphicsDevice;
         protected Camera m_camera;
-        public bool Initialized { get; private set; } 
+
+        protected WorldRenderable(Game game)
+        {
+            Game = game;
+        }
+
+        public bool Initialized { get; private set; }
+        public Game Game { get; private set; }
 
         public virtual void Initialize(GraphicsDevice graphicsDevice, Camera camera, GetTimeOfDay getTimeOfDay, GetFogVector getFogVector)
         {

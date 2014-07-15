@@ -53,11 +53,11 @@ namespace _4DMonoEngine.Core.Universe
         private Effect m_blockEffect; // block effect.
         private Texture2D m_blockTextureAtlas; // block texture atlas
 
-        public Sky(uint seed)
+        public Sky(Game game, uint seed) : base(game)
         {
             m_noise = new SimplexNoise(seed);
             m_clouds = new CloudBlock[Size * Size];
-            m_cloudVertexTarget = new CloudTarget(new Vector3Int(), Size, 1, Size);
+            m_cloudVertexTarget = new CloudTarget(new Vector3Int(), Size - 1, 1, Size - 1);
 
             CloudSpeed = 0.1f;
         }
@@ -71,7 +71,7 @@ namespace _4DMonoEngine.Core.Universe
         {
             base.Initialize(graphicsDevice, camera, getTimeOfDay, getFogVector);
             m_vertexBuilder = new VertexBuilder<CloudBlock>(m_clouds, CloudIndexByWorldPosition, m_graphicsDevice);
-
+            StepClouds();
         }
 
         private int CloudIndexByWorldPosition(int x, int y, int z)
@@ -82,10 +82,12 @@ namespace _4DMonoEngine.Core.Universe
 
         public override void Update(GameTime gameTime)
         {
-            if (m_vertexBuilder == null)
-            {
-                return;
-            }
+            //StepClouds();
+            m_vertexBuilder.Build(m_cloudVertexTarget);
+        }
+
+        private void StepClouds()
+        {
             for (var x = 0; x < Size; x++)
             {
                 for (var z = 0; z < Size; z++)
@@ -93,7 +95,6 @@ namespace _4DMonoEngine.Core.Universe
                     m_clouds[x * Size + z] = m_noise.Perlin3Dfmb(x, m_getTimeOfDay() * CloudSpeed, z, Size, 0, 3) > 0 ? CloudBlock.Cloud : CloudBlock.Empty;
                 }
             }
-            m_vertexBuilder.Build(m_cloudVertexTarget);
         }
 
         public override void Draw(GameTime gameTime)

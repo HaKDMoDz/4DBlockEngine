@@ -8,8 +8,6 @@ namespace _4DMonoEngine.Core.Common.AbstractClasses
         private bool m_enabled = true;
         private int m_updateOrder;
 
-        public Game Game { get; private set; }
-
         public bool Enabled
         {
           get

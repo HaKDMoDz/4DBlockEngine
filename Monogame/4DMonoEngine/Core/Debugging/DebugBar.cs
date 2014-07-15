@@ -24,16 +24,16 @@ namespace _4DMonoEngine.Core.Debugging
         private Statistics m_statistics;
 
 
-        public DebugBar(Game game, ChunkCache chunkCache)
+        public DebugBar(Game game, Statistics statistics, ChunkCache chunkCache)
             : base(game)
         {
             m_chunkCache = chunkCache;
+            m_statistics = statistics;
         }
 
         public override void Initialize()
         {
             base.Initialize();
-            m_statistics = (Statistics)Game.Services.GetService(typeof(Statistics));
         }
 
         protected override void LoadContent()

@@ -10,7 +10,6 @@ namespace _4DMonoEngine.Core.Debugging.Profiling
         public Statistics(Game game, ChunkCache chunkCache) : base(game)
         {
             m_chunkCache = chunkCache;
-            game.Services.AddService(typeof(Statistics), this);
         }
 
         public int Fps { get; private set; }

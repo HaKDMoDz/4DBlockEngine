@@ -61,8 +61,10 @@ namespace _4DMonoEngine.Core.Chunks
         public Block[] Blocks { get; private set; }
 
 
-        public ChunkCache(GraphicsDevice graphicsDevice, uint seed)
+        public ChunkCache(Game game, uint seed) : base(game)
         {
+            Debug.Assert(game != null);
+            var graphicsDevice = game.GraphicsDevice;
             Debug.Assert(ViewRange < CacheRange);
             Debug.Assert(graphicsDevice != null);
             Blocks = new Block[CacheSizeInBlocks * CacheSizeInBlocks * CacheSizeInBlocks];

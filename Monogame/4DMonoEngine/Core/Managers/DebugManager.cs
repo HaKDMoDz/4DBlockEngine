@@ -6,6 +6,7 @@ using _4DMonoEngine.Core.Debugging;
 using _4DMonoEngine.Core.Debugging.Console;
 using _4DMonoEngine.Core.Debugging.Graphs;
 using _4DMonoEngine.Core.Debugging.Ingame;
+using _4DMonoEngine.Core.Debugging.Profiling;
 using _4DMonoEngine.Core.Graphics;
 
 namespace _4DMonoEngine.Core.Managers
@@ -17,10 +18,12 @@ namespace _4DMonoEngine.Core.Managers
         public DebugManager(Game game, Camera camera, ChunkCache chunkCache, SpriteFont debugFont) : base(game)
         {
             m_graphs = new GraphManager(game);
+            var statistics = new Statistics(game, chunkCache);
             m_components = new GameComponentCollection
             {
                 new InGameDebugger(game, camera),
-                new DebugBar(game, chunkCache),
+                new DebugBar(game, statistics, chunkCache),
+                statistics,
                 m_graphs,
                 new GameConsole(game,  new SpriteBatch(game.GraphicsDevice), new GameConsoleOptions
                 {
