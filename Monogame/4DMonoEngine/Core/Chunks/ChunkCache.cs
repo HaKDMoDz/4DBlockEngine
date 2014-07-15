@@ -52,7 +52,7 @@ namespace _4DMonoEngine.Core.Chunks
         private readonly VertexBuilder<Block> m_vertexBuilder;
         private readonly SparseArray3D<Chunk> m_chunkStorage;
         private Vector4 m_cacheCenterPosition;
-        private Chunk m_currentChunk;
+        private readonly Action<EventArgs> m_wrappedPositionHandler; 
 
         private bool m_cacheThreadStarted;
 
@@ -74,6 +74,7 @@ namespace _4DMonoEngine.Core.Chunks
             m_chunkStorage = new SparseArray3D<Chunk>(CacheRange * 2 + 1, CacheRange * 2 + 1);
             m_cacheCenterPosition = new Vector4();
             m_cacheThreadStarted = false;
+            m_wrappedPositionHandler = EventHelper.Wrap<Vector3Args>(UpdateCachePosition);
 #if DEBUG
             StateStatistics = new Dictionary<ChunkState, int> // init. the debug stastics.
                                        {
@@ -211,10 +212,7 @@ namespace _4DMonoEngine.Core.Chunks
         {
             while (true)
             {
-                if (m_currentChunk != null)
-                {
-                    Process();
-                }
+                Process();
             }
 // ReSharper disable once FunctionNeverReturns
         }
@@ -235,7 +233,7 @@ namespace _4DMonoEngine.Core.Chunks
                     }
                     else
                     {
-                        m_chunkStorage.Remove(chunk.RelativePosition.X, chunk.RelativePosition.Y, chunk.RelativePosition.Z);
+                        m_chunkStorage.Remove(chunk.ChunkCachePosition.X, chunk.ChunkCachePosition.Y, chunk.ChunkCachePosition.Z);
                         chunk.PrepForRemoval();
                     }
                 }
@@ -245,24 +243,20 @@ namespace _4DMonoEngine.Core.Chunks
 
         private void RecacheChunks()
         {
-            m_currentChunk = GetChunkByWorldPosition((int)m_cacheCenterPosition.X, (int)m_cacheCenterPosition.Y, (int)m_cacheCenterPosition.Z);
-            if (m_currentChunk == null)
-            {
-                return;
-            }
+            var chunkPosition = new Vector3Int((int)(m_cacheCenterPosition.X / Chunk.SizeInBlocks), (int)(m_cacheCenterPosition.Y / Chunk.SizeInBlocks), ((int)m_cacheCenterPosition.Z / Chunk.SizeInBlocks));
             for (var z = -CacheRange; z <= CacheRange; z++)
             {
                 for (var y = -CacheRange; y <= CacheRange; y++)
                 {
                     for (var x = -CacheRange; x <= CacheRange; x++)
                     {
-                        if (m_chunkStorage.ContainsKey(m_currentChunk.RelativePosition.X + x,
-                            m_currentChunk.RelativePosition.Y + y, m_currentChunk.RelativePosition.Z + z))
+                        if (m_chunkStorage.ContainsKey(chunkPosition.X + x,
+                            chunkPosition.Y + y, chunkPosition.Z + z))
                         {
                             continue;
                         }
-                        var chunk = new Chunk(new Vector3Int(m_currentChunk.RelativePosition.X + x, m_currentChunk.RelativePosition.Y + y, m_currentChunk.RelativePosition.Z + z), Blocks);
-                        m_chunkStorage[chunk.RelativePosition.X, chunk.RelativePosition.Y, chunk.RelativePosition.Z] = chunk;
+                        var chunk = new Chunk(new Vector3Int(chunkPosition.X + x, chunkPosition.Y + y, chunkPosition.Z + z), Blocks);
+                        m_chunkStorage[chunk.ChunkCachePosition.X, chunk.ChunkCachePosition.Y, chunk.ChunkCachePosition.Z] = chunk;
                     }
                 }
             }
@@ -407,17 +401,17 @@ namespace _4DMonoEngine.Core.Chunks
             switch (edge)
             {
                 case FaceDirection.XDecreasing:
-                    return GetChunkByRelativePosition(origin.RelativePosition.X - 1, origin.RelativePosition.Y, origin.RelativePosition.Z);
+                    return GetChunkByRelativePosition(origin.ChunkCachePosition.X - 1, origin.ChunkCachePosition.Y, origin.ChunkCachePosition.Z);
                 case FaceDirection.XIncreasing:
-                    return GetChunkByRelativePosition(origin.RelativePosition.X + 1, origin.RelativePosition.Y, origin.RelativePosition.Z);
+                    return GetChunkByRelativePosition(origin.ChunkCachePosition.X + 1, origin.ChunkCachePosition.Y, origin.ChunkCachePosition.Z);
                 case FaceDirection.YDecreasing:
-                    return GetChunkByRelativePosition(origin.RelativePosition.X, origin.RelativePosition.Y - 1, origin.RelativePosition.Z);
+                    return GetChunkByRelativePosition(origin.ChunkCachePosition.X, origin.ChunkCachePosition.Y - 1, origin.ChunkCachePosition.Z);
                 case FaceDirection.YIncreasing:
-                    return GetChunkByRelativePosition(origin.RelativePosition.X, origin.RelativePosition.Y + 1, origin.RelativePosition.Z);
+                    return GetChunkByRelativePosition(origin.ChunkCachePosition.X, origin.ChunkCachePosition.Y + 1, origin.ChunkCachePosition.Z);
                 case FaceDirection.ZDecreasing:
-                    return GetChunkByRelativePosition(origin.RelativePosition.X, origin.RelativePosition.Y, origin.RelativePosition.Z - 1);
+                    return GetChunkByRelativePosition(origin.ChunkCachePosition.X, origin.ChunkCachePosition.Y, origin.ChunkCachePosition.Z - 1);
                 case FaceDirection.ZIncreasing:
-                    return GetChunkByRelativePosition(origin.RelativePosition.X, origin.RelativePosition.Y, origin.RelativePosition.Z + 1);
+                    return GetChunkByRelativePosition(origin.ChunkCachePosition.X, origin.ChunkCachePosition.Y, origin.ChunkCachePosition.Z + 1);
                 default:
                     return null;
             }
@@ -465,7 +459,7 @@ namespace _4DMonoEngine.Core.Chunks
             switch (eventName)
             {
                 case EventConstants.PlayerPositionUpdated:
-                    return EventHelper.Wrap<Vector3Args>(UpdateCachePosition);
+                    return m_wrappedPositionHandler;
                 default:
                     return null;
             }

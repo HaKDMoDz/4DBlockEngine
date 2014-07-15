@@ -63,7 +63,6 @@ namespace _4DMonoEngine.Core.Universe
         public override void Initialize()
         {
             var camera = MainEngine.GetEngineInstance().Camera;
-            m_player.SpawnPlayer(new Vector2Int(0, 0));
             foreach (var renderable in m_worldComponents)
             {
                 if (renderable is WorldRenderable)
@@ -73,6 +72,7 @@ namespace _4DMonoEngine.Core.Universe
                 renderable.LoadContent();
             }
             base.Initialize();
+            m_player.SpawnPlayer(new Vector2Int(0, 0));
         }
 
         public override void Update(GameTime gameTime)

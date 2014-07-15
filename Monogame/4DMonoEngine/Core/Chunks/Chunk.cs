@@ -30,22 +30,22 @@ namespace _4DMonoEngine.Core.Chunks
         public const byte MaxSunValue = 255;
         public const int SizeInBlocks = 16;
         private readonly Block[] m_blocks;
-        public Vector3Int RelativePosition;
+        public Vector3Int ChunkCachePosition;
 
         public SparseArray3D<Vector3Byte> LightSources;
 
         public ChunkState ChunkState;
         
-        public Chunk(Vector3Int relativePosition, Block[] blocks)
+        public Chunk(Vector3Int chunkCachePosition, Block[] blocks)
         {
             ChunkState = ChunkState.AwaitingGenerate; // set initial state to awaiting generation.
-            RelativePosition = relativePosition; // set the relative position.
+            ChunkCachePosition = chunkCachePosition; // set the relative position.
             m_blocks = blocks;
 
             // calculate the real world position.
-            Position = new Vector3Int(RelativePosition.X * SizeInBlocks,
-                                           RelativePosition.Y * SizeInBlocks,
-                                           RelativePosition.Z * SizeInBlocks);
+            Position = new Vector3Int(ChunkCachePosition.X * SizeInBlocks,
+                                           ChunkCachePosition.Y * SizeInBlocks,
+                                           ChunkCachePosition.Z * SizeInBlocks);
 
             // calculate bounding-box.
             BoundingBox = new BoundingBox(new Vector3(Position.X, Position.Y, Position.Z),
@@ -206,13 +206,13 @@ namespace _4DMonoEngine.Core.Chunks
 
         public override string ToString()
         {
-            return string.Format("{0} {1}", RelativePosition, ChunkState);
+            return string.Format("{0} {1}", ChunkCachePosition, ChunkState);
         }
 
         
         public void DrawInGameDebugVisual(GraphicsDevice graphicsDevice, Camera camera, SpriteBatch spriteBatch, SpriteFont spriteFont)
         {
-            var position = RelativePosition + " " + ChunkState;
+            var position = ChunkCachePosition + " " + ChunkState;
             var positionSize = spriteFont.MeasureString(position);
 
             var projected = graphicsDevice.Viewport.Project(Vector3.Zero, camera.Projection, camera.View,

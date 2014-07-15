@@ -15,11 +15,17 @@ namespace _4DMonoEngine.Core.Graphics
         private const float ViewAngle = MathHelper.PiOver4;
         private const float NearPlaneDistance = 0.01f;
         private const float FarPlaneDistance = 1000f;
+        private readonly Action<EventArgs> m_wrappedScreenSizeHandler;
+        private readonly Action<EventArgs> m_wrappedViewHandler;
+        private readonly Action<EventArgs> m_wrappedPositionHandler; 
 
         public Camera(float aspectRatio)
         {
             World = Matrix.Identity;
-            Projection = Matrix.CreatePerspectiveFieldOfView(ViewAngle, aspectRatio, NearPlaneDistance, FarPlaneDistance); 
+            Projection = Matrix.CreatePerspectiveFieldOfView(ViewAngle, aspectRatio, NearPlaneDistance, FarPlaneDistance);
+            m_wrappedScreenSizeHandler = EventHelper.Wrap<Vector2Args>(UpdateScreenSize);
+            m_wrappedViewHandler = EventHelper.Wrap<Vector3Args>(UpdateTarget);
+            m_wrappedPositionHandler = EventHelper.Wrap<Vector3Args>(UpdatePosition);
         }
 
         private void Update()
@@ -64,11 +70,11 @@ namespace _4DMonoEngine.Core.Graphics
             switch (eventName)
             {
                 case EventConstants.ScreenSizeUpdated:
-                    return EventHelper.Wrap<Vector2Args>(UpdateScreenSize);
+                    return m_wrappedScreenSizeHandler;
                 case EventConstants.ViewUpdated:
-                    return EventHelper.Wrap<Vector3Args>(UpdateTarget);
+                    return m_wrappedViewHandler;
                 case EventConstants.PlayerPositionUpdated:
-                    return EventHelper.Wrap<Vector3Args>(UpdatePosition);
+                    return m_wrappedPositionHandler;
                 default :
                     return null;
             }
