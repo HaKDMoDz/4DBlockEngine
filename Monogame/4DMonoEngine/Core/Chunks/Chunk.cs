@@ -224,10 +224,16 @@ namespace _4DMonoEngine.Core.Chunks
         public void PrepForRemoval()
         {
             ChunkState = ChunkState.AwaitingRemoval;
-            VertexBuffer.Dispose();
-            VertexBuffer = null;
-            IndexBuffer.Dispose();
-            IndexBuffer = null;
+            if (VertexBuffer != null)
+            {
+                VertexBuffer.Dispose();
+                VertexBuffer = null;
+            }
+            if (IndexBuffer != null)
+            {
+                IndexBuffer.Dispose();
+                IndexBuffer = null;
+            }
             //TODO : if dirty flag is true send this chunk to the persistance manager
         }
     }

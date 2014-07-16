@@ -33,7 +33,7 @@ namespace _4DMonoEngine.Core
             m_logManager = new LogManager(new List<LogTarget>
             {
                 new ConsoleTarget(Logger.Level.Info, Logger.Level.Fatal, false),
-                new FileTarget("EngineLog", Logger.Level.Trace, Logger.Level.PacketDump, true)
+                new FileTarget("EngineLog.txt", Logger.Level.Trace, Logger.Level.PacketDump, true)
             });
             Rasterizer = new Rasterizer();
             CentralDispatch = new EventDispatcher();

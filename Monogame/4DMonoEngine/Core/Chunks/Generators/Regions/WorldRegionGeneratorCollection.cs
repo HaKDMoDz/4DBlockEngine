@@ -64,15 +64,16 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
                 m_generators.Add(regionData.GetKey(), GeneratorBuilder(SimplexNoise, regionData));
             }
         }
-
+        
         public RegionData GetRegionData(float x, float y, float z)
         {
             var data = m_cellNoise.Voroni(x / m_centroidSampleScale, y / m_centroidSampleScale, z / m_centroidSampleScale);
-            if (!m_biomes.ContainsKey(data.Id))
+            if (m_biomes.ContainsKey(data.Id))
             {
-                var centroid = new Vector3(x, y, z) + data.Delta * m_centroidSampleScale;
-                m_biomes[data.Id] = InternalGetRegionData(x, y, z, centroid);
+                return m_biomes[data.Id];
             }
+            var centroid = new Vector3(x, y, z) + data.Delta*m_centroidSampleScale;
+            m_biomes[data.Id] = InternalGetRegionData(x, y, z, centroid);
             return m_biomes[data.Id];
         }
 

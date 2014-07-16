@@ -16,7 +16,7 @@
     	},
         {
             "Key":"Special",
-            "Value":["Cloud"]
+            "Value":["Cloud","Empty"]
         }
     ],
     "BlockTileMapUnitSize" : 0.0625

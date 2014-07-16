@@ -31,11 +31,6 @@ namespace _4DMonoEngine.Core.Debugging
             m_statistics = statistics;
         }
 
-        public override void Initialize()
-        {
-            base.Initialize();
-        }
-
         protected override void LoadContent()
         {
             // load resources.

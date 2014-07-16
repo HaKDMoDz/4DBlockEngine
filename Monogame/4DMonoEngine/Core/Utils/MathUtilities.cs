@@ -68,7 +68,7 @@ namespace _4DMonoEngine.Core.Utils
 
         public static int Modulo(int x, int m)
         {
-            return x < 0 ? x % m + m : x % m;
+            return x < 0 ? (x % m) + m : x % m;
         }
     }
 }

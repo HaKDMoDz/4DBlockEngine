@@ -185,7 +185,7 @@ namespace _4DMonoEngine.Core.Universe
 
         public void SpawnPlayer(Vector2Int relativePosition)
         {
-            m_position = new Vector3(relativePosition.X * Chunk.SizeInBlocks, 150, relativePosition.Z * Chunk.SizeInBlocks);
+            m_position = new Vector3(relativePosition.X * Chunk.SizeInBlocks, 10, relativePosition.Z * Chunk.SizeInBlocks);
             m_eventSourceImpl.FireEvent(EventConstants.PlayerPositionUpdated, new Vector3Args(m_position));
             m_eventSourceImpl.FireEvent(EventConstants.ViewUpdated, new Vector3Args(m_lookVector));
         }

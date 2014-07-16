@@ -28,15 +28,14 @@ sampler BlockTextureAtlasSampler = sampler_state
 
 struct VertexShaderInput
 {
-    float4 Position				: POSITION0;	
+	float4 Position				: SV_POSITION;
 	float2 blockTextureCoord	: TEXCOORD0;	// block texture uv-mapping coordinates.
-	float SunLight				: COLOR0;		// crack texture uv-mapping coordinates.
-    //float3 LocalLight			: COLOR1;		// ambient occlusion weight.
+	float4 Light				: COLOR0;		// Light (sun, r, g, b)
 };
 
 struct VertexShaderOutput
 {
-    float4 Position				: POSITION0;
+	float4 Position				: SV_POSITION;
     float2 blockTextureCoord	: TEXCOORD0;
     float3 CameraView			: TEXCOORD1;
     float Distance				: TEXCOORD2;
@@ -63,7 +62,7 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 	else
 		sunColor *= (TimeOfDay - 24) / -12;	
 
-	output.Color.rgb = (sunColor * input.SunLight); // + (input.LocalLight.rgb);
+	output.Color.rgb = (sunColor * input.Light.x); // + (input.LocalLight.rgb);
 	output.Color.a = 1;
 
     return output;
@@ -95,7 +94,7 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 	sunColor += nightColor;
 	fogColor += nightColor;
 
-    return lerp(fogColor, color ,fog);
+	return lerp(fogColor, color ,fog);
 }
 
 technique BlockTechnique

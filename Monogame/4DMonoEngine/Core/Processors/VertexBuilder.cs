@@ -42,7 +42,7 @@ namespace _4DMonoEngine.Core.Processors
                 {
                     for (var y = (int)vertexBuilderTarget.BoundingBox.Min.Y; y <= vertexBuilderTarget.BoundingBox.Max.Y; y++)
                     {
-                        var position = new Vector3Int(vertexBuilderTarget.Position.X + x, vertexBuilderTarget.Position.Y + y, vertexBuilderTarget.Position.Z + z);
+                        var position = new Vector3Int(x, y, z);
                         var blockIndex = m_mappingFunction(x, y, z);
                         var block = m_blockSource[blockIndex];
                         if (block.Exists && m_blockSource[blockIndex].Opacity > 0)
@@ -231,7 +231,7 @@ namespace _4DMonoEngine.Core.Processors
             }
             else
             {
-                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 2));
+                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 1));
                 vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 2));
                 vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 3));
                 vertexBuilderTarget.IndexList.Add(vertexBuilderTarget.Index);

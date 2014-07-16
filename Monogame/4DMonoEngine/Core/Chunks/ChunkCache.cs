@@ -10,6 +10,7 @@ using _4DMonoEngine.Core.Common.Enums;
 using _4DMonoEngine.Core.Events;
 using _4DMonoEngine.Core.Events.Args;
 using _4DMonoEngine.Core.Graphics;
+using _4DMonoEngine.Core.Logging;
 using _4DMonoEngine.Core.Processors;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -21,7 +22,7 @@ namespace _4DMonoEngine.Core.Chunks
 
     public class ChunkCache : WorldRenderable, IEventSink
     {
-        private const byte CacheRange = 16;
+        private const byte CacheRange = 4;
         private BoundingBox m_cacheRangeBoundingBox;
         /*TODO : Implement LOD here
          * 
@@ -31,7 +32,7 @@ namespace _4DMonoEngine.Core.Chunks
          * issues with the Large Object Heap
          * 
          */
-        public const byte ViewRange = 12;
+        public const byte ViewRange = 2;
         private BoundingBox m_viewRangeBoundingBox;
 
         private const int CacheSizeInBlocks = (CacheRange*2 + 1)*Chunk.SizeInBlocks;
@@ -55,14 +56,18 @@ namespace _4DMonoEngine.Core.Chunks
         private readonly Action<EventArgs> m_wrappedPositionHandler; 
 
         private bool m_cacheThreadStarted;
+        private bool m_cachePositionUpdated;
 
         public Vector4 CachePosition { get { return m_cacheCenterPosition; } }
 
         public Block[] Blocks { get; private set; }
+        private readonly Logger m_logger;
+        private readonly List<Chunk> m_processingQueue; 
 
 
         public ChunkCache(Game game, uint seed) : base(game)
         {
+            m_logger = MainEngine.GetEngineInstance().GetLogger("ChunkCache");
             Debug.Assert(game != null);
             var graphicsDevice = game.GraphicsDevice;
             Debug.Assert(ViewRange < CacheRange);
@@ -74,6 +79,7 @@ namespace _4DMonoEngine.Core.Chunks
             m_chunkStorage = new SparseArray3D<Chunk>(CacheRange * 2 + 1, CacheRange * 2 + 1);
             m_cacheCenterPosition = new Vector4();
             m_cacheThreadStarted = false;
+            m_processingQueue = new List<Chunk>();
             m_wrappedPositionHandler = EventHelper.Wrap<Vector3Args>(UpdateCachePosition);
 #if DEBUG
             StateStatistics = new Dictionary<ChunkState, int> // init. the debug stastics.
@@ -90,9 +96,9 @@ namespace _4DMonoEngine.Core.Chunks
 #endif
         }
 
-        private int MappingFunction(int x, int z)
+        private int MappingFunction(int x, int y, int z)
         {
-            return BlockIndexByWorldPosition(x, 0, z);
+            return BlockIndexByWorldPosition(x, y, z);
         }
 
         public override void Initialize(GraphicsDevice graphicsDevice, Camera camera, GetTimeOfDay getTimeOfDay, GetFogVector getFogVector)
@@ -156,19 +162,23 @@ namespace _4DMonoEngine.Core.Chunks
 
         public void UpdateCachePosition(int x, int y, int z)
         {
-            if(x != (int)m_cacheCenterPosition.X || y != (int)m_cacheCenterPosition.Y || z != (int)m_cacheCenterPosition.Z)
+            if (x == (int) m_cacheCenterPosition.X && y == (int) m_cacheCenterPosition.Y &&
+                z == (int) m_cacheCenterPosition.Z)
             {
-                m_cacheCenterPosition.X = x;
-                m_cacheCenterPosition.Y = y;
-                m_cacheCenterPosition.Z = z;
-                UpdateBoundingBoxes();
-                if (!m_cacheThreadStarted)
-                {
-                    var cacheThread = new Thread(CacheThread) {IsBackground = true};
-                    cacheThread.Start();
-                    m_cacheThreadStarted = true;
-                }
+                return;
             }
+            m_cachePositionUpdated = true;
+            m_cacheCenterPosition.X = x;
+            m_cacheCenterPosition.Y = y;
+            m_cacheCenterPosition.Z = z;
+            UpdateBoundingBoxes();
+            if (m_cacheThreadStarted)
+            {
+                return;
+            }
+            var cacheThread = new Thread(CacheThread) {IsBackground = true};
+            cacheThread.Start();
+            m_cacheThreadStarted = true;
         }
 
         public bool IsInViewRange(Chunk chunk)
@@ -219,30 +229,32 @@ namespace _4DMonoEngine.Core.Chunks
 
         private void Process()
         {
-            foreach (var chunk in m_chunkStorage.Values)
+           // m_processingQueue.AsParallel().ForAll(chunk =>
+            foreach (var chunk in m_chunkStorage.Values.ToArray())
             {
                 if (IsInViewRange(chunk))
                 {
                     ProcessChunkInViewRange(chunk);
                 }
-                else
+                else if (IsInCacheRange(chunk))
                 {
-                    if (IsInCacheRange(chunk))
-                    {
-                        ProcessChunkInCacheRange(chunk);
-                    }
-                    else
-                    {
-                        m_chunkStorage.Remove(chunk.ChunkCachePosition.X, chunk.ChunkCachePosition.Y, chunk.ChunkCachePosition.Z);
-                        chunk.PrepForRemoval();
-                    }
+                    ProcessChunkInCacheRange(chunk);
                 }
+            }//);
+           // m_processingQueue.Clear();
+            if (m_cachePositionUpdated)
+            {
+                RecacheChunks();
             }
-            RecacheChunks();
         }
 
         private void RecacheChunks()
         {
+            foreach (var chunk in m_chunkStorage.Values.Where(chunk => !IsInCacheRange(chunk)))
+            {
+                m_chunkStorage.Remove(chunk.ChunkCachePosition.X, chunk.ChunkCachePosition.Y, chunk.ChunkCachePosition.Z);
+                chunk.PrepForRemoval();
+            }
             var chunkPosition = new Vector3Int((int)(m_cacheCenterPosition.X / Chunk.SizeInBlocks), (int)(m_cacheCenterPosition.Y / Chunk.SizeInBlocks), ((int)m_cacheCenterPosition.Z / Chunk.SizeInBlocks));
             for (var z = -CacheRange; z <= CacheRange; z++)
             {
@@ -257,9 +269,24 @@ namespace _4DMonoEngine.Core.Chunks
                         }
                         var chunk = new Chunk(new Vector3Int(chunkPosition.X + x, chunkPosition.Y + y, chunkPosition.Z + z), Blocks);
                         m_chunkStorage[chunk.ChunkCachePosition.X, chunk.ChunkCachePosition.Y, chunk.ChunkCachePosition.Z] = chunk;
+                       // m_processingQueue.Add(chunk);
                     }
                 }
             }
+           /* m_processingQueue.Sort((chunk1, chunk2) =>
+            {
+                var dXc1 = chunk1.Position.X - m_cacheCenterPosition.X;
+                var dYc1 = chunk1.Position.Y - m_cacheCenterPosition.Y;
+                var dZc1 = chunk1.Position.Z - m_cacheCenterPosition.Z;
+
+                var dXc2 = chunk2.Position.X - m_cacheCenterPosition.X;
+                var dYc2 = chunk2.Position.Y - m_cacheCenterPosition.Y;
+                var dZc2 = chunk2.Position.Z - m_cacheCenterPosition.Z;
+
+                return (int)((dXc1 * dXc1 + dYc1 * dYc1 + dZc1 + dZc1) -
+                       (dXc2 * dXc2 + dYc2 * dYc2 + dZc2 + dZc2));
+
+            });*/
         }
 
         private void ProcessChunkInCacheRange(Chunk chunk)
@@ -275,15 +302,18 @@ namespace _4DMonoEngine.Core.Chunks
             switch (chunk.ChunkState) // switch on the chunk state.
             {
                 case ChunkState.AwaitingGenerate:
+                    m_logger.Error(chunk + " Generating");
                     m_generator.GenerateDataForChunk(chunk, 0);
                     break;
                 case ChunkState.AwaitingLighting:
                     chunk.ChunkState = ChunkState.Lighting;
+                    m_logger.Trace(chunk + " Lighting");
                     m_lightingEngine.Process(chunk.Position.X, chunk.Position.Y, chunk.Position.Z, chunk.LightSources);
                     chunk.ChunkState = ChunkState.AwaitingBuild;
                     break;
                 case ChunkState.AwaitingBuild:
                     chunk.ChunkState = ChunkState.Building; // set chunk state to building.
+                    m_logger.Trace(chunk + " Building");
                     m_vertexBuilder.Build(chunk);
                     chunk.ChunkState = ChunkState.Ready; // chunk is all ready now.
                     break;
@@ -356,7 +386,7 @@ namespace _4DMonoEngine.Core.Chunks
 
                     Game.GraphicsDevice.SetVertexBuffer(chunk.VertexBuffer);
                     Game.GraphicsDevice.Indices = chunk.IndexBuffer;
-                    Game.GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, chunk.VertexBuffer.VertexCount, 0, chunk.IndexBuffer.IndexCount/3);
+                    Game.GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, chunk.VertexBuffer.VertexCount, 0, chunk.IndexBuffer.IndexCount / 3);
 #if DEBUG
                     ChunksDrawn++;
 #endif

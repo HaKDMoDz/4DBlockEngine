@@ -9,7 +9,7 @@ namespace _4DMonoEngine.Core.Processors
 {
     internal class CellularLighting<T> where T : ILightable
     {
-        public delegate int MappingFunction(int x, int z);
+        public delegate int MappingFunction(int x, int y, int z);
 
         private const float SDropoff = 0.9375f;
         private readonly Queue<LightQueueContainer> m_lightQueueToAdd;
@@ -50,10 +50,9 @@ namespace _4DMonoEngine.Core.Processors
             {
                 for (byte z = 0; z < m_chunkSize; ++z)
                 {
-                    var offset = m_mappingFunction(chunkIndexX + x, chunkIndexZ + z) + chunkIndexY;
                     for (var y = m_chunkSize - 1; y > 0; --y)
                     {
-                        var blockIndex = offset + y;
+                        var blockIndex = m_mappingFunction(chunkIndexX + x, chunkIndexY + y, chunkIndexZ + z) ;
                         if (y == m_chunkSize - 1)
                         {
                             if (m_blockSource[blockIndex].Opacity < 1)
