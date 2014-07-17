@@ -1,7 +1,7 @@
 {
 	"Biomes" : ["Grassland"],
 	"Provinces" : ["Platform"],
-	"Sealevel" : 64,
+	"SeaLevel" : 64,
 	"MountainHeight" : 128,
 	"DetailScale" : 16,
 	"SinkHoleDepth" : 8,

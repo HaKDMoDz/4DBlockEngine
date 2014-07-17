@@ -60,17 +60,17 @@ namespace _4DMonoEngine.Core.Chunks.Generators
            var cW = chunkW * m_chunkSize;
            for (var x  = 0; x < m_chunkSize; ++x) 
 		   {
-                var cX = chunkWorldPosition.X * m_chunkSize + x;
+                var cX = chunkWorldPosition.X + x;
 			    for (var z = 0; z < m_chunkSize; ++z) 
 			    {
-                    var cZ = chunkWorldPosition.Z * m_chunkSize + z;
+                    var cZ = chunkWorldPosition.Z + z;
 					var groundLevel = GetHeight(cX, cZ, cW);
 					var detailNoise =  m_detail2.Perlin3Dfmb(cX, cZ, cW, 64, 0, 8);
                     var overhangStart = m_sealevel + MathHelper.Clamp(detailNoise * 4, -1, 1) * 2;
 					for (var y = 0; y < m_chunkSize; ++y)
 					{
-                        var cY = chunkWorldPosition.Y * m_chunkSize + y;
-					    if (!(cY < groundLevel))
+                        var cY = chunkWorldPosition.Y + y;
+					    if (cY > groundLevel)
 					    {
 					        continue;
 					    }

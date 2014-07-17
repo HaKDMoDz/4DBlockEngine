@@ -34,7 +34,7 @@ namespace _4DMonoEngine.Core.Universe
             m_worldComponents = new List<Renderable>();
             m_chunkCache = new ChunkCache(game, seed);
             m_worldComponents.Add(m_chunkCache);
-          //  m_worldComponents.Add(new Sky(game, seed));
+            m_worldComponents.Add(new Sky(game, seed));
             m_player = new Player(ChunkCache.Blocks);
             m_worldComponents.Add(m_player);
         }

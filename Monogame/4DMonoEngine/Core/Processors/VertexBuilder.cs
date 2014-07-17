@@ -193,10 +193,10 @@ namespace _4DMonoEngine.Core.Processors
                     vertexBl = new Vector3(position.X, position.Y + 1, position.Z);
                     break;
                 case FaceDirection.YDecreasing:
-                    vertexTl = new Vector3(position.X, position.Y, position.Z + 1);
-                    vertexTr = new Vector3(position.X + 1, position.Y, position.Z + 1);
-                    vertexBr = new Vector3(position.X + 1, position.Y, position.Z);
-                    vertexBl = new Vector3(position.X, position.Y, position.Z);
+                    vertexTl = new Vector3(position.X + 1, position.Y, position.Z + 1);
+                    vertexTr = new Vector3(position.X, position.Y, position.Z + 1);
+                    vertexBr = new Vector3(position.X, position.Y, position.Z);
+                    vertexBl = new Vector3(position.X + 1, position.Y, position.Z);
                     break;
                 case FaceDirection.ZIncreasing:
                     vertexTl = new Vector3(position.X + 1, position.Y + 1, position.Z + 1);

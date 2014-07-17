@@ -22,7 +22,7 @@ namespace _4DMonoEngine.Core.Input
         public InputManager(Game game)
             : base(game)
         {
-            CursorCentered = false;
+            CursorCentered = true;
             EventsFired = new[]
             {
                 EventConstants.MousePositionUpdated, 

@@ -8,13 +8,14 @@ using _4DMonoEngine.Core.Common.Interfaces;
 using _4DMonoEngine.Core.Events;
 using _4DMonoEngine.Core.Events.Args;
 using Microsoft.Xna.Framework;
+using _4DMonoEngine.Core.Utils;
 using _4DMonoEngine.Core.Utils.Vector;
 
 namespace _4DMonoEngine.Core.Universe
 {
     public class Player : Renderable, IEventSink, IEventSource
     {
-        private const float MouseVelocity = 0.005f;
+        private const float MouseVelocity = 0.05f;
         public bool FlyingEnabled { get; set; }
         public IEquipable Equipable { get; set; }
         private Vector2 m_currentMousePosition;
@@ -131,8 +132,8 @@ namespace _4DMonoEngine.Core.Universe
                 }
                 else
                 {
-                        m_velocity.X = moveVector.X * MoveSpeed;
-                        m_velocity.Z = moveVector.Z * MoveSpeed;
+                    m_velocity.X = moveVector.X * MoveSpeed;
+                    m_velocity.Z = moveVector.Z * MoveSpeed;
                 }
             }
             else
@@ -191,7 +192,8 @@ namespace _4DMonoEngine.Core.Universe
             if (m_currentMousePosition != Vector2.Zero)
             {
                 m_currentLookPolarVector.X -= deltaTime * m_currentMousePosition.X * MouseVelocity;
-                m_currentLookPolarVector.Y += deltaTime * m_currentMousePosition.Y * MouseVelocity;
+                m_currentLookPolarVector.Y -= deltaTime * m_currentMousePosition.Y * MouseVelocity;
+                m_currentLookPolarVector.Y = MathHelper.Clamp(m_currentLookPolarVector.Y, -3.1415f/2, 3.1415f/2);
                 var rotationMatrix = Matrix.CreateRotationX(m_currentLookPolarVector.Y) * Matrix.CreateRotationY(m_currentLookPolarVector.X);
                 m_lookVector = Vector3.Transform(Vector3.Forward, rotationMatrix);
                 m_lookVector.Normalize();
