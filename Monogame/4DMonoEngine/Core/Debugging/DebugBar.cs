@@ -132,6 +132,12 @@ namespace _4DMonoEngine.Core.Debugging
             m_stringBuilder.Append(m_chunkCache.CachePosition);
             m_spriteBatch.DrawString(m_spriteFont, m_stringBuilder, new Vector2(m_bounds.X + 305, m_bounds.Y + 15), Color.White);
 
+            // player position
+            m_stringBuilder.Length = 0;
+            m_stringBuilder.Append("view:");
+            m_stringBuilder.Append(MainEngine.GetEngineInstance().Camera.Ray.Direction);
+            m_spriteBatch.DrawString(m_spriteFont, m_stringBuilder, new Vector2(m_bounds.X + 305, m_bounds.Y + 25), Color.White);
+
             m_spriteBatch.End();
         }
     }

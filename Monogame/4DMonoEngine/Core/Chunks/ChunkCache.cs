@@ -22,7 +22,7 @@ namespace _4DMonoEngine.Core.Chunks
 
     public class ChunkCache : WorldRenderable, IEventSink
     {
-        private const byte CacheRange = 4;
+        private const byte CacheRange = 5;
         private BoundingBox m_cacheRangeBoundingBox;
         /*TODO : Implement LOD here
          * 
@@ -32,7 +32,7 @@ namespace _4DMonoEngine.Core.Chunks
          * issues with the Large Object Heap
          * 
          */
-        public const byte ViewRange = 2;
+        public const byte ViewRange = 4;
         private BoundingBox m_viewRangeBoundingBox;
 
         private const int CacheSizeInBlocks = (CacheRange*2 + 1)*Chunk.SizeInBlocks;
@@ -74,7 +74,7 @@ namespace _4DMonoEngine.Core.Chunks
             Debug.Assert(graphicsDevice != null);
             Blocks = new Block[CacheSizeInBlocks * CacheSizeInBlocks * CacheSizeInBlocks];
             m_generator = new TerrainGenerator(Chunk.SizeInBlocks, Blocks, seed);
-            m_lightingEngine = new CellularLighting<Block>(Blocks, MappingFunction, Chunk.SizeInBlocks, BlockStepX, 1, BlockStepZ);
+            m_lightingEngine = new CellularLighting<Block>(Blocks, BlockIndexByWorldPosition, Chunk.SizeInBlocks, BlockIndexOffsetX, BlockIndexOffsetY, BlockIndexOffsetZ);
             m_vertexBuilder = new VertexBuilder<Block>(Blocks, BlockIndexByWorldPosition, graphicsDevice);
             m_chunkStorage = new SparseArray3D<Chunk>(CacheRange * 2 + 1, CacheRange * 2 + 1);
             m_cacheCenterPosition = new Vector4();
@@ -94,11 +94,6 @@ namespace _4DMonoEngine.Core.Chunks
                                            {ChunkState.AwaitingRemoval, 0},
                                        };
 #endif
-        }
-
-        private int MappingFunction(int x, int y, int z)
-        {
-            return BlockIndexByWorldPosition(x, y, z);
         }
 
         public override void Initialize(GraphicsDevice graphicsDevice, Camera camera, GetTimeOfDay getTimeOfDay, GetFogVector getFogVector)
@@ -379,10 +374,10 @@ namespace _4DMonoEngine.Core.Chunks
                         continue;
                     }
 
-                    if (!chunk.BoundingBox.Intersects(viewFrustrum))
+                   /* if (!chunk.BoundingBox.Intersects(viewFrustrum))
                     {
                         continue;
-                    }
+                    }*/
 
                     Game.GraphicsDevice.SetVertexBuffer(chunk.VertexBuffer);
                     Game.GraphicsDevice.Indices = chunk.IndexBuffer;
@@ -459,6 +454,33 @@ namespace _4DMonoEngine.Core.Chunks
             var wrapZ = MathUtilities.Modulo(z, CacheSizeInBlocks);
             var flattenIndex = wrapX * BlockStepX + wrapZ * BlockStepZ + wrapY;
             return flattenIndex;
+        }
+
+        public static int BlockIndexOffsetX(int offset, int x = 0)
+        {
+            var wrapX = offset / BlockStepX;
+            var wrapZ = offset / BlockStepZ - wrapX;
+            var wrapY = offset - (wrapX + wrapZ);
+            wrapX = MathUtilities.Modulo(wrapX + x, CacheSizeInBlocks);
+            return BlockIndexByWorldPosition(wrapX, wrapY, wrapZ);
+        }
+
+        public static int BlockIndexOffsetY(int offset, int y = 0)
+        {
+            var wrapX = offset / BlockStepX;
+            var wrapZ = offset / BlockStepZ - wrapX;
+            var wrapY = offset - (wrapX + wrapZ);
+            wrapY = MathUtilities.Modulo(wrapY + y, CacheSizeInBlocks);
+            return BlockIndexByWorldPosition(wrapX, wrapY, wrapZ);
+        }
+
+        public static int BlockIndexOffsetZ(int offset, int z = 0)
+        {
+            var wrapX = offset / BlockStepX;
+            var wrapZ = offset / BlockStepZ - wrapX;
+            var wrapY = offset - (wrapX + wrapZ);
+            wrapZ = MathUtilities.Modulo(wrapZ + z, CacheSizeInBlocks);
+            return BlockIndexByWorldPosition(wrapX, wrapY, wrapZ);
         }
 
         public static int BlockIndexByRelativePosition(Chunk chunk, int x, int y, int z)

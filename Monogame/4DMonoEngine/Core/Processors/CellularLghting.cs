@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using _4DMonoEngine.Core.Chunks;
 using _4DMonoEngine.Core.Common.Interfaces;
@@ -10,6 +11,7 @@ namespace _4DMonoEngine.Core.Processors
     internal class CellularLighting<T> where T : ILightable
     {
         public delegate int MappingFunction(int x, int y, int z);
+        public delegate int MappingFunctionOffset(int offset, int x);
 
         private const float SDropoff = 0.9375f;
         private readonly Queue<LightQueueContainer> m_lightQueueToAdd;
@@ -19,22 +21,31 @@ namespace _4DMonoEngine.Core.Processors
         private readonly T[] m_blockSource;
         private readonly MappingFunction m_mappingFunction;
         private readonly int m_chunkSize;
-        private readonly int m_stepSizeX;
-        private readonly int m_stepSizeY;
-        private readonly int m_stepSizeZ;
+        private readonly MappingFunctionOffset m_stepX;
+        private readonly MappingFunctionOffset m_stepY;
+        private readonly MappingFunctionOffset m_stepZ;
+        private readonly HashSet<int> m_queuedSunHashSet;
+        private readonly HashSet<int> m_queuedLightHashSet;
 
-        internal CellularLighting(T[] blockSource, MappingFunction mappingFunction, int chunkSize, int stepSizeX, int stepSizeY, int stepSizeZ)
+        internal CellularLighting(T[] blockSource, MappingFunction mappingFunction, int chunkSize, MappingFunctionOffset stepX, MappingFunctionOffset stepY, MappingFunctionOffset stepZ)
         {
             m_blockSource = blockSource;
             m_mappingFunction = mappingFunction;
             m_chunkSize = chunkSize;
-            m_stepSizeX = stepSizeX;
-            m_stepSizeY = stepSizeY;
-            m_stepSizeZ = stepSizeZ;
+            m_stepX = stepX;
+            m_stepY = stepY;
+            m_stepZ = stepZ;
             m_sunQueueToAdd = new Queue<SunQueueContainer>();
             m_lightQueueToAdd = new Queue<LightQueueContainer>();
             m_sunQueueToRemove = new Queue<SunQueueContainer>();
             m_lightQueueToRemove = new Queue<LightQueueContainer>();
+            m_queuedSunHashSet = new HashSet<int>();
+            m_queuedLightHashSet = new HashSet<int>();
+        }
+
+        private int Modulo(int blockPosition)
+        {
+            return MathUtilities.Modulo(blockPosition, m_blockSource.Length);
         }
 
         internal void Process(int chunkIndexX, int chunkIndexY, int chunkIndexZ, SparseArray3D<Vector3Byte> lights)
@@ -78,19 +89,19 @@ namespace _4DMonoEngine.Core.Processors
 
         public void AddBlock(int blockIndex)
         {
-            ClearCellOrAddLight(blockIndex);
-            ClearCellOrAddSunSource(blockIndex);
+            ClearLightFromCell(blockIndex);
+            ClearSunFromCell(blockIndex);
         }
 
         public void RemoveBlock(int blockIndex)
         {
             var currentLight = new Vector4();
-            MaxLight(blockIndex + m_stepSizeX, ref currentLight);
-            MaxLight(blockIndex - m_stepSizeX, ref currentLight); 
-            MaxLight(blockIndex + m_stepSizeZ, ref currentLight); 
-            MaxLight(blockIndex - m_stepSizeZ, ref currentLight);
-            MaxLight(blockIndex + m_stepSizeY, ref currentLight);
-            MaxLight(blockIndex - m_stepSizeY, ref currentLight, true);
+            MaxLight(m_stepX(blockIndex, 1), ref currentLight);
+            MaxLight(m_stepX(blockIndex, -1), ref currentLight);
+            MaxLight(m_stepZ(blockIndex, 1), ref currentLight);
+            MaxLight(m_stepZ(blockIndex, -1), ref currentLight);
+            MaxLight(m_stepY(blockIndex, 1), ref currentLight);
+            MaxLight(m_stepY(blockIndex, -1), ref currentLight, true);
             PropogateFromLight(blockIndex, (byte)currentLight.X, (byte)currentLight.Y, (byte)currentLight.Z, immediate: true);
             PropagateFromSunSource(blockIndex, (byte)currentLight.W, down: true, immediate: true);
         }
@@ -127,47 +138,49 @@ namespace _4DMonoEngine.Core.Processors
 
         public void AddLight(Chunk chunk, int x, int y, int z, Vector3Byte light)
         {
-            if (!chunk.LightSources.ContainsKey(x, y, z))
+            if (chunk.LightSources.ContainsKey(x, y, z))
             {
-                chunk.LightSources[x, y, z] = light;
-                var blockIndex = ChunkCache.BlockIndexByRelativePosition(chunk, x, y, z);
-                var propogate = false;
-                var lightRed = m_blockSource[blockIndex].LightRed;
-                var lightGreen = m_blockSource[blockIndex].LightGreen;
-                var lightBlue = m_blockSource[blockIndex].LightBlue;
-                if (light.X > lightRed)
-                {
-                    propogate = true;
-                    lightRed = light.X;
-                }
-                if (light.Y > m_blockSource[blockIndex].LightGreen)
-                {
-                    propogate = true;
-                    lightGreen = light.Y;
-                }
-                if (light.Z > m_blockSource[blockIndex].LightBlue)
-                {
-                    propogate = true;
-                    lightBlue = light.Z;
-                }
-                if(propogate)
-                {
-                    PropogateFromLight(blockIndex, lightRed, lightGreen, lightBlue);
-                }
+                return;
+            }
+            chunk.LightSources[x, y, z] = light;
+            var blockIndex = ChunkCache.BlockIndexByRelativePosition(chunk, x, y, z);
+            var propogate = false;
+            var lightRed = m_blockSource[blockIndex].LightRed;
+            var lightGreen = m_blockSource[blockIndex].LightGreen;
+            var lightBlue = m_blockSource[blockIndex].LightBlue;
+            if (light.X > lightRed)
+            {
+                propogate = true;
+                lightRed = light.X;
+            }
+            if (light.Y > m_blockSource[blockIndex].LightGreen)
+            {
+                propogate = true;
+                lightGreen = light.Y;
+            }
+            if (light.Z > m_blockSource[blockIndex].LightBlue)
+            {
+                propogate = true;
+                lightBlue = light.Z;
+            }
+            if(propogate)
+            {
+                PropogateFromLight(blockIndex, lightRed, lightGreen, lightBlue, true);
             }
         }
 
         public void RemoveLight(Chunk chunk, int x, int y, int z)
         {
-            if(chunk.LightSources.ContainsKey(x, y, z))
+            if (!chunk.LightSources.ContainsKey(x, y, z))
             {
-                chunk.LightSources.Remove(x, y, z);
-                var blockIndex = ChunkCache.BlockIndexByRelativePosition(chunk, x, y, z);
-                ClearCellOrAddLight(blockIndex);
+                return;
             }
+            chunk.LightSources.Remove(x, y, z);
+            var blockIndex = ChunkCache.BlockIndexByRelativePosition(chunk, x, y, z);
+            ClearLightFromCell(blockIndex);
         }
 
-        private void ClearCellOrAddLight(int blockIndex)
+        private void ClearLightFromCell(int blockIndex)
         {
             var lightRed = m_blockSource[blockIndex].LightRed;
             m_blockSource[blockIndex].LightRed = 0;
@@ -176,11 +189,11 @@ namespace _4DMonoEngine.Core.Processors
             var lightBlue = m_blockSource[blockIndex].LightBlue;
             m_blockSource[blockIndex].LightBlue = 0;
             var container = new LightQueueContainer(blockIndex, lightRed, lightGreen, lightBlue);
-            m_lightQueueToAdd.Enqueue(container);
-            ClearCellOrAddLights();
+            m_lightQueueToRemove.Enqueue(container);
+            ClearCellsOrAddLightSources();
         }
 
-        private void ClearCellOrAddLights()
+        private void ClearCellsOrAddLightSources()
         {
             while (m_lightQueueToRemove.Count > 0)
             {
@@ -217,20 +230,21 @@ namespace _4DMonoEngine.Core.Processors
 
                 if(propogate)
                 {
+                    var blockIndex = lightContainer.BlockIndex;
                     var passThroughRate = (1 - m_blockSource[lightContainer.BlockIndex].Opacity) * SDropoff;
                     var lightRed = (byte)(lightContainer.LightRed > 0 ? lightContainer.LightRed * passThroughRate : 0);
                     var lightGreen = (byte)(lightContainer.LightGreen > 0 ? lightContainer.LightGreen * passThroughRate : 0);
                     var lightBlue = (byte)(lightContainer.LightBlue > 0 ? lightContainer.LightBlue * passThroughRate : 0);
-                    m_lightQueueToRemove.Enqueue(new LightQueueContainer(lightContainer.BlockIndex + m_stepSizeX, lightRed, lightGreen, lightBlue));
-                    m_lightQueueToRemove.Enqueue(new LightQueueContainer(lightContainer.BlockIndex - m_stepSizeX, lightRed, lightGreen, lightBlue));
-                    m_lightQueueToRemove.Enqueue(new LightQueueContainer(lightContainer.BlockIndex + m_stepSizeZ, lightRed, lightGreen, lightBlue));
-                    m_lightQueueToRemove.Enqueue(new LightQueueContainer(lightContainer.BlockIndex - m_stepSizeZ, lightRed, lightGreen, lightBlue));
-                    m_lightQueueToRemove.Enqueue(new LightQueueContainer(lightContainer.BlockIndex + m_stepSizeY, lightRed, lightGreen, lightBlue));
-                    m_lightQueueToRemove.Enqueue(new LightQueueContainer(lightContainer.BlockIndex - m_stepSizeY, lightRed, lightGreen, lightBlue));
+                    m_lightQueueToRemove.Enqueue(new LightQueueContainer(m_stepX(blockIndex, 1), lightRed, lightGreen, lightBlue));
+                    m_lightQueueToRemove.Enqueue(new LightQueueContainer(m_stepX(blockIndex, -1), lightRed, lightGreen, lightBlue));
+                    m_lightQueueToRemove.Enqueue(new LightQueueContainer(m_stepZ(blockIndex, 1), lightRed, lightGreen, lightBlue));
+                    m_lightQueueToRemove.Enqueue(new LightQueueContainer(m_stepZ(blockIndex, -1), lightRed, lightGreen, lightBlue));
+                    m_lightQueueToRemove.Enqueue(new LightQueueContainer(m_stepY(blockIndex, 1), lightRed, lightGreen, lightBlue));
+                    m_lightQueueToRemove.Enqueue(new LightQueueContainer(m_stepY(blockIndex, -1), lightRed, lightGreen, lightBlue));
                 }
                 if (isSource)
                 {
-                    m_lightQueueToAdd.Enqueue(new LightQueueContainer(lightContainer.BlockIndex,
+                    EnqueueLight(new LightQueueContainer(lightContainer.BlockIndex,
                                               m_blockSource[lightContainer.BlockIndex].LightRed,
                                               m_blockSource[lightContainer.BlockIndex].LightGreen,
                                               m_blockSource[lightContainer.BlockIndex].LightBlue));
@@ -239,12 +253,32 @@ namespace _4DMonoEngine.Core.Processors
             PropogateFromLights();
         }
 
-        private void ClearCellOrAddSunSource(int blockIndex)
+        private void EnqueueLight(LightQueueContainer container)
+        {
+            if (m_queuedLightHashSet.Contains(container.BlockIndex))
+            {
+                return;
+            }
+            m_lightQueueToAdd.Enqueue(container);
+            m_queuedLightHashSet.Add(container.BlockIndex);
+        }
+
+        private void EnqueueSun(SunQueueContainer container)
+        {
+            if (m_queuedSunHashSet.Contains(container.BlockIndex))
+            {
+                return;
+            }
+            m_sunQueueToAdd.Enqueue(container);
+            m_queuedSunHashSet.Add(container.BlockIndex);
+        }
+
+        private void ClearSunFromCell(int blockIndex)
         {
             var incomingSunLight = m_blockSource[blockIndex].LightSun;
             m_blockSource[blockIndex].LightSun = 0;
             var container = new SunQueueContainer(blockIndex, incomingSunLight);
-            m_sunQueueToAdd.Enqueue(container);
+            m_sunQueueToRemove.Enqueue(container);
             ClearCellOrAddSunSources();
         }
 
@@ -269,20 +303,21 @@ namespace _4DMonoEngine.Core.Processors
                 {
                     var opacity = m_blockSource[sunContainer.BlockIndex].Opacity;
                     var lightSun = sunContainer.LightSun;
+                    var blockIndex = sunContainer.BlockIndex;
                     if (!(sunContainer.PropogateDown && lightSun == Chunk.MaxSunValue) || opacity > 0)
                     {
                         lightSun = (byte)(lightSun * (1 - opacity) * SDropoff);
                     }
-                    m_sunQueueToRemove.Enqueue(new SunQueueContainer(sunContainer.BlockIndex + m_stepSizeX, lightSun));
-                    m_sunQueueToRemove.Enqueue(new SunQueueContainer(sunContainer.BlockIndex - m_stepSizeX, lightSun));
-                    m_sunQueueToRemove.Enqueue(new SunQueueContainer(sunContainer.BlockIndex + m_stepSizeZ, lightSun));
-                    m_sunQueueToRemove.Enqueue(new SunQueueContainer(sunContainer.BlockIndex - m_stepSizeZ, lightSun));
-                    m_sunQueueToRemove.Enqueue(new SunQueueContainer(sunContainer.BlockIndex + m_stepSizeY, lightSun));
-                    m_sunQueueToRemove.Enqueue(new SunQueueContainer(sunContainer.BlockIndex - m_stepSizeY, lightSun, true));
+                    m_sunQueueToRemove.Enqueue(new SunQueueContainer(m_stepX(blockIndex, 1), lightSun));
+                    m_sunQueueToRemove.Enqueue(new SunQueueContainer(m_stepX(blockIndex, -1), lightSun));
+                    m_sunQueueToRemove.Enqueue(new SunQueueContainer(m_stepZ(blockIndex, 1), lightSun));
+                    m_sunQueueToRemove.Enqueue(new SunQueueContainer(m_stepZ(blockIndex, -1), lightSun));
+                    m_sunQueueToRemove.Enqueue(new SunQueueContainer(m_stepY(blockIndex, 1), lightSun));
+                    m_sunQueueToRemove.Enqueue(new SunQueueContainer(m_stepY(blockIndex, -1), lightSun, true));
                 }
                 if (isSource)
                 {
-                    m_sunQueueToAdd.Enqueue(new SunQueueContainer(sunContainer.BlockIndex,
+                    EnqueueSun(new SunQueueContainer(sunContainer.BlockIndex,
                                               m_blockSource[sunContainer.BlockIndex].LightSun));
                 }
             }
@@ -292,7 +327,7 @@ namespace _4DMonoEngine.Core.Processors
         private void PropogateFromLight(int blockIndex, byte lightRed, byte lightGreen, byte lightBlue, bool immediate = false)
         {
             var container = new LightQueueContainer(blockIndex, lightRed, lightGreen, lightBlue);
-            m_lightQueueToAdd.Enqueue(container);
+            EnqueueLight(container);
             if (immediate)
             {
                 PropogateFromLights();
@@ -302,7 +337,7 @@ namespace _4DMonoEngine.Core.Processors
         private void PropogateFromLight(int blockIndex, Vector3Byte currentLight, bool immediate = false)
         {
             var container = new LightQueueContainer(blockIndex, currentLight.X, currentLight.Y, currentLight.Z);
-            m_lightQueueToAdd.Enqueue(container);
+            EnqueueLight(container);
             if (immediate)
             {
                 PropogateFromLights();
@@ -314,6 +349,7 @@ namespace _4DMonoEngine.Core.Processors
             while (m_lightQueueToAdd.Count > 0)
             {
                 var lightContainer = m_lightQueueToAdd.Dequeue();
+                m_queuedLightHashSet.Remove(lightContainer.BlockIndex);
                 var propogate = false;
                 if (lightContainer.LightBlue > m_blockSource[lightContainer.BlockIndex].LightRed)
                 {
@@ -331,36 +367,38 @@ namespace _4DMonoEngine.Core.Processors
                     m_blockSource[lightContainer.BlockIndex].LightBlue = lightContainer.LightBlue;
                 }
 
-                if(propogate)
+                if (!propogate)
                 {
-                    var passThroughRate = (1 - m_blockSource[lightContainer.BlockIndex].Opacity) * SDropoff;
-                    var lightRed = (byte)(lightContainer.LightRed > 0 ? lightContainer.LightRed * passThroughRate : 0);
-                    var lightGreen = (byte)(lightContainer.LightGreen > 0 ? lightContainer.LightGreen * passThroughRate : 0);
-                    var lightBlue = (byte)(lightContainer.LightBlue > 0 ? lightContainer.LightBlue * passThroughRate : 0);
-                    if (CanPropogate(lightContainer.BlockIndex + m_stepSizeX, lightRed, lightGreen, lightBlue))
-                    {
-                        m_lightQueueToAdd.Enqueue(new LightQueueContainer(lightContainer.BlockIndex + m_stepSizeX, lightRed, lightGreen, lightBlue));
-                    }
-                    if (CanPropogate(lightContainer.BlockIndex - m_stepSizeX, lightRed, lightGreen, lightBlue))
-                    {
-                        m_lightQueueToAdd.Enqueue(new LightQueueContainer(lightContainer.BlockIndex - m_stepSizeX, lightRed, lightGreen, lightBlue));
-                    }
-                    if (CanPropogate(lightContainer.BlockIndex + m_stepSizeZ, lightRed, lightGreen, lightBlue))
-                    {
-                        m_lightQueueToAdd.Enqueue(new LightQueueContainer(lightContainer.BlockIndex + m_stepSizeZ, lightRed, lightGreen, lightBlue));
-                    }
-                    if (CanPropogate(lightContainer.BlockIndex - m_stepSizeZ, lightRed, lightGreen, lightBlue))
-                    {
-                        m_lightQueueToAdd.Enqueue(new LightQueueContainer(lightContainer.BlockIndex - m_stepSizeZ, lightRed, lightGreen, lightBlue));
-                    }
-                    if (CanPropogate(lightContainer.BlockIndex + 1, lightRed, lightGreen, lightBlue))
-                    {
-                        m_lightQueueToAdd.Enqueue(new LightQueueContainer(lightContainer.BlockIndex + m_stepSizeY, lightRed, lightGreen, lightBlue));
-                    }
-                    if (CanPropogate(lightContainer.BlockIndex - 1, lightRed, lightGreen, lightBlue))
-                    {
-                        m_lightQueueToAdd.Enqueue(new LightQueueContainer(lightContainer.BlockIndex - m_stepSizeY, lightRed, lightGreen, lightBlue));
-                    }
+                    continue;
+                }
+                var passThroughRate = (1 - m_blockSource[lightContainer.BlockIndex].Opacity) * SDropoff;
+                var lightRed = (byte)(lightContainer.LightRed > 0 ? lightContainer.LightRed * passThroughRate : 0);
+                var lightGreen = (byte)(lightContainer.LightGreen > 0 ? lightContainer.LightGreen * passThroughRate : 0);
+                var lightBlue = (byte)(lightContainer.LightBlue > 0 ? lightContainer.LightBlue * passThroughRate : 0);
+                var blockIndex = lightContainer.BlockIndex;
+                if (CanPropogate(m_stepX(blockIndex, 1), lightRed, lightGreen, lightBlue))
+                {
+                    EnqueueLight(new LightQueueContainer(m_stepX(blockIndex, 1), lightRed, lightGreen, lightBlue));
+                }
+                if (CanPropogate(m_stepX(blockIndex, -1), lightRed, lightGreen, lightBlue))
+                {
+                    EnqueueLight(new LightQueueContainer(m_stepX(blockIndex, -1), lightRed, lightGreen, lightBlue));
+                }
+                if (CanPropogate(m_stepZ(blockIndex, 1), lightRed, lightGreen, lightBlue))
+                {
+                    EnqueueLight(new LightQueueContainer(m_stepZ(blockIndex, 1), lightRed, lightGreen, lightBlue));
+                }
+                if (CanPropogate(m_stepZ(blockIndex, -1), lightRed, lightGreen, lightBlue))
+                {
+                    EnqueueLight(new LightQueueContainer(m_stepZ(blockIndex, -1), lightRed, lightGreen, lightBlue));
+                }
+                if (CanPropogate(m_stepY(blockIndex, 1), lightRed, lightGreen, lightBlue))
+                {
+                    EnqueueLight(new LightQueueContainer(m_stepY(blockIndex, 1), lightRed, lightGreen, lightBlue));
+                }
+                if (CanPropogate(m_stepY(blockIndex, 1), lightRed, lightGreen, lightBlue))
+                {
+                    EnqueueLight(new LightQueueContainer(m_stepY(blockIndex, 1), lightRed, lightGreen, lightBlue));
                 }
             }
         }
@@ -375,7 +413,7 @@ namespace _4DMonoEngine.Core.Processors
         private void PropagateFromSunSource(int blockIndex, byte incomingSunLight, bool down = false, bool immediate = false)
         {
             var container = new SunQueueContainer(blockIndex, incomingSunLight, down);
-            m_sunQueueToAdd.Enqueue(container);
+            EnqueueSun(container);
             if (immediate)
             {
                 PropogateFromSunSources();
@@ -387,49 +425,53 @@ namespace _4DMonoEngine.Core.Processors
             while (m_sunQueueToAdd.Count > 0)
             {
                 var sunContainer = m_sunQueueToAdd.Dequeue();
+                m_queuedSunHashSet.Remove(sunContainer.BlockIndex);
                 var opacity = m_blockSource[sunContainer.BlockIndex].Opacity;
-                if (opacity < 1)
+                if (!(opacity < 1))
                 {
-                    m_blockSource[sunContainer.BlockIndex].LightSun = sunContainer.LightSun;
-                    if (sunContainer.LightSun > 0)
-                    {
-                        var lightSun = sunContainer.LightSun;
-                        if (!(sunContainer.PropogateDown && lightSun == Chunk.MaxSunValue) || opacity > 0)
-                        {
-                            lightSun = (byte)(lightSun * (1 - opacity) * SDropoff);
-                        }
-                        if (CanPropogate(sunContainer.BlockIndex + m_stepSizeX, lightSun))
-                        {
-                            m_sunQueueToAdd.Enqueue(new SunQueueContainer(sunContainer.BlockIndex + m_stepSizeX, lightSun));
-                        }
-                        if (CanPropogate(sunContainer.BlockIndex - m_stepSizeX, lightSun))
-                        {
-                            m_sunQueueToAdd.Enqueue(new SunQueueContainer(sunContainer.BlockIndex - m_stepSizeX, lightSun));
-                        }
-                        if (CanPropogate(sunContainer.BlockIndex + m_stepSizeZ, lightSun))
-                        {
-                            m_sunQueueToAdd.Enqueue(new SunQueueContainer(sunContainer.BlockIndex + m_stepSizeZ, lightSun));
-                        }
-                        if (CanPropogate(sunContainer.BlockIndex - m_stepSizeZ, lightSun))
-                        {
-                            m_sunQueueToAdd.Enqueue(new SunQueueContainer(sunContainer.BlockIndex - m_stepSizeZ, lightSun));
-                        }
-                        if (CanPropogate(sunContainer.BlockIndex + m_stepSizeY, lightSun))
-                        {
-                            m_sunQueueToAdd.Enqueue(new SunQueueContainer(sunContainer.BlockIndex + m_stepSizeY, lightSun));
-                        }
-                        if (CanPropogate(sunContainer.BlockIndex - m_stepSizeY, lightSun))
-                        {
-                            m_sunQueueToAdd.Enqueue(new SunQueueContainer(sunContainer.BlockIndex - m_stepSizeY, lightSun, true));
-                        }
-                    }
+                    continue;
+                }
+                m_blockSource[sunContainer.BlockIndex].LightSun = sunContainer.LightSun;
+                if (sunContainer.LightSun <= 0)
+                {
+                    continue;
+                }
+                var lightSun = sunContainer.LightSun;
+                var blockIndex = sunContainer.BlockIndex;
+                if (!(sunContainer.PropogateDown && lightSun == Chunk.MaxSunValue) || opacity > 0)
+                {
+                    lightSun = (byte)(lightSun * (1 - opacity) * SDropoff);
+                }
+                if (CanPropogate(m_stepX(blockIndex, 1), lightSun))
+                {
+                    EnqueueSun(new SunQueueContainer(m_stepX(blockIndex, 1), lightSun));
+                }
+                if (CanPropogate(m_stepX(blockIndex, -1), lightSun))
+                {
+                    EnqueueSun(new SunQueueContainer(m_stepX(blockIndex, -1), lightSun));
+                }
+                if (CanPropogate(m_stepZ(blockIndex, 1), lightSun))
+                {
+                    EnqueueSun(new SunQueueContainer(m_stepZ(blockIndex, 1), lightSun));
+                }
+                if (CanPropogate(m_stepZ(blockIndex, -1), lightSun))
+                {
+                    EnqueueSun(new SunQueueContainer(m_stepZ(blockIndex, -1), lightSun));
+                }
+                if (CanPropogate(m_stepY(blockIndex, 1), lightSun))
+                {
+                    EnqueueSun(new SunQueueContainer(m_stepY(blockIndex, 1), lightSun));
+                }
+                if (CanPropogate(m_stepY(blockIndex, -1), lightSun))
+                {
+                    EnqueueSun(new SunQueueContainer(m_stepY(blockIndex, -1), lightSun, true));
                 }
             }
         }
 
         private bool CanPropogate(int blockIndex, byte incomingSunLight)
         {
-            return m_blockSource[blockIndex].LightSun < incomingSunLight;
+            return m_blockSource[blockIndex].Opacity < 1 && m_blockSource[blockIndex].LightSun < incomingSunLight;
         }
 
         private struct LightQueueContainer

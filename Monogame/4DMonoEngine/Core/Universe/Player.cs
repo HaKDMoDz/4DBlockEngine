@@ -14,7 +14,7 @@ namespace _4DMonoEngine.Core.Universe
 {
     public class Player : Renderable, IEventSink, IEventSource
     {
-        private const float MouseVelocity = 0.875f;
+        private const float MouseVelocity = 0.005f;
         public bool FlyingEnabled { get; set; }
         public IEquipable Equipable { get; set; }
         private Vector2 m_currentMousePosition;
@@ -41,6 +41,10 @@ namespace _4DMonoEngine.Core.Universe
         private const float FlySpeed = 25f; // the fly speed.
         private const float Gravity = -15f;
         private const float JumpVelocity = 6f;
+
+        private readonly Action<EventArgs> m_mousePositionUpdated;
+        private readonly Action<EventArgs> m_keyDown;
+        private readonly Action<EventArgs> m_keyUp;
         
         public Player(Block[] blocks )
         {
@@ -62,6 +66,9 @@ namespace _4DMonoEngine.Core.Universe
                 EventConstants.PlayerPositionUpdated,
                 EventConstants.ViewUpdated
             };
+            m_mousePositionUpdated = EventHelper.Wrap<Vector2Args>(OnMouseUpdated);
+            m_keyDown = EventHelper.Wrap<KeyArgs>(OnKeyDown);
+            m_keyUp = EventHelper.Wrap<KeyArgs>(OnKeyUp);
             m_eventSourceImpl = new EventSource(EventsFired, true);
         }
 
@@ -97,38 +104,47 @@ namespace _4DMonoEngine.Core.Universe
                     }
                 } 
             }
-            if (m_controlBitVector > Jump)
+            var moveVector = Vector3.Zero;
+            if ((m_controlBitVector & Forward) != 0)
             {
-                var moveVector = Vector3.Zero;
-                if ((m_controlBitVector & Forward) != 0)
+                 moveVector.Z--;
+            }
+            if ((m_controlBitVector & Right) != 0)
+            {
+                moveVector.X++;
+            }
+            if ((m_controlBitVector & Backward) != 0)
+            {
+                moveVector.Z++;
+            }
+            if ((m_controlBitVector & Left) != 0)
+            {
+                moveVector.X--;
+            }
+            if (moveVector != Vector3.Zero)
+            {
+                if (FlyingEnabled)
                 {
-                     moveVector.Z--;
+                    var rotation = Matrix.CreateRotationX(m_currentLookPolarVector.Y) * Matrix.CreateRotationY(m_currentLookPolarVector.X);
+                    Vector3.Transform(ref moveVector, ref rotation, out moveVector);
+                    m_velocity = moveVector * FlySpeed;
                 }
-                if ((m_controlBitVector & Right) != 0)
+                else
                 {
-                    moveVector.X++;
+                        m_velocity.X = moveVector.X * MoveSpeed;
+                        m_velocity.Z = moveVector.Z * MoveSpeed;
                 }
-                if ((m_controlBitVector & Backward) != 0)
+            }
+            else
+            {
+                if (FlyingEnabled)
                 {
-                    moveVector.Z++;
+                    m_velocity = Vector3.Zero;
                 }
-                if ((m_controlBitVector & Left) != 0)
+                else
                 {
-                    moveVector.X--;
-                }
-                if (moveVector != Vector3.Zero)
-                {
-                    if (FlyingEnabled)
-                    {
-                        var rotation = Matrix.CreateRotationY(m_currentLookPolarVector.X) * Matrix.CreateRotationY(m_currentLookPolarVector.Y);
-                        Vector3.Transform(ref moveVector, ref rotation, out moveVector);
-                        m_velocity = moveVector * FlySpeed;
-                    }
-                    else
-                    {
-                         m_velocity.X = moveVector.X * MoveSpeed;
-                         m_velocity.Z = moveVector.Z * MoveSpeed;
-                    }
+                    m_velocity.X = 0;
+                    m_velocity.Z = 0;
                 }
             }
             if (m_velocity != Vector3.Zero)
@@ -174,9 +190,9 @@ namespace _4DMonoEngine.Core.Universe
         {
             if (m_currentMousePosition != Vector2.Zero)
             {
-                m_currentLookPolarVector.X += deltaTime * m_currentMousePosition.X * MouseVelocity;
+                m_currentLookPolarVector.X -= deltaTime * m_currentMousePosition.X * MouseVelocity;
                 m_currentLookPolarVector.Y += deltaTime * m_currentMousePosition.Y * MouseVelocity;
-                var rotationMatrix = Matrix.CreateRotationX(m_currentLookPolarVector.X) * Matrix.CreateRotationY(m_currentLookPolarVector.Y);
+                var rotationMatrix = Matrix.CreateRotationX(m_currentLookPolarVector.Y) * Matrix.CreateRotationY(m_currentLookPolarVector.X);
                 m_lookVector = Vector3.Transform(Vector3.Forward, rotationMatrix);
                 m_lookVector.Normalize();
                 m_eventSourceImpl.FireEvent(EventConstants.ViewUpdated, new Vector3Args(m_lookVector));
@@ -185,7 +201,7 @@ namespace _4DMonoEngine.Core.Universe
 
         public void SpawnPlayer(Vector2Int relativePosition)
         {
-            m_position = new Vector3(relativePosition.X * Chunk.SizeInBlocks, 10, relativePosition.Z * Chunk.SizeInBlocks);
+            m_position = new Vector3(relativePosition.X * Chunk.SizeInBlocks, 80, relativePosition.Z * Chunk.SizeInBlocks);
             m_eventSourceImpl.FireEvent(EventConstants.PlayerPositionUpdated, new Vector3Args(m_position));
             m_eventSourceImpl.FireEvent(EventConstants.ViewUpdated, new Vector3Args(m_lookVector));
         }
@@ -201,11 +217,11 @@ namespace _4DMonoEngine.Core.Universe
             switch (eventName)
             {
                 case EventConstants.KeyDown:
-                    return EventHelper.Wrap<KeyArgs>(OnKeyDown);
+                    return m_keyDown;
                 case EventConstants.KeyUp:
-                    return EventHelper.Wrap<KeyArgs>(OnKeyUp);
+                    return m_keyUp;
                 case EventConstants.MousePositionUpdated:
-                    return EventHelper.Wrap<Vector2Args>(OnMouseUpdated);
+                    return m_mousePositionUpdated;
                 default:
                     return null;
             }

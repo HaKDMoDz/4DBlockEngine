@@ -14,8 +14,12 @@ namespace _4DMonoEngine.Client
         public MainGame()
         {
             Content.RootDirectory = "Content"; // set content root directory
-            var graphicsDeviceManager = new GraphicsDeviceManager(this);
-           // Services.AddService(typeof (IGraphicsDeviceManager), graphicsDeviceManager);
+            var graphicsDeviceManager = new GraphicsDeviceManager(this)
+            {
+                PreferredBackBufferHeight = 720,
+                PreferredBackBufferWidth = 1440
+            };
+            // Services.AddService(typeof (IGraphicsDeviceManager), graphicsDeviceManager);
             m_timeRuler = new TimeRuler(this)
             {
                 Visible = true, 
@@ -25,7 +29,7 @@ namespace _4DMonoEngine.Client
 
        protected override void Initialize()
         {
-            IsMouseVisible = false;
+            IsMouseVisible = true;
             MainEngine.GetEngineInstance().Initialize(this, 0);
             Components.Add(m_timeRuler); 
             Components.Add(new InputManager(this));

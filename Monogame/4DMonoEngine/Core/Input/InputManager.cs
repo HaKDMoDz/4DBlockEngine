@@ -11,7 +11,7 @@ namespace _4DMonoEngine.Core.Input
 {
     public class InputManager : GameComponent, IEventSource
     {
-        private const int MouseMoveTolerance = 2; // in pixels
+        private const int MouseMoveTolerance = 5; // in pixels
 
         public bool CursorCentered { get; set; } // Should the mouse cursor centered on screen?
         
@@ -52,8 +52,8 @@ namespace _4DMonoEngine.Core.Input
         private void ProcessMouse()
         {
             var currentState = Mouse.GetState();
-            if (Math.Abs(currentState.X - m_previousMouseState.X) > MouseMoveTolerance ||
-                Math.Abs(currentState.Y - m_previousMouseState.Y) > MouseMoveTolerance)
+            if (Math.Abs(currentState.X - m_previousMouseState.X) > 1 ||
+                Math.Abs(currentState.Y - m_previousMouseState.Y) > 1)
             {
                 if (Math.Abs(currentState.X - Game.Window.ClientBounds.Width/2) > MouseMoveTolerance ||
                     Math.Abs(currentState.Y - Game.Window.ClientBounds.Height/2) > MouseMoveTolerance)
