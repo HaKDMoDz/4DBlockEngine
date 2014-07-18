@@ -24,14 +24,14 @@
 				"BlockName" : "Dirt",
 				"Thickness" : 3,
 				"NoiseOffset" : 0,
-				"NoiseScale" : 16
+				"NoiseScale" : 1
 			},
 			{
 				"Id" : 1,
 				"BlockName" : "Stone",
 				"Thickness" : 5,
 				"NoiseOffset" : 0,
-				"NoiseScale" : 16
+				"NoiseScale" : 1
 			}
 		]
 	}

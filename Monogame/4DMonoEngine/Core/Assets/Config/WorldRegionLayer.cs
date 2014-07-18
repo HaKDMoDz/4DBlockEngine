@@ -12,7 +12,7 @@ namespace _4DMonoEngine.Core.Assets.Config
         [DataMember]
         public int Thickness { get; set; }
         [DataMember]
-        public float NoiseOffset { get; set; }
+        public int NoiseOffset { get; set; }
         [DataMember]
         public float NoiseScale { get; set; }
     }

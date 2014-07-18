@@ -468,7 +468,6 @@ namespace _4DMonoEngine.Core.Chunks
             var wrapX = offset / BlockStepX;
             var wrapZ = offset / BlockStepZ - wrapX;
             var wrapY = offset - (wrapX + wrapZ);
-            wrapY = MathUtilities.Modulo(wrapY + y, CacheSizeInBlocks);
             return BlockIndexByWorldPosition(wrapX, wrapY + y, wrapZ);
         }
 
@@ -477,7 +476,6 @@ namespace _4DMonoEngine.Core.Chunks
             var wrapX = offset / BlockStepX;
             var wrapZ = offset / BlockStepZ - wrapX;
             var wrapY = offset - (wrapX + wrapZ);
-            wrapZ = MathUtilities.Modulo(wrapZ + z, CacheSizeInBlocks);
             return BlockIndexByWorldPosition(wrapX, wrapY, wrapZ + z);
         }
 

@@ -1,13 +1,13 @@
-﻿using _4DMonoEngine.Core.Assets.Config;
+﻿using System;
+using _4DMonoEngine.Core.Assets.Config;
 using _4DMonoEngine.Core.Blocks;
-using _4DMonoEngine.Core.Utils.Noise;
 
 namespace _4DMonoEngine.Core.Chunks.Generators.Regions
 {
     internal class ProvinceGenerator : WorldRegionTerrainGenerator
     {
-        public ProvinceGenerator(SimplexNoise noise, ProvinceData biome) 
-            : base( noise, biome.Name, biome.Layers, biome.Parameters)
+        public ProvinceGenerator(float[] noiseBuffer, ProvinceData province)
+            : base(noiseBuffer, province.Name, province.Layers, province.Parameters)
         {}
 
         public override Block Apply(int upperBound, int worldPositionX, int worldPositionY, int worldPositionZ, int worldPositionW)
@@ -19,7 +19,9 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
             while (index < 100)
             {
                 var worldRegionLayer = Layers[index++ % Layers.Count];
-                accumulator += (worldRegionLayer.Thickness) * Noise.Perlin4Dfbm(worldPositionX, worldRegionLayer.Id, worldPositionZ, worldPositionW,worldRegionLayer.NoiseScale,worldRegionLayer.NoiseOffset, 2);
+                accumulator += (int)Math.Ceiling(worldRegionLayer.Thickness *
+                                    GetNoise(worldPositionX, worldRegionLayer.Id, worldPositionZ, worldPositionW,
+                                        worldRegionLayer.NoiseOffset, worldRegionLayer.NoiseScale));
                 if (!(accumulator > (upperBound - worldPositionY)))
                 {
                     continue;

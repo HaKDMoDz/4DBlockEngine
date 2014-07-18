@@ -13,9 +13,9 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
             : base(seed, getHeightFunction, provinces, centeiodSampleScale, biomeSampleRescale, seaLevel, mountainHeight)
         {}
 
-        protected override WorldRegionTerrainGenerator GeneratorBuilder(SimplexNoise noise, WorldRegionData data)
+        protected override WorldRegionTerrainGenerator GeneratorBuilder(float[] noiseCache, WorldRegionData data)
         {
-            return new ProvinceGenerator(noise, (ProvinceData)data);
+            return new ProvinceGenerator(noiseCache, (ProvinceData)data);
         }
 
         protected override RegionData InternalGetRegionData(float x, float y, float z, Vector3 centroid)

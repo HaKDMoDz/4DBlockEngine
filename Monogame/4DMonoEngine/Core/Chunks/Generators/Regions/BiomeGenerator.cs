@@ -1,15 +1,14 @@
 ﻿using System;
 using _4DMonoEngine.Core.Assets.Config;
 using _4DMonoEngine.Core.Blocks;
-using _4DMonoEngine.Core.Utils.Noise;
 
 namespace _4DMonoEngine.Core.Chunks.Generators.Regions
 {
     internal class BiomeGenerator : WorldRegionTerrainGenerator
     {
         public float FoliageDensity { get; private set; }
-        public BiomeGenerator(SimplexNoise noise, BiomeData biomeData)
-            : base(noise, biomeData.Name, biomeData.Layers, biomeData.Parameters)
+        public BiomeGenerator(float[] noiseBuffer, BiomeData biomeData)
+            : base(noiseBuffer, biomeData.Name, biomeData.Layers, biomeData.Parameters)
         {
             FoliageDensity = biomeData.FoliageDensity;
         }
@@ -28,9 +27,8 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
                 else
                 {
                     step = (int)Math.Ceiling(worldRegionLayer.Thickness*
-                                        Noise.Perlin4Dfbm(worldPositionX, worldRegionLayer.Id, worldPositionZ,
-                                            worldPositionW,
-                                            worldRegionLayer.NoiseScale, worldRegionLayer.NoiseOffset, 2));
+                                        GetNoise(worldPositionX, worldRegionLayer.Id, worldPositionZ, worldPositionW,
+                                            worldRegionLayer.NoiseOffset, worldRegionLayer.NoiseScale));
                 }
 
                 accumulator += step;
