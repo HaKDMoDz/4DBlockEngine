@@ -72,6 +72,7 @@ namespace _4DMonoEngine.Core.Universe
             base.Initialize(graphicsDevice, camera, getTimeOfDay, getFogVector);
             m_vertexBuilder = new VertexBuilder<CloudBlock>(m_clouds, CloudIndexByWorldPosition, m_graphicsDevice);
             StepClouds();
+            m_vertexBuilder.Build(m_cloudVertexTarget);
         }
 
         private int CloudIndexByWorldPosition(int x, int y, int z)
@@ -83,7 +84,7 @@ namespace _4DMonoEngine.Core.Universe
         public override void Update(GameTime gameTime)
         {
             //StepClouds();
-            m_vertexBuilder.Build(m_cloudVertexTarget);
+           // m_vertexBuilder.Build(m_cloudVertexTarget);
         }
 
         private void StepClouds()

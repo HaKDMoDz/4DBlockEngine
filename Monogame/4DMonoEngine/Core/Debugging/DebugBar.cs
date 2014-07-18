@@ -54,6 +54,7 @@ namespace _4DMonoEngine.Core.Debugging
         /// <param name="gameTime"></param>
         public override void Draw(GameTime gameTime)
         {
+#if DEBUG
             // backup  the raster and depth-stencil states.
             var previousRasterizerState = Game.GraphicsDevice.RasterizerState;
             var previousDepthStencilState = Game.GraphicsDevice.DepthStencilState;
@@ -139,6 +140,7 @@ namespace _4DMonoEngine.Core.Debugging
             m_spriteBatch.DrawString(m_spriteFont, m_stringBuilder, new Vector2(m_bounds.X + 305, m_bounds.Y + 25), Color.White);
 
             m_spriteBatch.End();
+#endif
         }
     }
 }

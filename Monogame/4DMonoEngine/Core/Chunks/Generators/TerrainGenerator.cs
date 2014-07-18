@@ -53,29 +53,32 @@ namespace _4DMonoEngine.Core.Chunks.Generators
             m_biomeThickness = settings.BiomeThickness;
         }
 
-	    public void GenerateDataForChunk(Chunk chunk, int chunkW)
+	    public void GenerateDataForChunk(int chunkX, int chunkY, int chunkZ, int chunkW)
 	    {
-           chunk.ChunkState = ChunkState.Generating;
-	       var chunkWorldPosition = chunk.Position;
            var cW = chunkW * m_chunkSize;
            for (var x  = 0; x < m_chunkSize; ++x) 
 		   {
-                var cX = chunkWorldPosition.X + x;
+                var cX = chunkX + x;
 			    for (var z = 0; z < m_chunkSize; ++z) 
 			    {
-                    var cZ = chunkWorldPosition.Z + z;
-					var groundLevel = GetHeight(cX, cZ, cW);
+                    var cZ = chunkZ + z;
+			        var groundLevel = GetHeight(cX, cZ, cW);
 					var detailNoise =  m_detail2.Perlin3Dfmb(cX, cZ, cW, 64, 0, 8);
                     var overhangStart = m_sealevel + MathHelper.Clamp(detailNoise * 4, -1, 1) * 2;
 					for (var y = 0; y < m_chunkSize; ++y)
 					{
-                        var cY = chunkWorldPosition.Y + y;
-					    if (cY > groundLevel)
+                        var cY = chunkY + y;
+                        Block block;
+
+					    if (cY > groundLevel + 40)
 					    {
-					        continue;
+                            block = new Block(0) {LightSun = Chunk.MaxSunValue};
 					    }
-					    Block block;
-					    if (cY >= groundLevel - m_biomeThickness)
+					    else if (cY > groundLevel)
+					    {
+					        block = new Block(0);
+					    }
+                        else if (cY >= groundLevel - m_biomeThickness)
 					    {
 					        var biome = m_biomeGenerator.GetRegionGenerator(cX, cZ, cW);
 					        if (cY > overhangStart)
@@ -93,7 +96,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 					        var province = m_provinceGenerator.GetRegionGenerator(cX, cZ, cW);
 					        block = province.Apply((int)groundLevel - m_biomeThickness, cX, cY, cZ, cW);
 					    }
-					    m_blocks[ChunkCache.BlockIndexByWorldPosition(cX, cY, cZ)] = block;
+                        m_blocks[ChunkCache.BlockIndexByWorldPosition(cX, cY, cZ)] = block;
 					}
                     //TODO : fill with water
                     /*
@@ -109,7 +112,6 @@ namespace _4DMonoEngine.Core.Chunks.Generators
             //TODO : query if chunk has all neighbors loaded so we can run our erosion step
 
             //TODO : after eroding generate structures
-            chunk.ChunkState = ChunkState.AwaitingLighting;
 	    }
 
         private float GetHeight(float x, float z, float w)

@@ -135,39 +135,39 @@ namespace _4DMonoEngine.Core.Processors
                                           ref T block0, ref T block1, ref T block2, ref T block3, ref T block4, ref T block5, ref T block6, ref T block7, ref T block8)
         {
             
-            var sunTl = (byte)((block1.LightSun + block2.LightSun + block3.LightSun + block0.LightSun) >> 2);
-            var sunTr = (byte)((block3.LightSun + block4.LightSun + block5.LightSun + block0.LightSun) >> 2);
-            var sunBr = (byte)((block5.LightSun + block6.LightSun + block7.LightSun + block0.LightSun) >> 2);
-            var sunBl = (byte)((block7.LightSun + block8.LightSun + block1.LightSun + block0.LightSun) >> 2);
+            var sunTl = (block1.LightSun + block2.LightSun + block3.LightSun + block0.LightSun) >> 2;
+            var sunTr = (block3.LightSun + block4.LightSun + block5.LightSun + block0.LightSun) >> 2;
+            var sunBr = (block5.LightSun + block6.LightSun + block7.LightSun + block0.LightSun) >> 2;
+            var sunBl = (block7.LightSun + block8.LightSun + block1.LightSun + block0.LightSun) >> 2;
 
-            var redTl = (byte)((block1.LightRed + block2.LightRed + block3.LightRed + block0.LightRed) >> 2);
-            var redTr = (byte)((block3.LightRed + block4.LightRed + block5.LightRed + block0.LightRed) >> 2);
-            var redBr = (byte)((block5.LightRed + block6.LightRed + block7.LightRed + block0.LightRed) >> 2);
-            var redBl = (byte)((block7.LightRed + block8.LightRed + block1.LightRed + block0.LightRed) >> 2);
+            var redTl = (block1.LightRed + block2.LightRed + block3.LightRed + block0.LightRed) >> 2;
+            var redTr = (block3.LightRed + block4.LightRed + block5.LightRed + block0.LightRed) >> 2;
+            var redBr = (block5.LightRed + block6.LightRed + block7.LightRed + block0.LightRed) >> 2;
+            var redBl = (block7.LightRed + block8.LightRed + block1.LightRed + block0.LightRed) >> 2;
 
-            var greenTl = (byte)((block1.LightGreen + block2.LightGreen + block3.LightGreen + block0.LightGreen) >> 2);
-            var greenTr = (byte)((block3.LightGreen + block4.LightGreen + block5.LightGreen + block0.LightGreen) >> 2);
-            var greenBr = (byte)((block5.LightGreen + block6.LightGreen + block7.LightGreen + block0.LightGreen) >> 2);
-            var greenBl = (byte)((block7.LightGreen + block8.LightGreen + block1.LightGreen + block0.LightGreen) >> 2);
+            var greenTl = (block1.LightGreen + block2.LightGreen + block3.LightGreen + block0.LightGreen) >> 2;
+            var greenTr = (block3.LightGreen + block4.LightGreen + block5.LightGreen + block0.LightGreen) >> 2;
+            var greenBr = (block5.LightGreen + block6.LightGreen + block7.LightGreen + block0.LightGreen) >> 2;
+            var greenBl = (block7.LightGreen + block8.LightGreen + block1.LightGreen + block0.LightGreen) >> 2;
 
-            var blueTl = (byte)((block1.LightBlue + block2.LightBlue + block3.LightBlue + block0.LightBlue) >> 2);
-            var blueTr = (byte)((block3.LightBlue + block4.LightBlue + block5.LightBlue + block0.LightBlue) >> 2);
-            var blueBr = (byte)((block5.LightBlue + block6.LightBlue + block7.LightBlue + block0.LightBlue) >> 2);
-            var blueBl = (byte)((block7.LightBlue + block8.LightBlue + block1.LightBlue + block0.LightBlue) >> 2);
+            var blueTl = (block1.LightBlue + block2.LightBlue + block3.LightBlue + block0.LightBlue) >> 2;
+            var blueTr = (block3.LightBlue + block4.LightBlue + block5.LightBlue + block0.LightBlue) >> 2;
+            var blueBr = (block5.LightBlue + block6.LightBlue + block7.LightBlue + block0.LightBlue) >> 2;
+            var blueBl = (block7.LightBlue + block8.LightBlue + block1.LightBlue + block0.LightBlue) >> 2;
 
             var flipped = (sunTl + redTl + greenTl + blueTl) + (sunBr + redBr + greenBr + blueBr) <
                            (sunTr + redTr + greenTr + blueTr) + (sunBl + redBl + greenBl + blueBl);
 
-            var localTl = new Byte4(sunTl, redTl, greenTl, blueTl);
-            var localTr = new Byte4(sunTr, redTr, greenTr, blueTr);
-            var localBl = new Byte4(sunBl, redBl, greenBl, blueBl);
-            var localBr = new Byte4(sunBr, redBr, greenBr, blueBr);
+            var localTl = new HalfVector4(sunTl / 255.0f, redTl / 255.0f, greenTl / 255.0f, blueTl / 255.0f);
+            var localTr = new HalfVector4(sunTr / 255.0f, redTr / 255.0f, greenTr / 255.0f, blueTr / 255.0f);
+            var localBl = new HalfVector4(sunBl / 255.0f, redBl / 255.0f, greenBl / 255.0f, blueBl / 255.0f);
+            var localBr = new HalfVector4(sunBr / 255.0f, redBr / 255.0f, greenBr / 255.0f, blueBr / 255.0f);
 
             BuildFaceVertices(vertexBuilderTarget, ref worldPosition, blockIndex, faceDir, flipped, ref localTl, ref localTr, ref localBl, ref localBr);
         }
 
         private void BuildFaceVertices(VertexBuilderTarget vertexBuilderTarget, ref Vector3Int position, int blockIndex, FaceDirection faceDir, bool flipped,
-                                                ref Byte4 localLightTl, ref Byte4 localLightTr, ref Byte4 localLightBl, ref Byte4 localLightBr)
+                                                ref HalfVector4 localLightTl, ref HalfVector4 localLightTr, ref HalfVector4 localLightBl, ref HalfVector4 localLightBr)
         {
             var textureUvMappings = m_blockSource[blockIndex].GetTextureMapping(faceDir);
             Vector3 vertexTl, vertexTr, vertexBr, vertexBl;
@@ -222,21 +222,21 @@ namespace _4DMonoEngine.Core.Processors
         {
             if (flipped)
             {
-                vertexBuilderTarget.IndexList.Add(vertexBuilderTarget.Index);
+                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 2));
                 vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 1));
+                vertexBuilderTarget.IndexList.Add(vertexBuilderTarget.Index);
+                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 3));
                 vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 2));
                 vertexBuilderTarget.IndexList.Add(vertexBuilderTarget.Index);
-                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 2));
-                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 3));
             }
             else
             {
-                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 1));
+                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 3));
                 vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 2));
-                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 3));
-                vertexBuilderTarget.IndexList.Add(vertexBuilderTarget.Index);
                 vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 1));
                 vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 3));
+                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 1));
+                vertexBuilderTarget.IndexList.Add(vertexBuilderTarget.Index);
             }
             vertexBuilderTarget.Index += 4;
         }

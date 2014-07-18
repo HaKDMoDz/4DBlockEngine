@@ -71,29 +71,32 @@ namespace _4DMonoEngine.Core.Chunks
             var localY = MathUtilities.Modulo(y, SizeInBlocks);
             var localZ = MathUtilities.Modulo(z, SizeInBlocks);
 
-            if (localX == 0)
+            switch (localX)
             {
-                edges.Add(FaceDirection.XDecreasing);
+                case 0:
+                    edges.Add(FaceDirection.XDecreasing);
+                    break;
+                case SizeInBlocks - 1:
+                    edges.Add(FaceDirection.XIncreasing);
+                    break;
             }
-            else if (localX == SizeInBlocks - 1)
+            switch (localY)
             {
-                edges.Add(FaceDirection.XIncreasing);
+                case 0:
+                    edges.Add(FaceDirection.YDecreasing);
+                    break;
+                case SizeInBlocks - 1:
+                    edges.Add(FaceDirection.YIncreasing);
+                    break;
             }
-            if (localY == 0)
+            switch (localZ)
             {
-                edges.Add(FaceDirection.YDecreasing);
-            }
-            else if (localY == SizeInBlocks - 1)
-            {
-                edges.Add(FaceDirection.YIncreasing);
-            }
-            if (localZ == 0)
-            {
-                edges.Add(FaceDirection.ZDecreasing);
-            }
-            else if (localZ == SizeInBlocks - 1)
-            {
-                edges.Add(FaceDirection.ZIncreasing);
+                case 0:
+                    edges.Add(FaceDirection.ZDecreasing);
+                    break;
+                case SizeInBlocks - 1:
+                    edges.Add(FaceDirection.ZIncreasing);
+                    break;
             }
             return edges;
         }
@@ -136,7 +139,7 @@ namespace _4DMonoEngine.Core.Chunks
             }
         }
 
-        private void UpdateBoundingBox()
+        public void UpdateBoundingBox()
         {
             var upperBoundX = 0;
             var lowerBoundX = SizeInBlocks;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Chunks.Generators;
 using _4DMonoEngine.Core.Common.AbstractClasses;
@@ -22,7 +23,14 @@ namespace _4DMonoEngine.Core.Chunks
 
     public class ChunkCache : WorldRenderable, IEventSink
     {
-        private const byte CacheRange = 5;
+        private enum StartUpState
+        {
+            NotStarted,
+            AwaitingStart,
+            Starting,
+            Started,
+        }
+        private const byte CacheRange = 12;
         private BoundingBox m_cacheRangeBoundingBox;
         /*TODO : Implement LOD here
          * 
@@ -32,12 +40,12 @@ namespace _4DMonoEngine.Core.Chunks
          * issues with the Large Object Heap
          * 
          */
-        public const byte ViewRange = 4;
+        public const byte ViewRange = CacheRange - 2;
         private BoundingBox m_viewRangeBoundingBox;
 
         private const int CacheSizeInBlocks = (CacheRange*2 + 1)*Chunk.SizeInBlocks;
-        public const int BlockStepX = Chunk.SizeInBlocks*Chunk.SizeInBlocks;
-        public const int BlockStepZ = Chunk.SizeInBlocks;
+        public const int BlockStepX = CacheSizeInBlocks * CacheSizeInBlocks;
+        public const int BlockStepZ = CacheSizeInBlocks;
 #if DEBUG
         public int ChunksDrawn;
         public int ChunksLoaded { get { return m_chunkStorage.Count; } }
@@ -55,15 +63,13 @@ namespace _4DMonoEngine.Core.Chunks
         private Vector4 m_cacheCenterPosition;
         private readonly Action<EventArgs> m_wrappedPositionHandler; 
 
-        private bool m_cacheThreadStarted;
         private bool m_cachePositionUpdated;
 
         public Vector4 CachePosition { get { return m_cacheCenterPosition; } }
 
         public Block[] Blocks { get; private set; }
         private readonly Logger m_logger;
-        private readonly List<Chunk> m_processingQueue; 
-
+        private StartUpState m_startUpState;
 
         public ChunkCache(Game game, uint seed) : base(game)
         {
@@ -78,9 +84,8 @@ namespace _4DMonoEngine.Core.Chunks
             m_vertexBuilder = new VertexBuilder<Block>(Blocks, BlockIndexByWorldPosition, graphicsDevice);
             m_chunkStorage = new SparseArray3D<Chunk>(CacheRange * 2 + 1, CacheRange * 2 + 1);
             m_cacheCenterPosition = new Vector4();
-            m_cacheThreadStarted = false;
-            m_processingQueue = new List<Chunk>();
             m_wrappedPositionHandler = EventHelper.Wrap<Vector3Args>(UpdateCachePosition);
+            m_startUpState = StartUpState.NotStarted;
 #if DEBUG
             StateStatistics = new Dictionary<ChunkState, int> // init. the debug stastics.
                                        {
@@ -106,11 +111,6 @@ namespace _4DMonoEngine.Core.Chunks
         {
             m_blockEffect = MainEngine.GetEngineInstance().GetAsset<Effect>("BlockEffect");
             m_blockTextureAtlas = MainEngine.GetEngineInstance().GetAsset<Texture2D>("BlockTextureAtlas");
-        }
-
-        public override void Update(GameTime gameTime)
-        {
-            
         }
 
         public void AddBlock(int x, int y, int z, ref Block block)
@@ -167,13 +167,26 @@ namespace _4DMonoEngine.Core.Chunks
             m_cacheCenterPosition.Y = y;
             m_cacheCenterPosition.Z = z;
             UpdateBoundingBoxes();
-            if (m_cacheThreadStarted)
+            if (m_startUpState == StartUpState.NotStarted)
             {
-                return;
+                m_startUpState = StartUpState.AwaitingStart;
             }
-            var cacheThread = new Thread(CacheThread) {IsBackground = true};
-            cacheThread.Start();
-            m_cacheThreadStarted = true;
+        }
+
+        public override void Update(GameTime gameTime)
+        {
+            if(m_startUpState == StartUpState.AwaitingStart)
+            {
+                m_startUpState = StartUpState.Starting;
+                Task.Run(() =>
+                {
+                    RecacheChunks();
+                    Parallel.ForEach(m_chunkStorage.Values.ToList(), ProcessChunkInCacheRange);
+                    var cacheThread = new Thread(CacheThread) { IsBackground = true };
+                    cacheThread.Start();
+                    m_startUpState = StartUpState.Started;   
+                });
+            }
         }
 
         public bool IsInViewRange(Chunk chunk)
@@ -224,7 +237,6 @@ namespace _4DMonoEngine.Core.Chunks
 
         private void Process()
         {
-           // m_processingQueue.AsParallel().ForAll(chunk =>
             foreach (var chunk in m_chunkStorage.Values.ToArray())
             {
                 if (IsInViewRange(chunk))
@@ -235,8 +247,7 @@ namespace _4DMonoEngine.Core.Chunks
                 {
                     ProcessChunkInCacheRange(chunk);
                 }
-            }//);
-           // m_processingQueue.Clear();
+            }
             if (m_cachePositionUpdated)
             {
                 RecacheChunks();
@@ -264,53 +275,41 @@ namespace _4DMonoEngine.Core.Chunks
                         }
                         var chunk = new Chunk(new Vector3Int(chunkPosition.X + x, chunkPosition.Y + y, chunkPosition.Z + z), Blocks);
                         m_chunkStorage[chunk.ChunkCachePosition.X, chunk.ChunkCachePosition.Y, chunk.ChunkCachePosition.Z] = chunk;
-                       // m_processingQueue.Add(chunk);
                     }
                 }
             }
-           /* m_processingQueue.Sort((chunk1, chunk2) =>
-            {
-                var dXc1 = chunk1.Position.X - m_cacheCenterPosition.X;
-                var dYc1 = chunk1.Position.Y - m_cacheCenterPosition.Y;
-                var dZc1 = chunk1.Position.Z - m_cacheCenterPosition.Z;
-
-                var dXc2 = chunk2.Position.X - m_cacheCenterPosition.X;
-                var dYc2 = chunk2.Position.Y - m_cacheCenterPosition.Y;
-                var dZc2 = chunk2.Position.Z - m_cacheCenterPosition.Z;
-
-                return (int)((dXc1 * dXc1 + dYc1 * dYc1 + dZc1 + dZc1) -
-                       (dXc2 * dXc2 + dYc2 * dYc2 + dZc2 + dZc2));
-
-            });*/
         }
 
         private void ProcessChunkInCacheRange(Chunk chunk)
         {
             if (chunk.ChunkState == ChunkState.AwaitingGenerate)
             {
-                m_generator.GenerateDataForChunk(chunk, 0);
+                chunk.ChunkState = ChunkState.Generating;
+                m_generator.GenerateDataForChunk(chunk.Position.X, chunk.Position.Y, chunk.Position.Z, 0);
+               // chunk.UpdateBoundingBox();
+                chunk.ChunkState = ChunkState.AwaitingLighting;
             }
         }
 
         private void ProcessChunkInViewRange(Chunk chunk)
         {
-            switch (chunk.ChunkState) // switch on the chunk state.
+            switch (chunk.ChunkState) 
             {
                 case ChunkState.AwaitingGenerate:
-                    m_logger.Error(chunk + " Generating");
-                    m_generator.GenerateDataForChunk(chunk, 0);
+                    chunk.ChunkState = ChunkState.Generating;
+                    m_generator.GenerateDataForChunk(chunk.Position.X, chunk.Position.Y, chunk.Position.Z, 0);
+                  //  chunk.UpdateBoundingBox();
+                    chunk.ChunkState = ChunkState.AwaitingLighting;
                     break;
                 case ChunkState.AwaitingLighting:
                     chunk.ChunkState = ChunkState.Lighting;
-                    m_logger.Trace(chunk + " Lighting");
                     m_lightingEngine.Process(chunk.Position.X, chunk.Position.Y, chunk.Position.Z, chunk.LightSources);
                     chunk.ChunkState = ChunkState.AwaitingBuild;
                     break;
                 case ChunkState.AwaitingBuild:
-                    chunk.ChunkState = ChunkState.Building; // set chunk state to building.
-                    m_logger.Trace(chunk + " Building");
+                    chunk.ChunkState = ChunkState.Building; 
                     m_vertexBuilder.Build(chunk);
-                    chunk.ChunkState = ChunkState.Ready; // chunk is all ready now.
+                    chunk.ChunkState = ChunkState.Ready; 
                     break;
             }
         }
@@ -374,10 +373,10 @@ namespace _4DMonoEngine.Core.Chunks
                         continue;
                     }
 
-                   /* if (!chunk.BoundingBox.Intersects(viewFrustrum))
+                    if (!chunk.BoundingBox.Intersects(viewFrustrum))
                     {
                         continue;
-                    }*/
+                    }
 
                     Game.GraphicsDevice.SetVertexBuffer(chunk.VertexBuffer);
                     Game.GraphicsDevice.Indices = chunk.IndexBuffer;
@@ -461,8 +460,7 @@ namespace _4DMonoEngine.Core.Chunks
             var wrapX = offset / BlockStepX;
             var wrapZ = offset / BlockStepZ - wrapX;
             var wrapY = offset - (wrapX + wrapZ);
-            wrapX = MathUtilities.Modulo(wrapX + x, CacheSizeInBlocks);
-            return BlockIndexByWorldPosition(wrapX, wrapY, wrapZ);
+            return BlockIndexByWorldPosition(wrapX + x, wrapY, wrapZ);
         }
 
         public static int BlockIndexOffsetY(int offset, int y = 0)
@@ -471,7 +469,7 @@ namespace _4DMonoEngine.Core.Chunks
             var wrapZ = offset / BlockStepZ - wrapX;
             var wrapY = offset - (wrapX + wrapZ);
             wrapY = MathUtilities.Modulo(wrapY + y, CacheSizeInBlocks);
-            return BlockIndexByWorldPosition(wrapX, wrapY, wrapZ);
+            return BlockIndexByWorldPosition(wrapX, wrapY + y, wrapZ);
         }
 
         public static int BlockIndexOffsetZ(int offset, int z = 0)
@@ -480,7 +478,7 @@ namespace _4DMonoEngine.Core.Chunks
             var wrapZ = offset / BlockStepZ - wrapX;
             var wrapY = offset - (wrapX + wrapZ);
             wrapZ = MathUtilities.Modulo(wrapZ + z, CacheSizeInBlocks);
-            return BlockIndexByWorldPosition(wrapX, wrapY, wrapZ);
+            return BlockIndexByWorldPosition(wrapX, wrapY, wrapZ + z);
         }
 
         public static int BlockIndexByRelativePosition(Chunk chunk, int x, int y, int z)

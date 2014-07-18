@@ -1,7 +1,6 @@
 [
 	{
 		"Name" : "Platform",
-		"FoliageDensity" : 0.5,
 		"Parameters" : 
 		[
 			{
@@ -15,14 +14,14 @@
 			{
 				"Id" : 0,
 				"BlockName" : "Stone",
-				"Thickness" : 5,
+				"Thickness" : 3,
 				"NoiseOffset" : 0,
 				"NoiseScale" : 16
 			},
 			{
 				"Id" : 1,
 				"BlockName" : "Dirt",
-				"Thickness" : 5,
+				"Thickness" : 3,
 				"NoiseOffset" : 0,
 				"NoiseScale" : 16
 			}

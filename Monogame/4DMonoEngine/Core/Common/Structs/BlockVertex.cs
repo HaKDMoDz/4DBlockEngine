@@ -13,11 +13,11 @@ namespace _4DMonoEngine.Core.Common.Structs
         private HalfVector2 m_blockTextureCoordinate;
         private HalfVector4 m_light;
 
-        public BlockVertex(Vector3 position, HalfVector2 blockTextureCoordinate, Byte4 light)
+        public BlockVertex(Vector3 position, HalfVector2 blockTextureCoordinate, HalfVector4 light)
         {
             m_position = position;
             m_blockTextureCoordinate = blockTextureCoordinate;
-            m_light = new HalfVector4(light.ToVector4()/255.0f);
+            m_light = light;
         }
 
         VertexDeclaration IVertexType.VertexDeclaration

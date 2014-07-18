@@ -2,7 +2,7 @@
 	{
 		"Name" : "Grass",
 		"BlockId" : 1,
-		"TextureNames" : ["Grass", "Dirt", "Dirt", "Dirt", "Dirt", "Dirt"],
+		"TextureNames" : ["Dirt", "Dirt", "Grass", "Dirt", "Dirt", "Dirt"],
 		"Opacity" : 1,
 		"Durability" : 0.3,
 		"Elasticity" : 0.1,
