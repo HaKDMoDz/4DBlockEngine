@@ -80,7 +80,7 @@ namespace _4DMonoEngine.Core.Chunks
             Debug.Assert(graphicsDevice != null);
             Blocks = new Block[CacheSizeInBlocks * CacheSizeInBlocks * CacheSizeInBlocks];
             m_generator = new TerrainGenerator(Chunk.SizeInBlocks, Blocks, seed);
-            m_lightingEngine = new CellularLighting<Block>(Blocks, BlockIndexByWorldPosition, Chunk.SizeInBlocks, BlockIndexOffsetX, BlockIndexOffsetY, BlockIndexOffsetZ);
+            m_lightingEngine = new CellularLighting<Block>(Blocks, BlockIndexByWorldPosition, Chunk.SizeInBlocks);
             m_vertexBuilder = new VertexBuilder<Block>(Blocks, BlockIndexByWorldPosition, graphicsDevice);
             m_chunkStorage = new SparseArray3D<Chunk>(CacheRange * 2 + 1, CacheRange * 2 + 1);
             m_cacheCenterPosition = new Vector4();
@@ -121,7 +121,7 @@ namespace _4DMonoEngine.Core.Chunks
                 var flattenIndex = BlockIndexByWorldPosition(x, y, z);
                 Blocks[flattenIndex] = block;
                 chunk.AddBlock(x, y, z);
-                m_lightingEngine.AddBlock(flattenIndex);
+                m_lightingEngine.AddBlock(x, y, z);
                 UpdateChunkStateAfterModification(chunk, x, y, z);
             }
         }
@@ -134,7 +134,7 @@ namespace _4DMonoEngine.Core.Chunks
                 var flattenIndex = BlockIndexByWorldPosition(x, y, z);
                 Blocks[flattenIndex] = Block.Empty;
                 chunk.RemoveBlock(x, y, z);
-                m_lightingEngine.RemoveBlock(flattenIndex);
+                m_lightingEngine.RemoveBlock(x, y, x);
                 UpdateChunkStateAfterModification(chunk, x, y, z);
             }
         }
@@ -453,30 +453,6 @@ namespace _4DMonoEngine.Core.Chunks
             var wrapZ = MathUtilities.Modulo(z, CacheSizeInBlocks);
             var flattenIndex = wrapX * BlockStepX + wrapZ * BlockStepZ + wrapY;
             return flattenIndex;
-        }
-
-        public static int BlockIndexOffsetX(int offset, int x = 0)
-        {
-            var wrapX = offset / BlockStepX;
-            var wrapZ = offset / BlockStepZ - wrapX;
-            var wrapY = offset - (wrapX + wrapZ);
-            return BlockIndexByWorldPosition(wrapX + x, wrapY, wrapZ);
-        }
-
-        public static int BlockIndexOffsetY(int offset, int y = 0)
-        {
-            var wrapX = offset / BlockStepX;
-            var wrapZ = offset / BlockStepZ - wrapX;
-            var wrapY = offset - (wrapX + wrapZ);
-            return BlockIndexByWorldPosition(wrapX, wrapY + y, wrapZ);
-        }
-
-        public static int BlockIndexOffsetZ(int offset, int z = 0)
-        {
-            var wrapX = offset / BlockStepX;
-            var wrapZ = offset / BlockStepZ - wrapX;
-            var wrapY = offset - (wrapX + wrapZ);
-            return BlockIndexByWorldPosition(wrapX, wrapY, wrapZ + z);
         }
 
         public static int BlockIndexByRelativePosition(Chunk chunk, int x, int y, int z)

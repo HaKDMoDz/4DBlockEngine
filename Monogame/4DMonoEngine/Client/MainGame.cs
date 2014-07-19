@@ -29,7 +29,7 @@ namespace _4DMonoEngine.Client
 
        protected override void Initialize()
         {
-            IsMouseVisible = false;
+            IsMouseVisible = true;
             MainEngine.GetEngineInstance().Initialize(this, 0);
             Components.Add(m_timeRuler); 
             Components.Add(new InputManager(this));
