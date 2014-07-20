@@ -75,11 +75,11 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 
 					    if (cY > groundLevel + 10)
 					    {
-                            block = new Block(0) {LightSun = Chunk.MaxSunValue};
+                            block = new Block(Block.None) {LightSun = Chunk.MaxSunValue};
 					    }
 					    else if (cY > groundLevel)
 					    {
-					        block = new Block(0);
+					        block = Block.Empty;
 					    }
                         else if (cY >= groundLevel - m_biomeThickness)
 					    {

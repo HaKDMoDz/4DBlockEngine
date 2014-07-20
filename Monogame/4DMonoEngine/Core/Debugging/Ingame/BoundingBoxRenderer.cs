@@ -46,6 +46,11 @@ namespace _4DMonoEngine.Core.Debugging.Ingame
             Matrix projection,
             Color color)
         {
+            if (box.Min == box.Max)
+            {
+                return;
+            }
+
             if (effect == null)
             {
                 effect = new BasicEffect(graphicsDevice)

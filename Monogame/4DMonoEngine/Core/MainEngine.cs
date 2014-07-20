@@ -8,6 +8,7 @@ using _4DMonoEngine.Core.Common.Interfaces;
 using _4DMonoEngine.Core.Events;
 using _4DMonoEngine.Core.Graphics;
 using _4DMonoEngine.Core.Initialization;
+using _4DMonoEngine.Core.Input;
 using _4DMonoEngine.Core.Logging;
 using _4DMonoEngine.Core.Managers;
 using _4DMonoEngine.Core.Universe;
@@ -47,10 +48,12 @@ namespace _4DMonoEngine.Core
 
         public Task<General> GeneralSettings { get; private set; }
         private InitializationController m_initializationController;
+        private InputManager m_inputManager;
 
-        public void Initialize(Game game, uint seed)
+        public void Initialize(Game game, InputManager inputManager, uint seed)
         {
             Game = game;
+            m_inputManager = inputManager;
             m_assetProvider = new AssetManager(game.Content, game.GraphicsDevice);
             GeneralSettings = GetConfig<General>("GeneralSettings");
             m_initializationController = new InitializationController();
@@ -112,6 +115,12 @@ namespace _4DMonoEngine.Core
         public void Exit()
         {
             Game.Exit();
+        }
+
+        public void ToggleMouseMode()
+        {
+            Game.IsMouseVisible = !Game.IsMouseVisible;
+            m_inputManager.CursorCentered = !Game.IsMouseVisible;
         }
     }
 }

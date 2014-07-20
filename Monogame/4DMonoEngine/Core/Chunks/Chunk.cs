@@ -170,6 +170,7 @@ namespace _4DMonoEngine.Core.Chunks
                             continue;
                         }
                         foundBlockZ = true;
+                        foundBlockX = true;
                         if (y > upperBoundY)
                         {
                             upperBoundY = y;
@@ -191,7 +192,6 @@ namespace _4DMonoEngine.Core.Chunks
                     {
                         lowerBoundZ = z;
                     }
-                    foundBlockX = true;
                 }
                 if (!foundBlockX)
                 {
@@ -201,17 +201,29 @@ namespace _4DMonoEngine.Core.Chunks
                 {
                     upperBoundX = x;
                 }
-                if (x < lowerBoundZ)
+                if (x < lowerBoundX)
                 {
                     lowerBoundX = x;
                 }
             }
-            BoundingBox.Min.X = lowerBoundX + Position.X;
-            BoundingBox.Max.X = upperBoundX + Position.X;
-            BoundingBox.Min.Y = lowerBoundY + Position.Y;
-            BoundingBox.Max.Y = upperBoundY + Position.Y;
-            BoundingBox.Min.Z = lowerBoundZ + Position.Z;
-            BoundingBox.Max.Z = upperBoundZ + Position.Z;
+            if (lowerBoundX > upperBoundX || lowerBoundY > upperBoundY || lowerBoundZ > upperBoundZ)
+            {
+                BoundingBox.Min.X = Position.X;
+                BoundingBox.Max.X = Position.X;
+                BoundingBox.Min.Y = Position.Y;
+                BoundingBox.Max.Y = Position.Y;
+                BoundingBox.Min.Z = Position.Z;
+                BoundingBox.Max.Z = Position.Z;
+            }
+            else
+            {
+                BoundingBox.Min.X = lowerBoundX + Position.X;
+                BoundingBox.Max.X = upperBoundX + Position.X;
+                BoundingBox.Min.Y = lowerBoundY + Position.Y;
+                BoundingBox.Max.Y = upperBoundY + Position.Y;
+                BoundingBox.Min.Z = lowerBoundZ + Position.Z;
+                BoundingBox.Max.Z = upperBoundZ + Position.Z;
+            }
         }
 
 
@@ -223,13 +235,13 @@ namespace _4DMonoEngine.Core.Chunks
         
         public void DrawInGameDebugVisual(GraphicsDevice graphicsDevice, Camera camera, SpriteBatch spriteBatch, SpriteFont spriteFont)
         {
-            var position = ChunkCachePosition + " " + ChunkState;
-            var positionSize = spriteFont.MeasureString(position);
-
-            var projected = graphicsDevice.Viewport.Project(Vector3.Zero, camera.Projection, camera.View,
-                                                            Matrix.CreateTranslation(new Vector3(Position.X + SizeInBlocks / 2, Position.Y + SizeInBlocks / 2, Position.Z + SizeInBlocks / 2)));
-         //   spriteBatch.DrawString(spriteFont, position, new Vector2(projected.X - positionSize.X/2, projected.Y - positionSize.Y/2), Color.Yellow);
-            BoundingBoxRenderer.Render(BoundingBox, graphicsDevice, camera.View, camera.Projection, Color.DarkRed);
+            var color = Color.Blue;
+            if (ChunkState == ChunkState.Ready)
+            {
+                color = Color.DarkRed;
+            }
+            BoundingBoxRenderer.Render(BoundingBox, graphicsDevice, camera.View, camera.Projection, color);
+            
         }
 
         public void PrepForRemoval()

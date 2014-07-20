@@ -7,7 +7,7 @@ namespace _4DMonoEngine.Core.Blocks
 {
     public struct Block : ILightable
     {
-        private const ushort None = 0;
+        public const ushort None = 0;
         //private DynamicBlock m_dynamicBlockData;
         private readonly ushort m_type;
         private byte m_lightSun;

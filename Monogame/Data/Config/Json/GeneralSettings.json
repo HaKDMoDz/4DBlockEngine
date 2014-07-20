@@ -7,7 +7,7 @@
 	"SinkHoleDepth" : 8,
     "BiomeCentroidSampleScale" : 16,
     "BiomeSampleRescale" : 512,
-    "BiomeThickness" : 16,
+    "BiomeThickness" : 8,
     "BlockTypeMap" :
     [
     	{

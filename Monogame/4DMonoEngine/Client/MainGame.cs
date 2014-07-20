@@ -30,10 +30,11 @@ namespace _4DMonoEngine.Client
        protected override void Initialize()
         {
             IsMouseVisible = false;
-            MainEngine.GetEngineInstance().Initialize(this, 0);
-            Components.Add(m_timeRuler); 
-            Components.Add(new InputManager(this));
+            var inputManager = new InputManager(this);
             Components.Add(new UserInterface(this));
+            Components.Add(inputManager);
+            MainEngine.GetEngineInstance().Initialize(this, inputManager, 0);
+            Components.Add(m_timeRuler); 
             base.Initialize();
         }
 

@@ -120,6 +120,9 @@ namespace _4DMonoEngine.Core.Debugging.Console
                     case Keys.F1:
                         m_toggleInGameDebugger();
                         break;
+                    case Keys.F2:
+                        MainEngine.GetEngineInstance().ToggleMouseMode();
+                        break;
                 }
             }
         }
