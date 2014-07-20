@@ -30,7 +30,7 @@ namespace _4DMonoEngine.Core.Chunks
             Starting,
             Started,
         }
-        private const byte CacheRange = 14;
+        private const byte CacheRange = 6;
         private BoundingBox m_cacheRangeBoundingBox;
         /*TODO : Implement LOD here
          * 
@@ -79,7 +79,7 @@ namespace _4DMonoEngine.Core.Chunks
             Debug.Assert(ViewRange < CacheRange);
             Debug.Assert(graphicsDevice != null);
             Blocks = new Block[CacheSizeInBlocks * CacheSizeInBlocks * CacheSizeInBlocks];
-            m_generator = new TerrainGenerator(Chunk.SizeInBlocks, Blocks, seed);
+            m_generator = new TerrainGenerator(Chunk.SizeInBlocks, Blocks, seed, BlockIndexByWorldPosition);
             m_lightingEngine = new CellularLighting<Block>(Blocks, BlockIndexByWorldPosition, Chunk.SizeInBlocks);
             m_vertexBuilder = new VertexBuilder<Block>(Blocks, BlockIndexByWorldPosition, graphicsDevice);
             m_chunkStorage = new SparseArray3D<Chunk>(CacheRange * 2 + 1, CacheRange * 2 + 1);
@@ -250,6 +250,7 @@ namespace _4DMonoEngine.Core.Chunks
             }
             if (m_cachePositionUpdated)
             {
+                m_cachePositionUpdated = false;
                 RecacheChunks();
             }
         }
@@ -273,7 +274,7 @@ namespace _4DMonoEngine.Core.Chunks
                         {
                             continue;
                         }
-                        var chunk = new Chunk(new Vector3Int(chunkPosition.X + x, chunkPosition.Y + y, chunkPosition.Z + z), Blocks);
+                        var chunk = new Chunk(new Vector3Int(chunkPosition.X + x, chunkPosition.Y + y, chunkPosition.Z + z), Blocks, BlockIndexByWorldPosition);
                         m_chunkStorage[chunk.ChunkCachePosition.X, chunk.ChunkCachePosition.Y, chunk.ChunkCachePosition.Z] = chunk;
                     }
                 }
@@ -286,7 +287,7 @@ namespace _4DMonoEngine.Core.Chunks
             {
                 chunk.ChunkState = ChunkState.Generating;
                 m_generator.GenerateDataForChunk(chunk.Position.X, chunk.Position.Y, chunk.Position.Z, 0);
-               // chunk.UpdateBoundingBox();
+                chunk.UpdateBoundingBox();
                 chunk.ChunkState = ChunkState.AwaitingLighting;
             }
         }
@@ -298,7 +299,7 @@ namespace _4DMonoEngine.Core.Chunks
                 case ChunkState.AwaitingGenerate:
                     chunk.ChunkState = ChunkState.Generating;
                     m_generator.GenerateDataForChunk(chunk.Position.X, chunk.Position.Y, chunk.Position.Z, 0);
-                  //  chunk.UpdateBoundingBox();
+                    chunk.UpdateBoundingBox();
                     chunk.ChunkState = ChunkState.AwaitingLighting;
                     break;
                 case ChunkState.AwaitingLighting:
@@ -451,18 +452,6 @@ namespace _4DMonoEngine.Core.Chunks
             var wrapX = MathUtilities.Modulo(x, CacheSizeInBlocks);
             var wrapY = MathUtilities.Modulo(y, CacheSizeInBlocks);
             var wrapZ = MathUtilities.Modulo(z, CacheSizeInBlocks);
-            var flattenIndex = wrapX * BlockStepX + wrapZ * BlockStepZ + wrapY;
-            return flattenIndex;
-        }
-
-        public static int BlockIndexByRelativePosition(Chunk chunk, int x, int y, int z)
-        {
-            var xIndex = chunk.Position.X + x;
-            var yIndex = chunk.Position.Y + y;
-            var zIndex = chunk.Position.Z + z;
-            var wrapX = MathUtilities.Modulo(xIndex, CacheSizeInBlocks);
-            var wrapY = MathUtilities.Modulo(yIndex, CacheSizeInBlocks);
-            var wrapZ = MathUtilities.Modulo(zIndex, CacheSizeInBlocks);
             var flattenIndex = wrapX * BlockStepX + wrapZ * BlockStepZ + wrapY;
             return flattenIndex;
         }

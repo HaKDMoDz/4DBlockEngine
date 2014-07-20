@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using _4DMonoEngine.Core.Chunks;
+using _4DMonoEngine.Core.Common.Interfaces;
 using _4DMonoEngine.Core.Debugging;
 using _4DMonoEngine.Core.Debugging.Console;
 using _4DMonoEngine.Core.Debugging.Graphs;
@@ -15,13 +16,15 @@ namespace _4DMonoEngine.Core.Managers
     {
         private readonly GameComponentCollection m_components;
         private readonly GraphManager m_graphs;
+        private readonly InGameDebugger m_debugger;
         public DebugManager(Game game, Camera camera, ChunkCache chunkCache, SpriteFont debugFont) : base(game)
         {
             m_graphs = new GraphManager(game);
+            m_debugger = new InGameDebugger(game, camera);
             var statistics = new Statistics(game, chunkCache);
             m_components = new GameComponentCollection
             {
-                new InGameDebugger(game, camera),
+                m_debugger,
                 new DebugBar(game, statistics, chunkCache),
                 statistics,
                 m_graphs,
@@ -35,7 +38,7 @@ namespace _4DMonoEngine.Core.Managers
                     BackgroundColor = Color.Black*0.8f,
                     PastCommandOutputColor = Color.Aqua,
                     BufferColor = Color.Gold
-                })
+                }, m_debugger.ToggleInGameDebugger)
             };
         }
 
@@ -70,6 +73,11 @@ namespace _4DMonoEngine.Core.Managers
         {
             get { return  m_graphs.Enabled; }
             set { m_graphs.Enabled = value; }
+        }
+
+        public void RegisterInGameDebuggable(IInGameDebuggable debuggable)
+        {
+            m_debugger.RegisterInGameDebuggable(debuggable);
         }
     }
 }

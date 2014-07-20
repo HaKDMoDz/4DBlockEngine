@@ -35,7 +35,7 @@ namespace _4DMonoEngine.Core.Universe
             m_chunkCache = new ChunkCache(game, seed);
             m_worldComponents.Add(m_chunkCache);
             m_worldComponents.Add(new Sky(game, seed));
-            m_player = new Player(ChunkCache.Blocks);
+            m_player = new Player(ChunkCache.Blocks, ChunkCache.BlockIndexByWorldPosition);
             m_worldComponents.Add(m_player);
         }
 
@@ -72,6 +72,10 @@ namespace _4DMonoEngine.Core.Universe
                 renderable.LoadContent();
             }
             base.Initialize();
+        }
+
+        public void Start()
+        {
             m_player.SpawnPlayer(new Vector2Int(0, 0));
         }
 

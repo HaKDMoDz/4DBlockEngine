@@ -72,6 +72,7 @@ namespace _4DMonoEngine.Core
                 DebugOnlyDebugManager = new DebugManager(game, Camera, Simulation.ChunkCache, GetAsset<SpriteFont>("Verdana"));
                 game.Components.Add(DebugOnlyDebugManager);
 #endif
+                Simulation.Start();
             });
             m_initializationController.Run();
             Camera = new Camera(game.GraphicsDevice.Viewport.AspectRatio);

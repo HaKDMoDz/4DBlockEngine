@@ -46,11 +46,13 @@ namespace _4DMonoEngine.Core.Universe
         private readonly Action<EventArgs> m_mousePositionUpdated;
         private readonly Action<EventArgs> m_keyDown;
         private readonly Action<EventArgs> m_keyUp;
-        
-        public Player(Block[] blocks )
+        private readonly MappingFunctionVector3 m_mappingFunction;
+
+        public Player(Block[] blocks, MappingFunctionVector3 mappingFunction)
         {
             FlyingEnabled = true;
             m_blocks = blocks;
+            m_mappingFunction = mappingFunction;
             Equipable = new Shovel();
             m_eventsHandled = new HashSet<string>
             {
@@ -90,7 +92,7 @@ namespace _4DMonoEngine.Core.Universe
             if (!FlyingEnabled)
             {
                 m_velocity.Y += Gravity * deltaTime;
-                var standingBlock = m_blocks[ChunkCache.BlockIndexByWorldPosition(ref footPosition)];
+                var standingBlock = m_blocks[m_mappingFunction(ref footPosition)];
                 if (standingBlock.Exists)
                 {
                     if ((m_controlBitVector & Jump) != 0)
@@ -165,13 +167,13 @@ namespace _4DMonoEngine.Core.Universe
 
         private bool CheckCollision(ref Vector3 nextPosition)
         {
-            var index = ChunkCache.BlockIndexByWorldPosition(ref nextPosition);
+            var index = m_mappingFunction(ref nextPosition);
             return m_blocks[index].Exists || m_blocks[index + 1].Exists;
         }
 
         private void ResolveCollision(ref Vector3 positionIn, out Vector3 positionOut)
         {
-            var index = ChunkCache.BlockIndexByWorldPosition(ref positionIn);
+            var index = m_mappingFunction(ref positionIn);
             positionOut = positionIn;
             if ((m_velocity.X > 0 && m_blocks[index + ChunkCache.BlockStepX].Exists) || (m_velocity.X < 0 && m_blocks[index - ChunkCache.BlockStepX].Exists))
             {

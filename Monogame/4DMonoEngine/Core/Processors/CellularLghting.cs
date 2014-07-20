@@ -9,8 +9,6 @@ namespace _4DMonoEngine.Core.Processors
 {
     internal class CellularLighting<T> where T : ILightable
     {
-        public delegate int MappingFunction(int x, int y, int z);
-
         private const float SDropoff = 0.9375f;
         private readonly Queue<LightQueueContainer> m_lightQueueToAdd;
         private readonly Queue<SunQueueContainer> m_sunQueueToAdd;
@@ -57,16 +55,6 @@ namespace _4DMonoEngine.Core.Processors
                         m_blockSource[blockIndex].LightRed = 0;
                         m_blockSource[blockIndex].LightGreen = 0;
                         m_blockSource[blockIndex].LightBlue = 0;
-                        /*if (y == m_chunkSize - 1)
-                        {
-                            m_blockSource[blockIndex].LightSun = 0;
-                            blockIndex = m_mappingFunction(cX, cY - 1, cZ);
-                            if (m_blockSource[blockIndex].Opacity < 1 && m_blockSource[blockIndex].LightSun > 0)
-                            {
-                                PropagateFromSunSource(cX, cY - 1, cZ, m_blockSource[blockIndex].LightSun, down: true);
-                            }
-                        }
-                        else */
                         if (m_blockSource[blockIndex].LightSun == Chunk.MaxSunValue)
                         {
                             PropagateFromSunSource(cX, cY, cZ, m_blockSource[blockIndex].LightSun, down: true);
@@ -134,13 +122,13 @@ namespace _4DMonoEngine.Core.Processors
             }
         }
 
-        public void AddLight(Chunk chunk, int x, int y, int z, Vector3Byte light)
+        public void AddLight(SparseArray3D<Vector3Byte> lights, int x, int y, int z, Vector3Byte light)
         {
-            if (chunk.LightSources.ContainsKey(x, y, z))
+            if (lights.ContainsKey(x, y, z))
             {
                 return;
             }
-            chunk.LightSources[x, y, z] = light;
+            lights[x, y, z] = light;
             var blockIndex = m_mappingFunction( x, y, z);
             var propogate = false;
             var lightRed = m_blockSource[blockIndex].LightRed;
@@ -167,13 +155,13 @@ namespace _4DMonoEngine.Core.Processors
             }
         }
 
-        public void RemoveLight(Chunk chunk, int x, int y, int z)
+        public void RemoveLight(SparseArray3D<Vector3Byte> lights, int x, int y, int z)
         {
-            if (!chunk.LightSources.ContainsKey(x, y, z))
+            if (!lights.ContainsKey(x, y, z))
             {
                 return;
             }
-            chunk.LightSources.Remove(x, y, z);
+            lights.Remove(x, y, z);
             ClearLightFromCell(x, y, z);
         }
 
@@ -286,6 +274,7 @@ namespace _4DMonoEngine.Core.Processors
 
         private void ClearCellOrAddSunSources()
         {
+            ILightable currentChunk;
             while (m_sunQueueToRemove.Count > 0)
             {
                 var sunContainer = m_sunQueueToRemove.Dequeue();

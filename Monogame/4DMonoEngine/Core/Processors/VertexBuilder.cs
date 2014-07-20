@@ -5,14 +5,13 @@ using _4DMonoEngine.Core.Common.AbstractClasses;
 using _4DMonoEngine.Core.Common.Enums;
 using _4DMonoEngine.Core.Common.Interfaces;
 using _4DMonoEngine.Core.Common.Structs;
+using _4DMonoEngine.Core.Utils;
 using _4DMonoEngine.Core.Utils.Vector;
 
 namespace _4DMonoEngine.Core.Processors
 {
     public class VertexBuilder<T> where T : ILightable
     {
-        public delegate int MappingFunction(int x, int y, int z);
-
         private readonly GraphicsDevice m_graphicsDevice;
         private readonly T[] m_blockSource;
         private readonly MappingFunction m_mappingFunction;

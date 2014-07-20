@@ -1,7 +1,11 @@
 ﻿using System;
+using Microsoft.Xna.Framework;
 
 namespace _4DMonoEngine.Core.Utils
 {
+    public delegate int MappingFunction(int x, int y, int z);
+    public delegate int MappingFunctionVector3(ref Vector3 position);
+
     public static class MathUtilities
     {
         private static float[] s_biasTable = new float[101];      	
@@ -68,7 +72,7 @@ namespace _4DMonoEngine.Core.Utils
 
         public static int Modulo(int x, int m)
         {
-            return x < 0 ? (x % m) + m : x % m;
+            return ((x % m) + m) % m;
         }
     }
 }

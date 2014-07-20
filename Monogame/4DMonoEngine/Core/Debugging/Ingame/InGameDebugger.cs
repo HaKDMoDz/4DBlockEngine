@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -15,11 +16,13 @@ namespace _4DMonoEngine.Core.Debugging.Ingame
         private bool m_active;
 
         private readonly List<WeakReference<IInGameDebuggable>> m_debugList;
+        private readonly ConcurrentQueue<IInGameDebuggable>  m_debugQueue; 
 
         public InGameDebugger(Game game, Camera camera)
             : base(game)
         {
             m_debugList = new List<WeakReference<IInGameDebuggable>>();
+            m_debugQueue = new ConcurrentQueue<IInGameDebuggable>();
             m_camera = camera;
         }
 
@@ -31,6 +34,23 @@ namespace _4DMonoEngine.Core.Debugging.Ingame
 
         public override void Draw(GameTime gameTime)
         {
+           
+                IInGameDebuggable tryReference;
+                while (m_debugQueue.TryDequeue(out tryReference))
+                {
+                    foreach (var weakReference in m_debugList)
+                    {
+                        IInGameDebuggable outDebug;
+                        if (!weakReference.TryGetTarget(out outDebug))
+                        {
+                            weakReference.SetTarget(tryReference);
+                            goto Continue;
+                        }
+                    }
+                    m_debugList.Add(new WeakReference<IInGameDebuggable>(tryReference));
+                Continue:
+                    ;
+                }
             if (m_active)
             {
                 m_spriteBatch.Begin();
@@ -48,16 +68,7 @@ namespace _4DMonoEngine.Core.Debugging.Ingame
 
         public void RegisterInGameDebuggable(IInGameDebuggable debuggable)
         {
-            foreach (var weakReference in m_debugList)
-            {
-                IInGameDebuggable outDebug;
-                if (!weakReference.TryGetTarget(out outDebug))
-                {
-                    weakReference.SetTarget(debuggable);
-                    return;
-                }
-            }
-            m_debugList.Add(new WeakReference<IInGameDebuggable>(debuggable));
+            m_debugQueue.Enqueue(debuggable);
         }
 
         public void ToggleInGameDebugger()

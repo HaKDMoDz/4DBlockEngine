@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Input;
 using _4DMonoEngine.Core.Events;
 using _4DMonoEngine.Core.Events.Args;
 using Microsoft.Xna.Framework.Input;
+using _4DMonoEngine.Core.Managers;
+using Keyboard = Microsoft.Xna.Framework.Input.Keyboard;
 
 namespace _4DMonoEngine.Core.Debugging.Console
 {
@@ -19,15 +22,19 @@ namespace _4DMonoEngine.Core.Debugging.Console
         private bool m_isActive;
         private readonly CommandProcesser m_commandProcesser;
         private readonly GameConsoleOptions m_options;
+        private readonly Action m_toggleInGameDebugger;
+        private readonly Action<EventArgs> m_wrappedKeyEvent;
 
-        public InputProcessor(CommandProcesser commandProcesser, GameConsoleOptions options)
+        public InputProcessor(CommandProcesser commandProcesser, GameConsoleOptions options, Action toggleInGameDebugger)
         {
             m_commandProcesser = commandProcesser;
             m_options = options;
+            m_toggleInGameDebugger = toggleInGameDebugger;
             m_isActive = false;
             CommandHistory = new CommandHistory();
             Out = new List<OutputLine>();
             Buffer = new OutputLine("", OutputLineType.Command);
+            m_wrappedKeyEvent = EventHelper.Wrap<KeyArgs>(OnKeyDown);
             MainEngine.GetEngineInstance().CentralDispatch.Register(EventConstants.KeyDown, GetHandlerForEvent(EventConstants.KeyDown));
         }
 
@@ -77,30 +84,43 @@ namespace _4DMonoEngine.Core.Debugging.Console
                 ToggleConsole();
             }
 
-            switch (e.KeyCode)
+            if (m_isActive)
             {
-                case Keys.Enter:
-                    ExecuteBuffer();
-                    break;
-                case Keys.Back:
-                    if (Buffer.Output.Length > 0)
-                        Buffer.Output = Buffer.Output.Substring(0, Buffer.Output.Length - 1);
-                    break;
-                case Keys.Tab:
-                    AutoComplete();
-                    break;
-                case Keys.Up: 
-                    Buffer.Output = CommandHistory.Previous(); 
-                    break;
-                case Keys.Down: Buffer.Output = CommandHistory.Next(); 
-                    break;
-                default:
-                    var @char = TranslateChar(e.KeyCode);
-                    if (IsPrintable(@char))
-                    {
-                        Buffer.Output += @char;
-                    }
-                    break;
+                switch (e.KeyCode)
+                {
+                    case Keys.Enter:
+                        ExecuteBuffer();
+                        break;
+                    case Keys.Back:
+                        if (Buffer.Output.Length > 0)
+                            Buffer.Output = Buffer.Output.Substring(0, Buffer.Output.Length - 1);
+                        break;
+                    case Keys.Tab:
+                        AutoComplete();
+                        break;
+                    case Keys.Up:
+                        Buffer.Output = CommandHistory.Previous();
+                        break;
+                    case Keys.Down:
+                        Buffer.Output = CommandHistory.Next();
+                        break;
+                    default:
+                        var @char = TranslateChar(e.KeyCode);
+                        if (IsPrintable(@char))
+                        {
+                            Buffer.Output += @char;
+                        }
+                        break;
+                }
+            }
+            else
+            {
+                switch (e.KeyCode)
+                {
+                    case Keys.F1:
+                        m_toggleInGameDebugger();
+                        break;
+                }
             }
         }
 
@@ -124,6 +144,9 @@ namespace _4DMonoEngine.Core.Debugging.Console
 
             if (xnaKey == Keys.OemPeriod)
                 return '.';
+
+            if (xnaKey == Keys.OemMinus)
+                return '-';
 
             return ' ';
         }
@@ -178,7 +201,7 @@ namespace _4DMonoEngine.Core.Debugging.Console
             switch (eventName)
             {
                 case EventConstants.KeyDown:
-                    return EventHelper.Wrap<KeyArgs>(OnKeyDown);
+                    return m_wrappedKeyEvent;
                 default:
                     return null;
             }

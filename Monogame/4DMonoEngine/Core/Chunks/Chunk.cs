@@ -32,15 +32,17 @@ namespace _4DMonoEngine.Core.Chunks
         private readonly Block[] m_blocks;
         public Vector3Int ChunkCachePosition;
 
-        public SparseArray3D<Vector3Byte> LightSources;
+        public readonly SparseArray3D<Vector3Byte> LightSources;
 
         public ChunkState ChunkState;
-        
-        public Chunk(Vector3Int chunkCachePosition, Block[] blocks)
+        private readonly MappingFunction m_mappingFunction;
+
+        public Chunk(Vector3Int chunkCachePosition, Block[] blocks, MappingFunction mappingFunction)
         {
             ChunkState = ChunkState.AwaitingGenerate; // set initial state to awaiting generation.
             ChunkCachePosition = chunkCachePosition; // set the relative position.
             m_blocks = blocks;
+            m_mappingFunction = mappingFunction;
 
             // calculate the real world position.
             Position = new Vector3Int(ChunkCachePosition.X * SizeInBlocks,
@@ -56,6 +58,10 @@ namespace _4DMonoEngine.Core.Chunks
             VertexList = new List<BlockVertex>();
             IndexList = new List<short>();
             LightSources = new SparseArray3D<Vector3Byte>(SizeInBlocks, SizeInBlocks);
+#if DEBUG
+            MainEngine.GetEngineInstance().DebugOnlyDebugManager.RegisterInGameDebuggable(this);
+#endif
+
         }
 
         public bool IsInBounds(float x, float y, float z)
@@ -157,7 +163,8 @@ namespace _4DMonoEngine.Core.Chunks
                     var foundBlockZ = false;
                     for (var y = 0; y < SizeInBlocks; ++y)
                     {
-                        var samplePosition = ChunkCache.BlockIndexByWorldPosition(worldPositionX, Position.Y + y, worldPositionZ);
+                        var worldPositionY = Position.Y + y;
+                        var samplePosition = m_mappingFunction(worldPositionX, worldPositionY, worldPositionZ);
                         if (!m_blocks[samplePosition].Exists)
                         {
                             continue;
@@ -167,23 +174,24 @@ namespace _4DMonoEngine.Core.Chunks
                         {
                             upperBoundY = y;
                         }
-                        else if (y < lowerBoundY)
+                        if (y < lowerBoundY)
                         {
                             lowerBoundY = y;
                         }
                     }
-                    if (foundBlockZ)
+                    if (!foundBlockZ)
                     {
-                        if (z > upperBoundZ)
-                        {
-                            upperBoundZ = z;
-                        }
-                        else if (z < lowerBoundZ)
-                        {
-                            lowerBoundZ = z;
-                        }
+                        continue;
                     }
-                    foundBlockX |= foundBlockZ;
+                    if (z > upperBoundZ)
+                    {
+                        upperBoundZ = z;
+                    }
+                    if (z < lowerBoundZ)
+                    {
+                        lowerBoundZ = z;
+                    }
+                    foundBlockX = true;
                 }
                 if (!foundBlockX)
                 {
@@ -193,7 +201,7 @@ namespace _4DMonoEngine.Core.Chunks
                 {
                     upperBoundX = x;
                 }
-                else if (x < lowerBoundZ)
+                if (x < lowerBoundZ)
                 {
                     lowerBoundX = x;
                 }
@@ -220,7 +228,7 @@ namespace _4DMonoEngine.Core.Chunks
 
             var projected = graphicsDevice.Viewport.Project(Vector3.Zero, camera.Projection, camera.View,
                                                             Matrix.CreateTranslation(new Vector3(Position.X + SizeInBlocks / 2, Position.Y + SizeInBlocks / 2, Position.Z + SizeInBlocks / 2)));
-            spriteBatch.DrawString(spriteFont, position, new Vector2(projected.X - positionSize.X/2, projected.Y - positionSize.Y/2), Color.Yellow);
+         //   spriteBatch.DrawString(spriteFont, position, new Vector2(projected.X - positionSize.X/2, projected.Y - positionSize.Y/2), Color.Yellow);
             BoundingBoxRenderer.Render(BoundingBox, graphicsDevice, camera.View, camera.Projection, Color.DarkRed);
         }
 

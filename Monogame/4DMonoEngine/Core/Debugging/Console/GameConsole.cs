@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace _4DMonoEngine.Core.Debugging.Console
@@ -17,13 +18,13 @@ namespace _4DMonoEngine.Core.Debugging.Console
         private readonly InputProcessor m_inputProcesser;
         private readonly Renderer m_renderer;
         
-        public GameConsole(Game game, SpriteBatch spriteBatch, GameConsoleOptions options) 
+        public GameConsole(Game game, SpriteBatch spriteBatch, GameConsoleOptions options, Action toggleInGameDebugger) 
             : base(game)
         {
             m_options = options;
             Enabled = true;
             m_spriteBatch = spriteBatch;
-            m_inputProcesser = new InputProcessor(new CommandProcesser(), m_options);
+            m_inputProcesser = new InputProcessor(new CommandProcesser(), m_options, toggleInGameDebugger);
             m_inputProcesser.Open += (s, e) => m_renderer.Open();
             m_inputProcesser.Close += (s, e) => m_renderer.Close();
             m_renderer = new Renderer(game, spriteBatch, m_inputProcesser, m_options);

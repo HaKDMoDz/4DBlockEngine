@@ -1,6 +1,7 @@
 ﻿using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Chunks.Generators.Regions;
 using Microsoft.Xna.Framework;
+using _4DMonoEngine.Core.Utils;
 using _4DMonoEngine.Core.Utils.Noise;
 using _4DMonoEngine.Core.Utils.Random;
 
@@ -24,10 +25,12 @@ namespace _4DMonoEngine.Core.Chunks.Generators
         private float m_detailScale;
         private float m_sinkHoleDepth;
         private int m_biomeThickness;
+        private readonly MappingFunction m_mappingFunction;
 
-        public TerrainGenerator(int chunkSize, Block[] blocks, uint seed) 
+        public TerrainGenerator(int chunkSize, Block[] blocks, uint seed, MappingFunction mappingFunction) 
 	    {
             Seed = seed;
+            m_mappingFunction = mappingFunction;
             m_chunkSize = chunkSize;
             m_blocks = blocks;
             InitializeAsync();
@@ -96,7 +99,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 					        var province = m_provinceGenerator.GetRegionGenerator(cX, cZ, cW);
 					        block = province.Apply((int)groundLevel - m_biomeThickness, cX, cY, cZ, cW);
 					    }
-                        m_blocks[ChunkCache.BlockIndexByWorldPosition(cX, cY, cZ)] = block;
+                        m_blocks[m_mappingFunction(cX, cY, cZ)] = block;
 					}
                     //TODO : fill with water
                     /*
