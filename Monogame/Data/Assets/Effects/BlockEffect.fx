@@ -62,7 +62,7 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 	else
 		sunColor *= (TimeOfDay - 24) / -12;	
 
-	output.Color.rgb = (sunColor * input.Light.x); // + (input.LocalLight.rgb);
+	output.Color.rgb = input.Light.x;//(sunColor * input.Light.x); // + (input.LocalLight.rgb);
 	output.Color.a = 1;
 
     return output;

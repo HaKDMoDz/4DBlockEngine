@@ -13,15 +13,15 @@
 		[
 			{
 				"Id" : 0,
-				"BlockName" : "Stone",
-				"Thickness" : 3,
+				"BlockName" : "StoneDark",
+				"Thickness" : 5,
 				"NoiseOffset" : 0,
 				"NoiseScale" : 1
 			},
 			{
 				"Id" : 1,
-				"BlockName" : "Dirt",
-				"Thickness" : 3,
+				"BlockName" : "Stone",
+				"Thickness" : 5,
 				"NoiseOffset" : 0,
 				"NoiseScale" : 1
 			}

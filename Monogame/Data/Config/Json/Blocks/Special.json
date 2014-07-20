@@ -11,7 +11,7 @@
 	},
 	{
 		"Name" : "Cloud",
-		"BlockId" : 4,
+		"BlockId" : 5,
 		"TextureNames" : ["Cloud", "Cloud", "Cloud", "Cloud", "Cloud", "Cloud"],
 		"Opacity" : 0.625,
 		"Durability" : 0.01,

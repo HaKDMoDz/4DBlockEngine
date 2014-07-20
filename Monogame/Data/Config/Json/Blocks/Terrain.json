@@ -2,7 +2,7 @@
 	{
 		"Name" : "Grass",
 		"BlockId" : 1,
-		"TextureNames" : ["Dirt", "Dirt", "Grass", "Dirt", "Dirt", "Dirt"],
+		"TextureNames" : ["GrassSide", "GrassSide", "Grass", "Dirt", "GrassSide", "GrassSide"],
 		"Opacity" : 1,
 		"Durability" : 0.3,
 		"Elasticity" : 0.1,
@@ -12,7 +12,7 @@
 	{
 		"Name" : "Dirt",
 		"BlockId" : 2,
-		"TextureNames" : ["Dirt", "Dirt", "Dirt", "Dirt", "Dirt", "Dirt"],
+		"TextureNames" : ["Dirt"],
 		"Opacity" : 1,
 		"Durability" : 0.3,
 		"Elasticity" : 0.1,
@@ -22,7 +22,17 @@
 	{
 		"Name" : "Stone",
 		"BlockId" : 3,
-		"TextureNames" : ["Stone", "Stone", "Stone", "Stone", "Stone", "Stone"],
+		"TextureNames" : ["Stone"],
+		"Opacity" : 1,
+		"Durability" : 0.4,
+		"Elasticity" : 0.1,
+		"Adhesion" : 0.9,
+		"Mass" : 8
+	},
+	{
+		"Name" : "StoneDark",
+		"BlockId" : 4,
+		"TextureNames" : ["StoneDark"],
 		"Opacity" : 1,
 		"Durability" : 0.4,
 		"Elasticity" : 0.1,

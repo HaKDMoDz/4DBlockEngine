@@ -51,7 +51,7 @@ namespace _4DMonoEngine.Core.Blocks
                     m_blockNameMap.Add(blockName, blockData.BlockId);
                     for (var faceIndex = 0; faceIndex < 6; faceIndex++)
                     {
-                        var textureName = blockData.TextureNames[faceIndex];
+                        var textureName = blockData.TextureNames[faceIndex % blockData.TextureNames.Length];
                         var textureIndex = (blockData.BlockId << 3) + faceIndex;
                         var textureData = await MainEngine.GetEngineInstance().GetConfig<BlockTextureData>("Textures", textureName);
                         m_blockTextureMappings.Add(textureIndex, GetBlockTextureMapping(textureData.TileU, textureData.TileV, textureUnitSize));

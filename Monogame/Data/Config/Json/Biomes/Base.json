@@ -22,7 +22,7 @@
 			{
 				"Id" : 1,
 				"BlockName" : "Dirt",
-				"Thickness" : 3,
+				"Thickness" : 8,
 				"NoiseOffset" : 0,
 				"NoiseScale" : 1
 			},

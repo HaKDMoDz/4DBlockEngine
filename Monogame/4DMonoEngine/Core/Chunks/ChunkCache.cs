@@ -30,7 +30,7 @@ namespace _4DMonoEngine.Core.Chunks
             Starting,
             Started,
         }
-        private const byte CacheRange = 12;
+        private const byte CacheRange = 14;
         private BoundingBox m_cacheRangeBoundingBox;
         /*TODO : Implement LOD here
          * 
@@ -43,7 +43,7 @@ namespace _4DMonoEngine.Core.Chunks
         public const byte ViewRange = CacheRange - 2;
         private BoundingBox m_viewRangeBoundingBox;
 
-        private const int CacheSizeInBlocks = (CacheRange*2 + 1)*Chunk.SizeInBlocks;
+        private const int CacheSizeInBlocks = (CacheRange * 2 + 1) * Chunk.SizeInBlocks;
         public const int BlockStepX = CacheSizeInBlocks * CacheSizeInBlocks;
         public const int BlockStepZ = CacheSizeInBlocks;
 #if DEBUG

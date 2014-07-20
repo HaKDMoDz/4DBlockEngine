@@ -48,26 +48,36 @@ namespace _4DMonoEngine.Core.Processors
             {
                 for (byte z = 0; z < m_chunkSize; ++z)
                 {
-                    for (var y = m_chunkSize - 1; y > 0; --y)
+                    for (var y = 0; y < m_chunkSize; ++y)
                     {
-                        var blockIndex = m_mappingFunction(chunkIndexX + x, chunkIndexY + y, chunkIndexZ + z) ;
-                        if (y == m_chunkSize - 1)
+                        var cX = chunkIndexX + x;
+                        var cY = chunkIndexY + y;
+                        var cZ = chunkIndexZ + z;
+                        var blockIndex = m_mappingFunction(cX, cY, cZ);
+                        m_blockSource[blockIndex].LightRed = 0;
+                        m_blockSource[blockIndex].LightGreen = 0;
+                        m_blockSource[blockIndex].LightBlue = 0;
+                        /*if (y == m_chunkSize - 1)
                         {
-                            if (m_blockSource[blockIndex].Opacity < 1 && m_blockSource[blockIndex - 1].LightSun > 0)
+                            m_blockSource[blockIndex].LightSun = 0;
+                            blockIndex = m_mappingFunction(cX, cY - 1, cZ);
+                            if (m_blockSource[blockIndex].Opacity < 1 && m_blockSource[blockIndex].LightSun > 0)
                             {
-                                PropagateFromSunSource(x, y, z, m_blockSource[blockIndex - 1].LightSun, down: true);
+                                PropagateFromSunSource(cX, cY - 1, cZ, m_blockSource[blockIndex].LightSun, down: true);
                             }
+                        }
+                        else */
+                        if (m_blockSource[blockIndex].LightSun == Chunk.MaxSunValue)
+                        {
+                            PropagateFromSunSource(cX, cY, cZ, m_blockSource[blockIndex].LightSun, down: true);
                         }
                         else
                         {
-                            if (lights.ContainsKey(x, y, z))
-                            {
-                                PropogateFromLight(x, y, z, lights[x, y, z]);
-                            }
                             m_blockSource[blockIndex].LightSun = 0;
-                            m_blockSource[blockIndex].LightRed = 0;
-                            m_blockSource[blockIndex].LightGreen = 0;
-                            m_blockSource[blockIndex].LightBlue = 0;
+                            if (lights.ContainsKey(cX, cY, cZ))
+                            {
+                                PropogateFromLight(cX, cY, cZ, lights[cX, cY, cZ]);
+                            }
                         }
                     }
                 }
@@ -131,7 +141,7 @@ namespace _4DMonoEngine.Core.Processors
                 return;
             }
             chunk.LightSources[x, y, z] = light;
-            var blockIndex = ChunkCache.BlockIndexByRelativePosition(chunk, x, y, z);
+            var blockIndex = m_mappingFunction( x, y, z);
             var propogate = false;
             var lightRed = m_blockSource[blockIndex].LightRed;
             var lightGreen = m_blockSource[blockIndex].LightGreen;

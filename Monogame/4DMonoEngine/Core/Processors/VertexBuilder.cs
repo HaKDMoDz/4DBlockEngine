@@ -213,8 +213,8 @@ namespace _4DMonoEngine.Core.Processors
             }
             vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexTl * m_blockScale, textureUvMappings[0], localLightTl));
             vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexTr * m_blockScale, textureUvMappings[1], localLightTr));
-            vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexBr * m_blockScale, textureUvMappings[2], localLightBr));
-            vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexBl * m_blockScale, textureUvMappings[3], localLightBl));
+            vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexBr * m_blockScale, textureUvMappings[3], localLightBr));
+            vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexBl * m_blockScale, textureUvMappings[2], localLightBl));
             AddIndex(vertexBuilderTarget, flipped);
         }
 

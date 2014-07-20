@@ -70,7 +70,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
                         var cY = chunkY + y;
                         Block block;
 
-					    if (cY > groundLevel + 40)
+					    if (cY > groundLevel + 10)
 					    {
                             block = new Block(0) {LightSun = Chunk.MaxSunValue};
 					    }

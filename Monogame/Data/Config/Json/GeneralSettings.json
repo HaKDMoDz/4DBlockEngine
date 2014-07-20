@@ -12,7 +12,7 @@
     [
     	{
     		"Key":"Terrain",
-    		"Value":["Grass","Dirt","Stone"]
+    		"Value":["Grass","Dirt","Stone","StoneDark"]
     	},
         {
             "Key":"Special",

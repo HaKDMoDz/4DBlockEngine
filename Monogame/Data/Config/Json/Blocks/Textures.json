@@ -5,6 +5,11 @@
 		"TileV" : 0
 	},
 	{
+		"Name" : "GrassSide",
+		"TileU" : 0.1875,
+		"TileV" : 0
+	},
+	{
 		"Name" : "Dirt",
 		"TileU" : 0.125,
 		"TileV" : 0
@@ -13,6 +18,11 @@
 		"Name" : "Stone",
 		"TileU" : 0.0625,
 		"TileV" : 0
+	},
+	{
+		"Name" : "StoneDark",
+		"TileU" : 0.1875,
+		"TileV" : 0.0625
 	},
 	{
 		"Name" : "Cloud",
