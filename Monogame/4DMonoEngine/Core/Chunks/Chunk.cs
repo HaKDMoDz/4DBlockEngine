@@ -218,11 +218,11 @@ namespace _4DMonoEngine.Core.Chunks
             else
             {
                 BoundingBox.Min.X = lowerBoundX + Position.X;
-                BoundingBox.Max.X = upperBoundX + Position.X;
+                BoundingBox.Max.X = upperBoundX + Position.X + 1;
                 BoundingBox.Min.Y = lowerBoundY + Position.Y;
-                BoundingBox.Max.Y = upperBoundY + Position.Y;
+                BoundingBox.Max.Y = upperBoundY + Position.Y + 1;
                 BoundingBox.Min.Z = lowerBoundZ + Position.Z;
-                BoundingBox.Max.Z = upperBoundZ + Position.Z;
+                BoundingBox.Max.Z = upperBoundZ + Position.Z + 1;
             }
         }
 

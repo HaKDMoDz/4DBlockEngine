@@ -35,11 +35,11 @@ namespace _4DMonoEngine.Core.Processors
         public void Build(VertexBuilderTarget vertexBuilderTarget)
         {
             Clear(vertexBuilderTarget);
-            for (var x = (int)vertexBuilderTarget.BoundingBox.Min.X; x <= vertexBuilderTarget.BoundingBox.Max.X; x++)
+            for (var x = (int)vertexBuilderTarget.BoundingBox.Min.X; x < vertexBuilderTarget.BoundingBox.Max.X; x++)
             {
-                for (var z = (int)vertexBuilderTarget.BoundingBox.Min.Z; z <= vertexBuilderTarget.BoundingBox.Max.Z; z++)
+                for (var z = (int)vertexBuilderTarget.BoundingBox.Min.Z; z < vertexBuilderTarget.BoundingBox.Max.Z; z++)
                 {
-                    for (var y = (int)vertexBuilderTarget.BoundingBox.Min.Y; y <= vertexBuilderTarget.BoundingBox.Max.Y; y++)
+                    for (var y = (int)vertexBuilderTarget.BoundingBox.Min.Y; y < vertexBuilderTarget.BoundingBox.Max.Y; y++)
                     {
                         var position = new Vector3Int(x, y, z);
                         var blockIndex = m_mappingFunction(x, y, z);
