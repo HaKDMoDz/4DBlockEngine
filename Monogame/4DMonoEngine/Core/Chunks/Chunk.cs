@@ -232,7 +232,15 @@ namespace _4DMonoEngine.Core.Chunks
             return string.Format("{0} {1}", ChunkCachePosition, ChunkState);
         }
 
-        
+        public override void SetDirty()
+        {
+            if (ChunkState == ChunkState.Ready)
+            {
+                ChunkState = ChunkState.AwaitingBuild;
+            }
+        }
+
+
         public void DrawInGameDebugVisual(GraphicsDevice graphicsDevice, Camera camera, SpriteBatch spriteBatch, SpriteFont spriteFont)
         {
             var color = Color.Blue;

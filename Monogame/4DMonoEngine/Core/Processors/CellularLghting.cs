@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using _4DMonoEngine.Core.Chunks;
+using _4DMonoEngine.Core.Common.AbstractClasses;
 using _4DMonoEngine.Core.Common.Interfaces;
 using _4DMonoEngine.Core.Utils;
 using _4DMonoEngine.Core.Utils.Vector;
@@ -9,6 +10,7 @@ namespace _4DMonoEngine.Core.Processors
 {
     internal class CellularLighting<T> where T : ILightable
     {
+        public delegate VertexBuilderTarget GetTarget(int x, int y, int z);
         private const float SDropoff = 0.9375f;
         private readonly Queue<LightQueueContainer> m_lightQueueToAdd;
         private readonly Queue<SunQueueContainer> m_sunQueueToAdd;
@@ -19,8 +21,9 @@ namespace _4DMonoEngine.Core.Processors
         private readonly int m_chunkSize;
         private readonly HashSet<int> m_queuedSunHashSet;
         private readonly HashSet<int> m_queuedLightHashSet;
+        private readonly GetTarget m_getTarget;
 
-        internal CellularLighting(T[] blockSource, MappingFunction mappingFunction, int chunkSize)
+        internal CellularLighting(T[] blockSource, MappingFunction mappingFunction, int chunkSize, GetTarget getTarget)
         {
             m_blockSource = blockSource;
             m_mappingFunction = mappingFunction;
@@ -31,6 +34,7 @@ namespace _4DMonoEngine.Core.Processors
             m_lightQueueToRemove = new Queue<LightQueueContainer>();
             m_queuedSunHashSet = new HashSet<int>();
             m_queuedLightHashSet = new HashSet<int>();
+            m_getTarget = getTarget;
         }
 
         internal void Process(int chunkIndexX, int chunkIndexY, int chunkIndexZ, SparseArray3D<Vector3Byte> lights)
@@ -42,26 +46,40 @@ namespace _4DMonoEngine.Core.Processors
 
         private void ResetLight(int chunkIndexX, int chunkIndexY, int chunkIndexZ, SparseArray3D<Vector3Byte> lights)
         {
-            for (byte x = 0; x < m_chunkSize; ++x)
+            for (var x = -1; x < m_chunkSize + 1; ++x)
             {
-                for (byte z = 0; z < m_chunkSize; ++z)
+                for (var z = -1; z < m_chunkSize + 1; ++z)
                 {
-                    for (var y = 0; y < m_chunkSize; ++y)
+                    for (var y = -1; y < m_chunkSize + 1; ++y)
                     {
                         var cX = chunkIndexX + x;
                         var cY = chunkIndexY + y;
                         var cZ = chunkIndexZ + z;
                         var blockIndex = m_mappingFunction(cX, cY, cZ);
-                        m_blockSource[blockIndex].LightRed = 0;
-                        m_blockSource[blockIndex].LightGreen = 0;
-                        m_blockSource[blockIndex].LightBlue = 0;
-                        if (m_blockSource[blockIndex].LightSun == Chunk.MaxSunValue)
+                        if (x < 0 || y < 0 || z < 0 || x >= m_chunkSize || y >= m_chunkSize || z >= m_chunkSize)
                         {
-                            PropagateFromSunSource(cX, cY, cZ, m_blockSource[blockIndex].LightSun, down: true);
+                            if (m_blockSource[blockIndex].LightSun > 0)
+                            {
+                                PropagateFromSunSource(cX, cY, cZ, m_blockSource[blockIndex].LightSun, down: true);
+                            }
+                            if (m_blockSource[blockIndex].LightRed > 0 || m_blockSource[blockIndex].LightGreen > 0 || m_blockSource[blockIndex].LightBlue > 0)
+                            {
+                                PropogateFromLight(cX, cY, cZ, lights[cX, cY, cZ]);
+                            }
                         }
                         else
                         {
-                            m_blockSource[blockIndex].LightSun = 0;
+                            m_blockSource[blockIndex].LightRed = 0;
+                            m_blockSource[blockIndex].LightGreen = 0;
+                            m_blockSource[blockIndex].LightBlue = 0;
+                            if (m_blockSource[blockIndex].LightSun == Chunk.MaxSunValue)
+                            {
+                                PropagateFromSunSource(cX, cY, cZ, m_blockSource[blockIndex].LightSun, down: true);
+                            }
+                            else
+                            {
+                                m_blockSource[blockIndex].LightSun = 0;
+                            }
                             if (lights.ContainsKey(cX, cY, cZ))
                             {
                                 PropogateFromLight(cX, cY, cZ, lights[cX, cY, cZ]);
@@ -274,13 +292,14 @@ namespace _4DMonoEngine.Core.Processors
 
         private void ClearCellOrAddSunSources()
         {
-            ILightable currentChunk;
             while (m_sunQueueToRemove.Count > 0)
             {
                 var sunContainer = m_sunQueueToRemove.Dequeue();
                 var x = sunContainer.X;
                 var y = sunContainer.Y;
                 var z = sunContainer.Z;
+                var target = m_getTarget(x, y, z);
+                target.SetDirty();
                 var blockIndex = m_mappingFunction(x, y, z);
                 var propogate = false;
                 var isSource = false;

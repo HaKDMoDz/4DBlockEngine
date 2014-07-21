@@ -15,5 +15,6 @@ namespace _4DMonoEngine.Core.Common.AbstractClasses
         public List<BlockVertex> VertexList;
         public List<short> IndexList;
         public short Index;
+        public abstract void SetDirty();
     }
 }

@@ -22,5 +22,10 @@ namespace _4DMonoEngine.Core.Universe
             VertexList = new List<BlockVertex>();
             IndexList = new List<short>();
         }
+
+        public override void SetDirty()
+        {
+            //NO OP
+        }
     }
 }

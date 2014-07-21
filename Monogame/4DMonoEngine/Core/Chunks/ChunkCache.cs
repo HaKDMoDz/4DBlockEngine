@@ -80,7 +80,7 @@ namespace _4DMonoEngine.Core.Chunks
             Debug.Assert(graphicsDevice != null);
             Blocks = new Block[CacheSizeInBlocks * CacheSizeInBlocks * CacheSizeInBlocks];
             m_generator = new TerrainGenerator(Chunk.SizeInBlocks, Blocks, seed, BlockIndexByWorldPosition);
-            m_lightingEngine = new CellularLighting<Block>(Blocks, BlockIndexByWorldPosition, Chunk.SizeInBlocks);
+            m_lightingEngine = new CellularLighting<Block>(Blocks, BlockIndexByWorldPosition, Chunk.SizeInBlocks, GetChunkByWorldPosition);
             m_vertexBuilder = new VertexBuilder<Block>(Blocks, BlockIndexByWorldPosition, graphicsDevice);
             m_chunkStorage = new SparseArray3D<Chunk>(CacheRange * 2 + 1, CacheRange * 2 + 1);
             m_cacheCenterPosition = new Vector4();
