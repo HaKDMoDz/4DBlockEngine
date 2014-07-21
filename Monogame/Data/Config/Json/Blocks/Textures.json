@@ -33,6 +33,15 @@
 		"Name" : "Empty",
 		"TileU" : 0.1875,
 		"TileV" : 0.25
-	}
-]
+	},
+	{
+		"Name" : "Sand",
+		"TileU" : 0.125,
+		"TileV" : 0.0625
+	},
+	{
+		"Name" : "SandStone",
+		"TileU" : 0,
+		"TileV" : 0.6875
+	},
 ]

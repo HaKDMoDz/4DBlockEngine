@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Graphics.PackedVector;
@@ -8,6 +10,7 @@ using _4DMonoEngine.Core.Common.Enums;
 using _4DMonoEngine.Core.Common.Interfaces;
 using _4DMonoEngine.Core.Graphics;
 using _4DMonoEngine.Core.Processors;
+using _4DMonoEngine.Core.Utils;
 using _4DMonoEngine.Core.Utils.Noise;
 using _4DMonoEngine.Core.Utils.Vector;
 
@@ -16,15 +19,19 @@ namespace _4DMonoEngine.Core.Universe
     public class CloudBlock : ILightable
     {
         private readonly ushort m_type;
-        private CloudBlock(ushort type)
+        private CloudBlock(ushort type, byte light)
         {
             m_type = type;
+            LightSun = light;
         }
         public byte LightSun { get; set; }
         public byte LightRed { get; set; }
         public byte LightGreen { get; set; }
         public byte LightBlue { get; set; }
-        public float Opacity { get; private set; }
+        public float Opacity
+        {
+            get { return BlockDictionary.GetInstance().GetStaticData(m_type).Opacity; }
+        }
         public HalfVector2[] GetTextureMapping(FaceDirection faceDir)
         {
             return BlockDictionary.GetInstance().GetTextureMapping(m_type, faceDir);
@@ -35,31 +42,31 @@ namespace _4DMonoEngine.Core.Universe
             get { return m_type != 0; }
         }
 
-        public static readonly CloudBlock Cloud = new CloudBlock(BlockDictionary.GetInstance().GetBlockIdForName("Cloud"));
-        public static readonly CloudBlock Empty = new CloudBlock(0);
+        public static readonly CloudBlock Cloud = new CloudBlock(BlockDictionary.GetInstance().GetBlockIdForName("Cloud"), 0);
+        public static readonly CloudBlock Empty = new CloudBlock(0, 255);
     }
 
     public class Sky : WorldRenderable
     {
-        private const int Size = 150;
+        private const int Size = 32;
         private readonly CloudBlock[] m_clouds;
         private readonly SimplexNoise m_noise;
         private  VertexBuilder<CloudBlock> m_vertexBuilder;
         private readonly CloudTarget m_cloudVertexTarget;
         public float CloudSpeed { get; set; }
-
-        //private bool m_meshBuilt;
-
+        
         private Effect m_blockEffect; // block effect.
         private Texture2D m_blockTextureAtlas; // block texture atlas
+        private float m_cloudPosition;
 
         public Sky(Game game, uint seed) : base(game)
         {
             m_noise = new SimplexNoise(seed);
-            m_clouds = new CloudBlock[Size * Size];
-            m_cloudVertexTarget = new CloudTarget(new Vector3Int(), Size - 1, 1, Size - 1);
-
+            m_clouds = new CloudBlock[Size * Size * Size];
+            m_cloudVertexTarget = new CloudTarget(new Vector3Int(0, 80, 0), Size + 1, Size + 1, Size + 1);
+            InitializeClouds();
             CloudSpeed = 0.1f;
+            m_cloudPosition = 0;
         }
         public override void LoadContent()
         {
@@ -71,29 +78,67 @@ namespace _4DMonoEngine.Core.Universe
         {
             base.Initialize(graphicsDevice, camera, getTimeOfDay, getFogVector);
             m_vertexBuilder = new VertexBuilder<CloudBlock>(m_clouds, CloudIndexByWorldPosition, m_graphicsDevice);
-            StepClouds();
-            m_vertexBuilder.Build(m_cloudVertexTarget);
+            Task.Run(() =>
+            {
+                while (true)
+                {
+                    StepClouds();
+                    m_vertexBuilder.Build(m_cloudVertexTarget);
+                    Thread.Sleep(100);
+                }
+            });
         }
 
         private int CloudIndexByWorldPosition(int x, int y, int z)
         {
-            return x * Size + z;
+            return CloudIndexByRelativePosition(x - m_cloudVertexTarget.Position.X, y - m_cloudVertexTarget.Position.Y, z - m_cloudVertexTarget.Position.Z);
+        }
+
+        private int CloudIndexByRelativePosition(int x, int y, int z)
+        {
+            var wrapX = MathUtilities.Modulo(x, Size);
+            var wrapY = MathUtilities.Modulo(y, Size);
+            var wrapZ = MathUtilities.Modulo(z, Size);
+            var flattenIndex = wrapX * Size * Size + wrapZ * Size + wrapY;
+            return flattenIndex;
         }
 
 
         public override void Update(GameTime gameTime)
         {
-            //StepClouds();
-           // m_vertexBuilder.Build(m_cloudVertexTarget);
+            
+        }
+
+        private void InitializeClouds()
+        {
+            for (var x = 0; x < Size; x++) 
+            {
+                for (var y = 0; y < Size; y++)
+                {
+                    for (var z = 0; z < Size; z++)
+                    {
+                        m_clouds[CloudIndexByRelativePosition(x, y, z)] = CloudBlock.Empty;
+                    }
+                }
+            }
         }
 
         private void StepClouds()
         {
-            for (var x = 0; x < Size; x++)
+            m_cloudPosition += CloudSpeed; 
+            for (var x = 1; x < Size - 1; x++)
             {
-                for (var z = 0; z < Size; z++)
+                for (var y = 1; y < Size - 1; y++)
                 {
-                    m_clouds[x * Size + z] = m_noise.Perlin3Dfmb(x, m_getTimeOfDay() * CloudSpeed, z, Size, 0, 3) > 0 ? CloudBlock.Cloud : CloudBlock.Empty;
+                    for (var z = 1; z < Size - 1; z++)
+                    {
+                        m_clouds[CloudIndexByRelativePosition(x, y, z)] = 
+                            m_noise.Perlin4Dfbm(x + m_cloudVertexTarget.Position.X,
+                                y + m_cloudVertexTarget.Position.Y, z + m_cloudVertexTarget.Position.Z, m_cloudPosition,
+                                Size, 0, 3) > 0
+                                ? CloudBlock.Cloud
+                                : CloudBlock.Empty;
+                    }
                 }
             }
         }

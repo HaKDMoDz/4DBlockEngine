@@ -22,13 +22,48 @@
 			{
 				"Id" : 1,
 				"BlockName" : "Dirt",
-				"Thickness" : 8,
+				"Thickness" : 5,
+				"NoiseOffset" : 0,
+				"NoiseScale" : 1
+			},
+			{
+				"Id" : 2,
+				"BlockName" : "Stone",
+				"Thickness" : 5,
+				"NoiseOffset" : 0,
+				"NoiseScale" : 1
+			}
+		]
+	},
+	{
+
+		"Name" : "Desert",
+		"FoliageDensity" : 0.1,
+		"Parameters" : 
+		[
+			{
+				"Name" : "Temperature",
+				"Min" : 0.75,
+				"Max" : 1
+			},
+			{
+				"Name" : "Humidity",
+				"Min" : 0,
+				"Max" : 0.25
+			}
+		],
+		"Layers" :
+		[
+			{
+				"Id" : 0,
+				"BlockName" : "Sand",
+				"Thickness" : 4,
 				"NoiseOffset" : 0,
 				"NoiseScale" : 1
 			},
 			{
 				"Id" : 1,
-				"BlockName" : "Stone",
+				"BlockName" : "SandStone",
 				"Thickness" : 5,
 				"NoiseOffset" : 0,
 				"NoiseScale" : 1

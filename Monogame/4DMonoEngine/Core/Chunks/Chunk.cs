@@ -28,7 +28,7 @@ namespace _4DMonoEngine.Core.Chunks
     public sealed class Chunk : VertexBuilderTarget, IInGameDebuggable
     {
         public const byte MaxSunValue = 255;
-        public const int SizeInBlocks = 16;
+        public const int SizeInBlocks = 32;
         private readonly Block[] m_blocks;
         public Vector3Int ChunkCachePosition;
 

@@ -1,5 +1,5 @@
 {
-	"Biomes" : ["Grassland"],
+	"Biomes" : ["Grassland", "Desert"],
 	"Provinces" : ["Platform"],
 	"SeaLevel" : 64,
 	"MountainHeight" : 128,
@@ -12,7 +12,7 @@
     [
     	{
     		"Key":"Terrain",
-    		"Value":["Grass","Dirt","Stone","StoneDark"]
+    		"Value":["Grass","Dirt","Stone","StoneDark","Sand","SandStone"]
     	},
         {
             "Key":"Special",
