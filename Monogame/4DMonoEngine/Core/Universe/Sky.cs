@@ -48,7 +48,8 @@ namespace _4DMonoEngine.Core.Universe
 
     public class Sky : WorldRenderable
     {
-        private const int Size = 32;
+        private const int SizeXZ = 36; 
+        private const int SizeY = 5;
         private readonly CloudBlock[] m_clouds;
         private readonly SimplexNoise m_noise;
         private  VertexBuilder<CloudBlock> m_vertexBuilder;
@@ -62,8 +63,8 @@ namespace _4DMonoEngine.Core.Universe
         public Sky(Game game, uint seed) : base(game)
         {
             m_noise = new SimplexNoise(seed);
-            m_clouds = new CloudBlock[Size * Size * Size];
-            m_cloudVertexTarget = new CloudTarget(new Vector3Int(0, 80, 0), Size + 1, Size + 1, Size + 1);
+            m_clouds = new CloudBlock[SizeXZ * SizeY * SizeXZ];
+            m_cloudVertexTarget = new CloudTarget(new Vector3Int(0, 120, 0), SizeXZ, SizeY, SizeXZ, 8);
             InitializeClouds();
             CloudSpeed = 0.1f;
             m_cloudPosition = 0;
@@ -77,14 +78,14 @@ namespace _4DMonoEngine.Core.Universe
         public override void Initialize(GraphicsDevice graphicsDevice, Camera camera, GetTimeOfDay getTimeOfDay, GetFogVector getFogVector)
         {
             base.Initialize(graphicsDevice, camera, getTimeOfDay, getFogVector);
-            m_vertexBuilder = new VertexBuilder<CloudBlock>(m_clouds, CloudIndexByWorldPosition, m_graphicsDevice);
+            m_vertexBuilder = new VertexBuilder<CloudBlock>(m_clouds, CloudIndexByWorldPosition, m_graphicsDevice, 8);
             Task.Run(() =>
             {
                 while (true)
                 {
                     StepClouds();
                     m_vertexBuilder.Build(m_cloudVertexTarget);
-                    Thread.Sleep(100);
+                    Thread.Sleep(1000);
                 }
             });
         }
@@ -94,28 +95,29 @@ namespace _4DMonoEngine.Core.Universe
             return CloudIndexByRelativePosition(x - m_cloudVertexTarget.Position.X, y - m_cloudVertexTarget.Position.Y, z - m_cloudVertexTarget.Position.Z);
         }
 
-        private int CloudIndexByRelativePosition(int x, int y, int z)
+        private static int CloudIndexByRelativePosition(int x, int y, int z)
         {
-            var wrapX = MathUtilities.Modulo(x, Size);
-            var wrapY = MathUtilities.Modulo(y, Size);
-            var wrapZ = MathUtilities.Modulo(z, Size);
-            var flattenIndex = wrapX * Size * Size + wrapZ * Size + wrapY;
+            var flattenIndex = x * SizeXZ * SizeY + z * SizeY + y;
             return flattenIndex;
         }
 
-
+        private bool registered = false;
         public override void Update(GameTime gameTime)
         {
-            
+            if (MainEngine.GetEngineInstance().DebugOnlyDebugManager != null && !registered)
+            {
+                registered = true;
+                MainEngine.GetEngineInstance().DebugOnlyDebugManager.RegisterInGameDebuggable(m_cloudVertexTarget);
+            }
         }
 
         private void InitializeClouds()
         {
-            for (var x = 0; x < Size; x++) 
+            for (var x = 0; x < SizeXZ; x++) 
             {
-                for (var y = 0; y < Size; y++)
+                for (var y = 0; y < SizeY; y++)
                 {
-                    for (var z = 0; z < Size; z++)
+                    for (var z = 0; z < SizeXZ; z++)
                     {
                         m_clouds[CloudIndexByRelativePosition(x, y, z)] = CloudBlock.Empty;
                     }
@@ -125,17 +127,18 @@ namespace _4DMonoEngine.Core.Universe
 
         private void StepClouds()
         {
-            m_cloudPosition += CloudSpeed; 
-            for (var x = 1; x < Size - 1; x++)
+            m_cloudPosition += CloudSpeed;
+            for (var x = 1; x < SizeXZ - 1; x++)
             {
-                for (var y = 1; y < Size - 1; y++)
+                for (var y = 1; y < SizeY - 1; y++)
                 {
-                    for (var z = 1; z < Size - 1; z++)
+                    var offset = -Math.Abs(2 - y) * 0.25f;
+                    for (var z = 1; z < SizeXZ - 1; z++)
                     {
                         m_clouds[CloudIndexByRelativePosition(x, y, z)] = 
                             m_noise.Perlin4Dfbm(x + m_cloudVertexTarget.Position.X,
                                 y + m_cloudVertexTarget.Position.Y, z + m_cloudVertexTarget.Position.Z, m_cloudPosition,
-                                Size, 0, 3) > 0
+                                16, offset, 3) > 0
                                 ? CloudBlock.Cloud
                                 : CloudBlock.Empty;
                     }
@@ -195,7 +198,7 @@ namespace _4DMonoEngine.Core.Universe
                     continue;
                 }*/
 
-                if (!m_cloudVertexTarget.BoundingBox.Intersects(viewFrustrum))
+                if (!m_cloudVertexTarget.RenderingBoundingBox.Intersects(viewFrustrum))
                 {
                     continue;
                 }

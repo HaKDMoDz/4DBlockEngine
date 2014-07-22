@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Graphics.PackedVector;
 using _4DMonoEngine.Core.Common.AbstractClasses;
@@ -16,6 +17,7 @@ namespace _4DMonoEngine.Core.Processors
         private readonly T[] m_blockSource;
         private readonly MappingFunction m_mappingFunction;
         private readonly int m_blockScale;
+        private Vector3 m_origin;
 
         public VertexBuilder(T[] blockSource, MappingFunction mappingFunction, GraphicsDevice graphicsDevice, int blockScale = 1)
         {
@@ -35,6 +37,7 @@ namespace _4DMonoEngine.Core.Processors
         public void Build(VertexBuilderTarget vertexBuilderTarget)
         {
             Clear(vertexBuilderTarget);
+            m_origin = vertexBuilderTarget.BoundingBox.Min;
             for (var x = (int)vertexBuilderTarget.BoundingBox.Min.X; x < vertexBuilderTarget.BoundingBox.Max.X; x++)
             {
                 for (var z = (int)vertexBuilderTarget.BoundingBox.Min.Z; z < vertexBuilderTarget.BoundingBox.Max.Z; z++)
@@ -210,10 +213,18 @@ namespace _4DMonoEngine.Core.Processors
                     vertexBl = new Vector3(position.X, position.Y, position.Z);
                     break;
             }
-            vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexTl * m_blockScale, textureUvMappings[0], localLightTl));
-            vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexTr * m_blockScale, textureUvMappings[1], localLightTr));
-            vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexBr * m_blockScale, textureUvMappings[3], localLightBr));
-            vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexBl * m_blockScale, textureUvMappings[2], localLightBl));
+            if (m_blockScale != 1)
+            {
+                vertexTl = (vertexTl - m_origin) * m_blockScale + m_origin;
+                vertexTr = (vertexTr - m_origin) * m_blockScale + m_origin;
+                vertexBr = (vertexBr - m_origin) * m_blockScale + m_origin;
+                vertexBl = (vertexBl - m_origin) * m_blockScale + m_origin;
+            }
+
+            vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexTl, textureUvMappings[0], localLightTl));
+            vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexTr, textureUvMappings[1], localLightTr));
+            vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexBr, textureUvMappings[3], localLightBr));
+            vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexBl, textureUvMappings[2], localLightBl));
             AddIndex(vertexBuilderTarget, flipped);
         }
 
