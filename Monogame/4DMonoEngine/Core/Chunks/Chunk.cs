@@ -56,7 +56,7 @@ namespace _4DMonoEngine.Core.Chunks
 
             // create vertex & index lists.
             VertexList = new List<BlockVertex>();
-            IndexList = new List<short>();
+            IndexList = new List<int>();
             LightSources = new SparseArray3D<Vector3Byte>(SizeInBlocks, SizeInBlocks);
 #if DEBUG
             MainEngine.GetEngineInstance().DebugOnlyDebugManager.RegisterInGameDebuggable(this);

@@ -64,7 +64,7 @@ namespace _4DMonoEngine.Core.Processors
                 vertexBuilderTarget.VertexBuffer = new VertexBuffer(m_graphicsDevice, typeof(BlockVertex), vertices.Length, BufferUsage.WriteOnly);
                 vertexBuilderTarget.VertexBuffer.SetData(vertices);
 
-                vertexBuilderTarget.IndexBuffer = new IndexBuffer(m_graphicsDevice, IndexElementSize.SixteenBits, indices.Length, BufferUsage.WriteOnly);
+                vertexBuilderTarget.IndexBuffer = new IndexBuffer(m_graphicsDevice, IndexElementSize.ThirtyTwoBits, indices.Length, BufferUsage.WriteOnly);
                 vertexBuilderTarget.IndexBuffer.SetData(indices);
             }
         }
@@ -232,20 +232,20 @@ namespace _4DMonoEngine.Core.Processors
         {
             if (flipped)
             {
-                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 2));
-                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 1));
+                vertexBuilderTarget.IndexList.Add((int)(vertexBuilderTarget.Index + 2));
+                vertexBuilderTarget.IndexList.Add((int)(vertexBuilderTarget.Index + 1));
                 vertexBuilderTarget.IndexList.Add(vertexBuilderTarget.Index);
-                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 3));
-                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 2));
+                vertexBuilderTarget.IndexList.Add((int)(vertexBuilderTarget.Index + 3));
+                vertexBuilderTarget.IndexList.Add((int)(vertexBuilderTarget.Index + 2));
                 vertexBuilderTarget.IndexList.Add(vertexBuilderTarget.Index);
             }
             else
             {
-                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 3));
-                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 2));
-                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 1));
-                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 3));
-                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 1));
+                vertexBuilderTarget.IndexList.Add((int)(vertexBuilderTarget.Index + 3));
+                vertexBuilderTarget.IndexList.Add((int)(vertexBuilderTarget.Index + 2));
+                vertexBuilderTarget.IndexList.Add((int)(vertexBuilderTarget.Index + 1));
+                vertexBuilderTarget.IndexList.Add((int)(vertexBuilderTarget.Index + 3));
+                vertexBuilderTarget.IndexList.Add((int)(vertexBuilderTarget.Index + 1));
                 vertexBuilderTarget.IndexList.Add(vertexBuilderTarget.Index);
             }
             vertexBuilderTarget.Index += 4;

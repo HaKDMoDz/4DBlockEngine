@@ -13,8 +13,8 @@ namespace _4DMonoEngine.Core.Common.AbstractClasses
         public VertexBuffer VertexBuffer;
         public IndexBuffer IndexBuffer;
         public List<BlockVertex> VertexList;
-        public List<short> IndexList;
-        public short Index;
+        public List<int> IndexList;
+        public int Index;
         public abstract void SetDirty();
     }
 }

@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Controls.Primitives;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Graphics.PackedVector;
@@ -44,12 +46,16 @@ namespace _4DMonoEngine.Core.Universe
 
         public static readonly CloudBlock Cloud = new CloudBlock(BlockDictionary.GetInstance().GetBlockIdForName("Cloud"), 0);
         public static readonly CloudBlock Empty = new CloudBlock(0, 255);
+        public static readonly CloudBlock UndersideClear = new CloudBlock(0, 200);
+        public static readonly CloudBlock UndersideOvercast = new CloudBlock(0, 140);
+        public static readonly CloudBlock UndersideThreatening = new CloudBlock(0, 100);
+        public static readonly CloudBlock UndersideStormy = new CloudBlock(0, 65);
     }
 
     public class Sky : WorldRenderable
     {
-        private const int SizeXZ = 36; 
-        private const int SizeY = 5;
+        private const int SizeXz = 200; 
+        private const int SizeY = 7;
         private readonly CloudBlock[] m_clouds;
         private readonly SimplexNoise m_noise;
         private  VertexBuilder<CloudBlock> m_vertexBuilder;
@@ -59,15 +65,17 @@ namespace _4DMonoEngine.Core.Universe
         private Effect m_blockEffect; // block effect.
         private Texture2D m_blockTextureAtlas; // block texture atlas
         private float m_cloudPosition;
+        private float m_cloudDensity;
 
         public Sky(Game game, uint seed) : base(game)
         {
             m_noise = new SimplexNoise(seed);
-            m_clouds = new CloudBlock[SizeXZ * SizeY * SizeXZ];
-            m_cloudVertexTarget = new CloudTarget(new Vector3Int(0, 120, 0), SizeXZ, SizeY, SizeXZ, 8);
+            m_clouds = new CloudBlock[SizeXz * SizeY * SizeXz];
+            m_cloudVertexTarget = new CloudTarget(new Vector3Int(-400, 120, -400), SizeXz, SizeY, SizeXz, 4);
             InitializeClouds();
             CloudSpeed = 0.1f;
             m_cloudPosition = 0;
+            m_cloudDensity = 0;
         }
         public override void LoadContent()
         {
@@ -78,15 +86,19 @@ namespace _4DMonoEngine.Core.Universe
         public override void Initialize(GraphicsDevice graphicsDevice, Camera camera, GetTimeOfDay getTimeOfDay, GetFogVector getFogVector)
         {
             base.Initialize(graphicsDevice, camera, getTimeOfDay, getFogVector);
-            m_vertexBuilder = new VertexBuilder<CloudBlock>(m_clouds, CloudIndexByWorldPosition, m_graphicsDevice, 8);
+            m_vertexBuilder = new VertexBuilder<CloudBlock>(m_clouds, CloudIndexByWorldPosition, m_graphicsDevice, 4);
             Task.Run(() =>
             {
+                Stopwatch sw = Stopwatch.StartNew();
                 while (true)
                 {
+                    var start = sw.Elapsed.TotalMilliseconds;
                     StepClouds();
+                    var delta = MathHelper.Clamp(0, (float)(sw.Elapsed.TotalMilliseconds - start), 800);
                     m_vertexBuilder.Build(m_cloudVertexTarget);
-                    Thread.Sleep(1000);
+                    Thread.Sleep(1000 - (int)delta);
                 }
+// ReSharper disable once FunctionNeverReturns
             });
         }
 
@@ -97,27 +109,22 @@ namespace _4DMonoEngine.Core.Universe
 
         private static int CloudIndexByRelativePosition(int x, int y, int z)
         {
-            var flattenIndex = x * SizeXZ * SizeY + z * SizeY + y;
+            var flattenIndex = x * SizeXz * SizeY + z * SizeY + y;
             return flattenIndex;
         }
 
-        private bool registered = false;
         public override void Update(GameTime gameTime)
         {
-            if (MainEngine.GetEngineInstance().DebugOnlyDebugManager != null && !registered)
-            {
-                registered = true;
-                MainEngine.GetEngineInstance().DebugOnlyDebugManager.RegisterInGameDebuggable(m_cloudVertexTarget);
-            }
+          
         }
 
         private void InitializeClouds()
         {
-            for (var x = 0; x < SizeXZ; x++) 
+            for (var x = 0; x < SizeXz; x++) 
             {
-                for (var y = 0; y < SizeY; y++)
+                for (var z = 0; z < SizeXz; z++)
                 {
-                    for (var z = 0; z < SizeXZ; z++)
+                    for (var y = 0; y < SizeY; y++)
                     {
                         m_clouds[CloudIndexByRelativePosition(x, y, z)] = CloudBlock.Empty;
                     }
@@ -125,25 +132,70 @@ namespace _4DMonoEngine.Core.Universe
             }
         }
 
+        private float delta = 0.05f;
         private void StepClouds()
         {
             m_cloudPosition += CloudSpeed;
-            for (var x = 1; x < SizeXZ - 1; x++)
+            m_cloudDensity += delta;
+            if (m_cloudDensity > 1 || m_cloudDensity < 0) delta = -delta;
+            var undersideCell = CloudBlock.UndersideClear;
+            if (m_cloudDensity > 0.75)
             {
-                for (var y = 1; y < SizeY - 1; y++)
+                undersideCell = CloudBlock.UndersideStormy;
+            }
+            else if (m_cloudDensity > 0.5)
+            {
+                undersideCell = CloudBlock.UndersideThreatening;
+            }
+            else if (m_cloudDensity > 0.25)
+            {
+                undersideCell = CloudBlock.UndersideOvercast;
+            }
+            for (var x = 1; x < SizeXz - 1; x++)
+            {
+                for (var z = 1; z < SizeXz - 1; z++)
                 {
-                    var offset = -Math.Abs(2 - y) * 0.25f;
-                    for (var z = 1; z < SizeXZ - 1; z++)
+                    for (var y = SizeY - 2; y >= 1 ; y--)
                     {
-                        m_clouds[CloudIndexByRelativePosition(x, y, z)] = 
-                            m_noise.Perlin4Dfbm(x + m_cloudVertexTarget.Position.X,
-                                y + m_cloudVertexTarget.Position.Y, z + m_cloudVertexTarget.Position.Z, m_cloudPosition,
-                                16, offset, 3) > 0
+                        var offset = -Math.Abs(3 - y) * 0.25f + (m_cloudDensity - .5f);
+                        m_clouds[CloudIndexByRelativePosition(x, y, z)] =
+                            m_noise.Perlin4Dfbm(x + m_cloudVertexTarget.Position.X + m_cloudPosition * 4,
+                                y + m_cloudVertexTarget.Position.Y, z + m_cloudVertexTarget.Position.Z + m_cloudPosition * 4, m_cloudPosition,
+                                16, offset, 2) > 0
                                 ? CloudBlock.Cloud
-                                : CloudBlock.Empty;
+                                : CloudBlock.Empty;  
                     }
                 }
             }
+            for (var x = 1; x < SizeXz - 1; x++)
+            {
+                for (var z = 1; z < SizeXz - 1; z++)
+                {
+                    for (var y = 0; y < SizeY - 1; y++)
+                    {
+                        if (m_clouds[CloudIndexByRelativePosition(x, y, z)].Exists)
+                        {
+                            continue;
+                        }
+                        var underACloudCell = IsCellUnderCloud(x, y, z);
+                        m_clouds[CloudIndexByRelativePosition(x, y, z)] = underACloudCell ? undersideCell
+                            : CloudBlock.Empty;
+                    }
+                }
+            }
+        }
+
+        private bool IsCellUnderCloud(int x, int y, int z)
+        {
+            return m_clouds[CloudIndexByRelativePosition(x, y + 1, z)].Exists ||
+                    m_clouds[CloudIndexByRelativePosition(x + 1, y + 1, z)].Exists ||
+                    m_clouds[CloudIndexByRelativePosition(x, y + 1, z + 1)].Exists ||
+                    m_clouds[CloudIndexByRelativePosition(x - 1, y + 1, z)].Exists ||
+                    m_clouds[CloudIndexByRelativePosition(x, y + 1, z - 1)].Exists || 
+                    m_clouds[CloudIndexByRelativePosition(x + 1, y + 1, z + 1)].Exists ||
+                    m_clouds[CloudIndexByRelativePosition(x - 1, y + 1, z + 1)].Exists ||
+                    m_clouds[CloudIndexByRelativePosition(x - 1, y + 1, z - 1)].Exists ||
+                    m_clouds[CloudIndexByRelativePosition(x + 1, y + 1, z - 1)].Exists;
         }
 
         public override void Draw(GameTime gameTime)

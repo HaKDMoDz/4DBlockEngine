@@ -29,7 +29,7 @@ namespace _4DMonoEngine.Core.Universe
 
             // create vertex & index lists.
             VertexList = new List<BlockVertex>();
-            IndexList = new List<short>();
+            IndexList = new List<int>();
         }
 
         public override void SetDirty()
@@ -39,7 +39,7 @@ namespace _4DMonoEngine.Core.Universe
 
         public void DrawInGameDebugVisual(GraphicsDevice graphicsDevice, Camera camera, SpriteBatch spriteBatch, SpriteFont spriteFont)
         {
-            BoundingBoxRenderer.Render(BoundingBox, graphicsDevice, camera.View, camera.Projection, Color.DarkRed);
+            BoundingBoxRenderer.Render(RenderingBoundingBox, graphicsDevice, camera.View, camera.Projection, Color.DarkRed);
         }
     }
 }
