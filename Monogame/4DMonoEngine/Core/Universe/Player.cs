@@ -134,6 +134,8 @@ namespace _4DMonoEngine.Core.Universe
                 }
                 else
                 {
+                    var rotation = Matrix.CreateRotationY(m_currentLookPolarVector.X);
+                    Vector3.Transform(ref moveVector, ref rotation, out moveVector);
                     m_velocity.X = moveVector.X * MoveSpeed;
                     m_velocity.Z = moveVector.Z * MoveSpeed;
                 }

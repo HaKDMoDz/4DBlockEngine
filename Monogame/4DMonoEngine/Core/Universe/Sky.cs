@@ -93,7 +93,7 @@ namespace _4DMonoEngine.Core.Universe
             InitializeClouds();
             CloudSpeed = 0.1f;
             m_cloudPosition = 0;
-            m_cloudDensity = 0.75f;
+            m_cloudDensity = 0.25f;
         }
         public override void LoadContent()
         {
@@ -133,7 +133,7 @@ namespace _4DMonoEngine.Core.Universe
 
         private static int CloudIndexByRelativePosition(int x, int y, int z)
         {
-            var flattenIndex = x * SizeXz * SizeY + z * SizeY + y;
+            var flattenIndex = x * ArraySizeXz * SizeY + z * SizeY + y;
             return flattenIndex;
         }
 
