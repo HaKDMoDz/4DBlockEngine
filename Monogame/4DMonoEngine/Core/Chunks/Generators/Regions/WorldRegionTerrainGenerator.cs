@@ -64,6 +64,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
                 var key = (string)dictionaryEntry.Key;
                 if (!m_parameters.ContainsKey(key))
                 {
+                    distance += 1;
                     continue;
                 }
                 var d = (float)dictionaryEntry.Value - (m_parameters[key].Min + m_parameters[key].Max) / 2;

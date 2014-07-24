@@ -1,5 +1,5 @@
 {
-	"Biomes" : ["Grassland", "Desert"],
+	"Biomes" : ["Grassland", "Desert", "PineBarren"],
 	"Provinces" : ["Platform"],
 	"SeaLevel" : 64,
 	"MountainHeight" : 128,

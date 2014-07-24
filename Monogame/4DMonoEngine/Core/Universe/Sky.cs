@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Graphics.PackedVector;
@@ -15,6 +16,7 @@ using _4DMonoEngine.Core.Processors;
 using _4DMonoEngine.Core.Utils;
 using _4DMonoEngine.Core.Utils.Noise;
 using _4DMonoEngine.Core.Utils.Vector;
+using Matrix = Microsoft.Xna.Framework.Matrix;
 
 namespace _4DMonoEngine.Core.Universe
 {
@@ -54,12 +56,18 @@ namespace _4DMonoEngine.Core.Universe
 
     public class Sky : WorldRenderable
     {
-        private const int SizeXz = 200; 
+        private const int SizeXz = 20;
+        private const int Scale = 1;
         private const int SizeY = 7;
+        private const int ChunksXz = 10;
+        private const int ArraySizeXz = ChunksXz * SizeXz;
+        private const int OffsetXz = -ArraySizeXz * Scale / 2;
+        private const int OffsetY = 120;
+
         private readonly CloudBlock[] m_clouds;
         private readonly SimplexNoise m_noise;
         private  VertexBuilder<CloudBlock> m_vertexBuilder;
-        private readonly CloudTarget m_cloudVertexTarget;
+        private readonly CloudTarget[] m_cloudVertexTargets;
         public float CloudSpeed { get; set; }
         
         private Effect m_blockEffect; // block effect.
@@ -70,12 +78,22 @@ namespace _4DMonoEngine.Core.Universe
         public Sky(Game game, uint seed) : base(game)
         {
             m_noise = new SimplexNoise(seed);
-            m_clouds = new CloudBlock[SizeXz * SizeY * SizeXz];
-            m_cloudVertexTarget = new CloudTarget(new Vector3Int(-400, 120, -400), SizeXz, SizeY, SizeXz, 4);
+            m_clouds = new CloudBlock[ArraySizeXz * SizeY * ArraySizeXz];
+            m_cloudVertexTargets = new CloudTarget[ChunksXz * ChunksXz];
+            for (var x = 0; x < ChunksXz; x++)
+            {
+                for (var z = 0; z < ChunksXz; z++)
+                {
+                    var offsetX = OffsetXz + x * SizeXz * Scale;
+                    var offsetZ = OffsetXz + z * SizeXz * Scale;
+                    m_cloudVertexTargets[x * ChunksXz + z] = new CloudTarget(new Vector3Int(offsetX, OffsetY, offsetZ), SizeXz, SizeY, SizeXz, Scale);
+                }
+            }
+
             InitializeClouds();
             CloudSpeed = 0.1f;
             m_cloudPosition = 0;
-            m_cloudDensity = 0;
+            m_cloudDensity = 0.75f;
         }
         public override void LoadContent()
         {
@@ -86,25 +104,31 @@ namespace _4DMonoEngine.Core.Universe
         public override void Initialize(GraphicsDevice graphicsDevice, Camera camera, GetTimeOfDay getTimeOfDay, GetFogVector getFogVector)
         {
             base.Initialize(graphicsDevice, camera, getTimeOfDay, getFogVector);
-            m_vertexBuilder = new VertexBuilder<CloudBlock>(m_clouds, CloudIndexByWorldPosition, m_graphicsDevice, 4);
+            m_vertexBuilder = new VertexBuilder<CloudBlock>(m_clouds, CloudIndexByWorldPosition, m_graphicsDevice, Scale);
+            //TODO: create general task pool (with priority) and put this in it.
             Task.Run(() =>
             {
-                Stopwatch sw = Stopwatch.StartNew();
                 while (true)
                 {
-                    var start = sw.Elapsed.TotalMilliseconds;
                     StepClouds();
-                    var delta = MathHelper.Clamp(0, (float)(sw.Elapsed.TotalMilliseconds - start), 800);
-                    m_vertexBuilder.Build(m_cloudVertexTarget);
-                    Thread.Sleep(1000 - (int)delta);
+                    foreach (var cloudVertexTarget in m_cloudVertexTargets)
+                    {
+                        m_vertexBuilder.Build(cloudVertexTarget);
+                    }
+                    Thread.Sleep(100);
                 }
 // ReSharper disable once FunctionNeverReturns
             });
         }
 
+        public void UpdateCloudDensity(float density)
+        {
+            m_cloudDensity = MathHelper.Clamp(density, -0.5f, 0.5f);
+        }
+
         private int CloudIndexByWorldPosition(int x, int y, int z)
         {
-            return CloudIndexByRelativePosition(x - m_cloudVertexTarget.Position.X, y - m_cloudVertexTarget.Position.Y, z - m_cloudVertexTarget.Position.Z);
+            return CloudIndexByRelativePosition((x - OffsetXz), y - OffsetY, (z - OffsetXz));
         }
 
         private static int CloudIndexByRelativePosition(int x, int y, int z)
@@ -120,9 +144,9 @@ namespace _4DMonoEngine.Core.Universe
 
         private void InitializeClouds()
         {
-            for (var x = 0; x < SizeXz; x++) 
+            for (var x = 0; x < ArraySizeXz; x++) 
             {
-                for (var z = 0; z < SizeXz; z++)
+                for (var z = 0; z < ArraySizeXz; z++)
                 {
                     for (var y = 0; y < SizeY; y++)
                     {
@@ -136,8 +160,8 @@ namespace _4DMonoEngine.Core.Universe
         private void StepClouds()
         {
             m_cloudPosition += CloudSpeed;
-            m_cloudDensity += delta;
-            if (m_cloudDensity > 1 || m_cloudDensity < 0) delta = -delta;
+          //  m_cloudDensity += delta;
+           // if (m_cloudDensity > 1 || m_cloudDensity < 0) delta = -delta;
             var undersideCell = CloudBlock.UndersideClear;
             if (m_cloudDensity > 0.75)
             {
@@ -151,25 +175,26 @@ namespace _4DMonoEngine.Core.Universe
             {
                 undersideCell = CloudBlock.UndersideOvercast;
             }
-            for (var x = 1; x < SizeXz - 1; x++)
+           // if(m_lastCloudDensity !)
+            for (var x = 1; x < ArraySizeXz - 1; x++)
             {
-                for (var z = 1; z < SizeXz - 1; z++)
+                for (var z = 1; z < ArraySizeXz - 1; z++)
                 {
                     for (var y = SizeY - 2; y >= 1 ; y--)
                     {
                         var offset = -Math.Abs(3 - y) * 0.25f + (m_cloudDensity - .5f);
                         m_clouds[CloudIndexByRelativePosition(x, y, z)] =
-                            m_noise.Perlin4Dfbm(x + m_cloudVertexTarget.Position.X + m_cloudPosition * 4,
-                                y + m_cloudVertexTarget.Position.Y, z + m_cloudVertexTarget.Position.Z + m_cloudPosition * 4, m_cloudPosition,
+                            m_noise.Perlin4Dfbm(x + OffsetXz / Scale + m_cloudPosition * 4,
+                                y + OffsetY, z + OffsetXz / Scale + m_cloudPosition * 4, m_cloudPosition,
                                 16, offset, 2) > 0
                                 ? CloudBlock.Cloud
                                 : CloudBlock.Empty;  
                     }
                 }
             }
-            for (var x = 1; x < SizeXz - 1; x++)
+            for (var x = 1; x < ArraySizeXz - 1; x++)
             {
-                for (var z = 1; z < SizeXz - 1; z++)
+                for (var z = 1; z < ArraySizeXz - 1; z++)
                 {
                     for (var y = 0; y < SizeY - 1; y++)
                     {
@@ -230,34 +255,33 @@ namespace _4DMonoEngine.Core.Universe
             foreach (var pass in m_blockEffect.CurrentTechnique.Passes)
             {
                 pass.Apply();
-                if (m_cloudVertexTarget.IndexBuffer == null || m_cloudVertexTarget.VertexBuffer == null)
+                foreach (var cloudVertexTarget in m_cloudVertexTargets)
                 {
-                    continue;
+                    if (cloudVertexTarget.IndexBuffer == null || cloudVertexTarget.VertexBuffer == null)
+                    {
+                        continue;
+                    }
+
+                    if (cloudVertexTarget.VertexBuffer.VertexCount == 0)
+                    {
+                        continue;
+                    }
+
+                    if (cloudVertexTarget.IndexBuffer.IndexCount == 0)
+                    {
+                        continue;
+                    }
+                    
+                    if (!cloudVertexTarget.RenderingBoundingBox.Intersects(viewFrustrum))
+                    {
+                        continue;
+                    }
+
+                    Game.GraphicsDevice.SetVertexBuffer(cloudVertexTarget.VertexBuffer);
+                    Game.GraphicsDevice.Indices = cloudVertexTarget.IndexBuffer;
+                    Game.GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0,
+                        cloudVertexTarget.VertexBuffer.VertexCount, 0, cloudVertexTarget.IndexBuffer.IndexCount/3);
                 }
-
-                if (m_cloudVertexTarget.VertexBuffer.VertexCount == 0)
-                {
-                    continue;
-                }
-
-                if (m_cloudVertexTarget.IndexBuffer.IndexCount == 0)
-                {
-                    continue;
-                }
-
-                /*if (!IsInRange(m_vertexBuilder))
-                {
-                    continue;
-                }*/
-
-                if (!m_cloudVertexTarget.RenderingBoundingBox.Intersects(viewFrustrum))
-                {
-                    continue;
-                }
-
-                Game.GraphicsDevice.SetVertexBuffer(m_cloudVertexTarget.VertexBuffer);
-                Game.GraphicsDevice.Indices = m_cloudVertexTarget.IndexBuffer;
-                Game.GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, m_cloudVertexTarget.VertexBuffer.VertexCount, 0, m_cloudVertexTarget.IndexBuffer.IndexCount / 3);
             }
         }
     }

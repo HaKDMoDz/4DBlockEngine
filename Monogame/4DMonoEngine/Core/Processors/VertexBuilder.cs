@@ -58,15 +58,22 @@ namespace _4DMonoEngine.Core.Processors
             var vertices = vertexBuilderTarget.VertexList.ToArray();
             var indices = vertexBuilderTarget.IndexList.ToArray();
 
-            if (vertices.Length > 0 && indices.Length > 0)
+            if (vertices.Length == 0 || indices.Length == 0)
             {
-
-                vertexBuilderTarget.VertexBuffer = new VertexBuffer(m_graphicsDevice, typeof(BlockVertex), vertices.Length, BufferUsage.WriteOnly);
-                vertexBuilderTarget.VertexBuffer.SetData(vertices);
-
-                vertexBuilderTarget.IndexBuffer = new IndexBuffer(m_graphicsDevice, IndexElementSize.ThirtyTwoBits, indices.Length, BufferUsage.WriteOnly);
-                vertexBuilderTarget.IndexBuffer.SetData(indices);
+                return;
             }
+            if (vertexBuilderTarget.VertexBuffer == null || vertexBuilderTarget.VertexBuffer.VertexCount != vertices.Length)
+            {
+                vertexBuilderTarget.VertexBuffer = new VertexBuffer(m_graphicsDevice, typeof(BlockVertex),
+                    vertices.Length, BufferUsage.WriteOnly);
+            }
+            vertexBuilderTarget.VertexBuffer.SetData(vertices);
+            if (vertexBuilderTarget.IndexBuffer == null || vertexBuilderTarget.IndexBuffer.IndexCount != indices.Length)
+            {
+                vertexBuilderTarget.IndexBuffer = new IndexBuffer(m_graphicsDevice, IndexElementSize.SixteenBits,
+                    indices.Length, BufferUsage.WriteOnly);
+            }
+            vertexBuilderTarget.IndexBuffer.SetData(indices);
         }
 
         private void BuildBlockVertices(VertexBuilderTarget vertexBuilderTarget, int blockIndex, Vector3Int worldPosition)
@@ -232,20 +239,20 @@ namespace _4DMonoEngine.Core.Processors
         {
             if (flipped)
             {
-                vertexBuilderTarget.IndexList.Add((int)(vertexBuilderTarget.Index + 2));
-                vertexBuilderTarget.IndexList.Add((int)(vertexBuilderTarget.Index + 1));
+                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 2));
+                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 1));
                 vertexBuilderTarget.IndexList.Add(vertexBuilderTarget.Index);
-                vertexBuilderTarget.IndexList.Add((int)(vertexBuilderTarget.Index + 3));
-                vertexBuilderTarget.IndexList.Add((int)(vertexBuilderTarget.Index + 2));
+                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 3));
+                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 2));
                 vertexBuilderTarget.IndexList.Add(vertexBuilderTarget.Index);
             }
             else
             {
-                vertexBuilderTarget.IndexList.Add((int)(vertexBuilderTarget.Index + 3));
-                vertexBuilderTarget.IndexList.Add((int)(vertexBuilderTarget.Index + 2));
-                vertexBuilderTarget.IndexList.Add((int)(vertexBuilderTarget.Index + 1));
-                vertexBuilderTarget.IndexList.Add((int)(vertexBuilderTarget.Index + 3));
-                vertexBuilderTarget.IndexList.Add((int)(vertexBuilderTarget.Index + 1));
+                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 3));
+                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 2));
+                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 1));
+                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 3));
+                vertexBuilderTarget.IndexList.Add((short)(vertexBuilderTarget.Index + 1));
                 vertexBuilderTarget.IndexList.Add(vertexBuilderTarget.Index);
             }
             vertexBuilderTarget.Index += 4;

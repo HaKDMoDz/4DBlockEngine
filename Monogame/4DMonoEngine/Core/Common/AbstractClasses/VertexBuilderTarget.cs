@@ -12,9 +12,16 @@ namespace _4DMonoEngine.Core.Common.AbstractClasses
         public Vector3Int Position;
         public VertexBuffer VertexBuffer;
         public IndexBuffer IndexBuffer;
-        public List<BlockVertex> VertexList;
-        public List<int> IndexList;
-        public int Index;
+        public readonly List<BlockVertex> VertexList;
+        public readonly List<short> IndexList;
+        public short Index;
         public abstract void SetDirty();
+
+        protected VertexBuilderTarget()
+        {
+            // create vertex & index lists.
+            VertexList = new List<BlockVertex>();
+            IndexList = new List<short>();
+        }
     }
 }

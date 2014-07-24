@@ -30,7 +30,7 @@ namespace _4DMonoEngine.Core.Chunks
             Starting,
             Started,
         }
-        private const byte CacheRange = 6;
+        private const byte CacheRange = 8;
         private BoundingBox m_cacheRangeBoundingBox;
         /*TODO : Implement LOD here
          * 

@@ -36,6 +36,33 @@
 		]
 	},
 	{
+		"Name" : "PineBarren",
+		"FoliageDensity" : 0.5,
+		"Parameters" : 
+		[
+			{
+				"Name" : "Temperature",
+				"Min" : 0,
+				"Max" : 1
+			},
+			{
+				"Name" : "Elevation",
+				"Min" : 0.6,
+				"Max" : 1
+			}
+		],
+		"Layers" :
+		[
+			{
+				"Id" : 0,
+				"BlockName" : "Stone",
+				"Thickness" : 1,
+				"NoiseOffset" : 0
+,				"NoiseScale" : 1
+			}
+		]
+	},
+	{
 
 		"Name" : "Desert",
 		"FoliageDensity" : 0.1,

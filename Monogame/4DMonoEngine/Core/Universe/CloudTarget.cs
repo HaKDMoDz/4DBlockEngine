@@ -1,9 +1,7 @@
-using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using _4DMonoEngine.Core.Common.AbstractClasses;
 using _4DMonoEngine.Core.Common.Interfaces;
-using _4DMonoEngine.Core.Common.Structs;
 using _4DMonoEngine.Core.Debugging.Ingame;
 using _4DMonoEngine.Core.Graphics;
 using _4DMonoEngine.Core.Utils.Vector;
@@ -27,9 +25,6 @@ namespace _4DMonoEngine.Core.Universe
                new Vector3(Position.X + sizeX * renderScale, Position.Y + sizeY * renderScale,
                    Position.Z + sizeZ * renderScale));
 
-            // create vertex & index lists.
-            VertexList = new List<BlockVertex>();
-            IndexList = new List<int>();
         }
 
         public override void SetDirty()

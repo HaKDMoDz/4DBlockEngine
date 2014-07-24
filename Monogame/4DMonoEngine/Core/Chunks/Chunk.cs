@@ -3,7 +3,6 @@ using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Common.AbstractClasses;
 using _4DMonoEngine.Core.Common.Enums;
 using _4DMonoEngine.Core.Common.Interfaces;
-using _4DMonoEngine.Core.Common.Structs;
 using _4DMonoEngine.Core.Debugging.Ingame;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -53,10 +52,6 @@ namespace _4DMonoEngine.Core.Chunks
             BoundingBox = new BoundingBox(new Vector3(Position.X, Position.Y, Position.Z),
                                           new Vector3(Position.X + SizeInBlocks, Position.Y + SizeInBlocks,
                                                       Position.Z + SizeInBlocks));
-
-            // create vertex & index lists.
-            VertexList = new List<BlockVertex>();
-            IndexList = new List<int>();
             LightSources = new SparseArray3D<Vector3Byte>(SizeInBlocks, SizeInBlocks);
 #if DEBUG
             MainEngine.GetEngineInstance().DebugOnlyDebugManager.RegisterInGameDebuggable(this);
