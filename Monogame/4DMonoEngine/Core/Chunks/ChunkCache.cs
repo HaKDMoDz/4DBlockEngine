@@ -116,38 +116,27 @@ namespace _4DMonoEngine.Core.Chunks
         public void AddBlock(int x, int y, int z, ref Block block)
         {
             var chunk = GetChunkByWorldPosition(x, y, z); // get the chunk that block is hosted in.
-            if (chunk != null)
+            if (chunk == null)
             {
-                var flattenIndex = BlockIndexByWorldPosition(x, y, z);
-                Blocks[flattenIndex] = block;
-                chunk.AddBlock(x, y, z);
-                m_lightingEngine.AddBlock(x, y, z);
-                UpdateChunkStateAfterModification(chunk, x, y, z);
+                return;
             }
+            var flattenIndex = BlockIndexByWorldPosition(x, y, z);
+            Blocks[flattenIndex] = block;
+            chunk.AddBlock(x, y, z);
+            m_lightingEngine.AddBlock(x, y, z);
         }
 
         public void RemoveBlock(int x, int y, int z)
         {
             var chunk = GetChunkByWorldPosition(x, y, z); // get the chunk that block is hosted in.
-            if (chunk != null)
+            if (chunk == null)
             {
-                var flattenIndex = BlockIndexByWorldPosition(x, y, z);
-                Blocks[flattenIndex] = Block.Empty;
-                chunk.RemoveBlock(x, y, z);
-                m_lightingEngine.RemoveBlock(x, y, x);
-                UpdateChunkStateAfterModification(chunk, x, y, z);
+                return;
             }
-        }
-
-        private void UpdateChunkStateAfterModification(Chunk chunk, int x, int y, int z)
-        {
-            var edgesBlockIsIn = Chunk.GetChunkEdgesBlockIsIn(x, y, z);
-            foreach (var edge in edgesBlockIsIn)
-            {
-                var neighborChunk = GetNeighborChunk(chunk, edge);
-                neighborChunk.ChunkState = ChunkState.AwaitingBuild;
-            }
-            chunk.ChunkState = ChunkState.AwaitingBuild;
+            var flattenIndex = BlockIndexByWorldPosition(x, y, z);
+            Blocks[flattenIndex] = Block.Empty;
+            chunk.RemoveBlock(x, y, z);
+            m_lightingEngine.RemoveBlock(x, y, x);
         }
 
         private void UpdateCachePosition(Vector3Args args)
@@ -175,18 +164,19 @@ namespace _4DMonoEngine.Core.Chunks
 
         public override void Update(GameTime gameTime)
         {
-            if(m_startUpState == StartUpState.AwaitingStart)
+            if (m_startUpState != StartUpState.AwaitingStart)
             {
-                m_startUpState = StartUpState.Starting;
-                Task.Run(() =>
-                {
-                    RecacheChunks();
-                    Parallel.ForEach(m_chunkStorage.Values.ToList(), ProcessChunkInCacheRange);
-                    var cacheThread = new Thread(CacheThread) { IsBackground = true };
-                    cacheThread.Start();
-                    m_startUpState = StartUpState.Started;   
-                });
+                return;
             }
+            m_startUpState = StartUpState.Starting;
+            Task.Run(() =>
+            {
+                RecacheChunks();
+                Parallel.ForEach(m_chunkStorage.Values.ToList(), ProcessChunkInCacheRange);
+                var cacheThread = new Thread(CacheThread) { IsBackground = true };
+                cacheThread.Start();
+                m_startUpState = StartUpState.Started;   
+            });
         }
 
         public bool IsInViewRange(Chunk chunk)
@@ -274,7 +264,7 @@ namespace _4DMonoEngine.Core.Chunks
                         {
                             continue;
                         }
-                        var chunk = new Chunk(new Vector3Int(chunkPosition.X + x, chunkPosition.Y + y, chunkPosition.Z + z), Blocks, BlockIndexByWorldPosition);
+                        var chunk = new Chunk(new Vector3Int(chunkPosition.X + x, chunkPosition.Y + y, chunkPosition.Z + z), Blocks, BlockIndexByWorldPosition, GetNeighborChunk);
                         m_chunkStorage[chunk.ChunkCachePosition.X, chunk.ChunkCachePosition.Y, chunk.ChunkCachePosition.Z] = chunk;
                     }
                 }

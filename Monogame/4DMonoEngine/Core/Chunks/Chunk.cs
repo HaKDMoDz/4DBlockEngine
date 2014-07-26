@@ -26,6 +26,7 @@ namespace _4DMonoEngine.Core.Chunks
 
     public sealed class Chunk : VertexBuilderTarget, IInGameDebuggable
     {
+        public delegate Chunk GetNeighborChunk(Chunk origin, FaceDirection edge);
         public const byte MaxSunValue = 255;
         public const int SizeInBlocks = 32;
         private readonly Block[] m_blocks;
@@ -35,13 +36,15 @@ namespace _4DMonoEngine.Core.Chunks
 
         public ChunkState ChunkState;
         private readonly MappingFunction m_mappingFunction;
+        private readonly GetNeighborChunk m_getNeighborChunk;
 
-        public Chunk(Vector3Int chunkCachePosition, Block[] blocks, MappingFunction mappingFunction)
+        public Chunk(Vector3Int chunkCachePosition, Block[] blocks, MappingFunction mappingFunction, GetNeighborChunk getNeighborChunk)
         {
             ChunkState = ChunkState.AwaitingGenerate; // set initial state to awaiting generation.
             ChunkCachePosition = chunkCachePosition; // set the relative position.
             m_blocks = blocks;
             m_mappingFunction = mappingFunction;
+            m_getNeighborChunk = getNeighborChunk;
 
             // calculate the real world position.
             Position = new Vector3Int(ChunkCachePosition.X * SizeInBlocks,
@@ -128,7 +131,9 @@ namespace _4DMonoEngine.Core.Chunks
             {
                 BoundingBox.Min.Y = blockPositionY;
             }
+            SetDirty(blockPositionX, blockPositionY, blockPositionZ);
         }
+
         public void RemoveBlock(int blockPositionX, int blockPositionZ, int blockPositionY)
         {
             if (blockPositionX == (int)BoundingBox.Max.X || blockPositionX == (int)BoundingBox.Min.X ||
@@ -138,6 +143,7 @@ namespace _4DMonoEngine.Core.Chunks
                 //When we do a remove we can't take a shortcut. Luckily only removals on the shell will change the bounding box
                 UpdateBoundingBox();
             }
+            SetDirty(blockPositionX, blockPositionY, blockPositionZ);
         }
 
         public void UpdateBoundingBox()
@@ -227,11 +233,20 @@ namespace _4DMonoEngine.Core.Chunks
             return string.Format("{0} {1}", ChunkCachePosition, ChunkState);
         }
 
-        public override void SetDirty()
+        public override void SetDirty(int x, int y, int z)
         {
             if (ChunkState == ChunkState.Ready)
             {
                 ChunkState = ChunkState.AwaitingBuild;
+            }
+            var edgesBlockIsIn = GetChunkEdgesBlockIsIn(x, y, z);
+            foreach (var edge in edgesBlockIsIn)
+            {
+                var neighborChunk = m_getNeighborChunk(this, edge);
+                if (neighborChunk != null && neighborChunk.ChunkState == ChunkState.Ready)
+                {
+                    neighborChunk.ChunkState = ChunkState.AwaitingBuild;
+                }
             }
         }
 

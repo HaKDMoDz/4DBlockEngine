@@ -27,7 +27,7 @@ namespace _4DMonoEngine.Core.Universe
 
         }
 
-        public override void SetDirty()
+        public override void SetDirty(int i, int i1, int i2)
         {
             //NO OP
         }
