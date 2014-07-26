@@ -301,12 +301,12 @@ namespace _4DMonoEngine.Core.Chunks
                     m_generator.GenerateDataForChunk(chunk.Position.X, chunk.Position.Y, chunk.Position.Z, 0);
                     chunk.UpdateBoundingBox();
                     chunk.ChunkState = ChunkState.AwaitingLighting;
-                    break;
+                    goto case ChunkState.AwaitingLighting;
                 case ChunkState.AwaitingLighting:
                     chunk.ChunkState = ChunkState.Lighting;
                     m_lightingEngine.Process(chunk.Position.X, chunk.Position.Y, chunk.Position.Z, chunk.LightSources);
                     chunk.ChunkState = ChunkState.AwaitingBuild;
-                    break;
+                    goto case ChunkState.AwaitingBuild;
                 case ChunkState.AwaitingBuild:
                     chunk.ChunkState = ChunkState.Building; 
                     m_vertexBuilder.Build(chunk);

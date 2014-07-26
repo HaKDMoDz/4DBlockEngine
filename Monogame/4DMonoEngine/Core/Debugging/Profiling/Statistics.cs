@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using _4DMonoEngine.Core.Chunks;
 
@@ -25,35 +26,55 @@ namespace _4DMonoEngine.Core.Debugging.Profiling
         {
             get
             {
+#if DEBUG
                 return m_chunkCache.StateStatistics[ChunkState.AwaitingGenerate] + m_chunkCache.StateStatistics[ChunkState.Generating];
+#else
+                return 0;
+#endif
             }
         }
         public int LightenQueue
         {
             get
             {
+#if DEBUG
                 return m_chunkCache.StateStatistics[ChunkState.AwaitingLighting] + m_chunkCache.StateStatistics[ChunkState.Lighting];
+#else
+                return 0;
+#endif
             }
         }
         public int BuildQueue
         {
             get
             {
+#if DEBUG
                 return m_chunkCache.StateStatistics[ChunkState.AwaitingBuild] + m_chunkCache.StateStatistics[ChunkState.Building];
+#else
+                return 0;
+#endif
             }
         }
         public int ReadyQueue
         {
             get
             {
+#if DEBUG
                 return m_chunkCache.StateStatistics[ChunkState.Ready];
+#else
+                return 0;
+#endif
             }
         }
         public int RemovalQueue
         {
             get
             {
+#if DEBUG
                 return m_chunkCache.StateStatistics[ChunkState.AwaitingRemoval];
+#else
+                return 0;
+#endif
             }
         }
 

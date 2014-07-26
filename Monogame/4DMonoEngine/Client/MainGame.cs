@@ -8,9 +8,10 @@ namespace _4DMonoEngine.Client
 {
     public class MainGame : Game
     {
-
+//TODO : consolidate DEBUG confitionals
+#if DEBUG
         private readonly TimeRuler m_timeRuler;
-
+#endif
         public MainGame()
         {
             Content.RootDirectory = "Content"; // set content root directory
@@ -19,12 +20,13 @@ namespace _4DMonoEngine.Client
                 PreferredBackBufferHeight = 720,
                 PreferredBackBufferWidth = 1440
             };
-            // Services.AddService(typeof (IGraphicsDeviceManager), graphicsDeviceManager);
+#if DEBUG
             m_timeRuler = new TimeRuler(this)
             {
                 Visible = true, 
                 ShowLog = true
             };
+#endif
         }
 
        protected override void Initialize()
@@ -34,7 +36,9 @@ namespace _4DMonoEngine.Client
             Components.Add(new UserInterface(this));
             Components.Add(inputManager);
             MainEngine.GetEngineInstance().Initialize(this, inputManager, 0);
+#if DEBUG
             Components.Add(m_timeRuler); 
+#endif
             base.Initialize();
         }
 
