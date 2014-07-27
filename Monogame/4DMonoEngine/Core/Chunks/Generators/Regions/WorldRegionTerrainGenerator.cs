@@ -1,21 +1,23 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
+using Microsoft.Xna.Framework;
 using _4DMonoEngine.Core.Assets.Config;
 using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Utils;
-using _4DMonoEngine.Core.Utils.Noise;
 
 namespace _4DMonoEngine.Core.Chunks.Generators.Regions
 {
     internal abstract class WorldRegionTerrainGenerator
     {
+        private const int MaxCacheSize = 10000;
         private const int Xoffset = 8;
         private const int Yoffset = 7;
         private const int Zoffset = 5;
         private const int Woffset = 3;
         private readonly Dictionary<string, WorldRegionParameter> m_parameters;
-        private readonly float[] m_noiseBuffer; 
+        private readonly float[] m_noiseBuffer;
+        private readonly Queue<DepthCacheEntry> m_cacheExipiraQueue;
+        private readonly Dictionary<Vector3, DepthCacheEntry> m_depthCache; 
         protected readonly List<WorldRegionLayer> Layers;
 
         public string Name { get; private set; }
@@ -23,6 +25,8 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
         protected WorldRegionTerrainGenerator(float[] noiseBuffer, string name, IEnumerable<WorldRegionLayer> layers, IEnumerable<WorldRegionParameter> parameters)
         {
             m_noiseBuffer = noiseBuffer;
+            m_cacheExipiraQueue = new Queue<DepthCacheEntry>();
+            m_depthCache = new Dictionary<Vector3, DepthCacheEntry>();
             m_parameters = new Dictionary<string, WorldRegionParameter>();
             Layers = new List<WorldRegionLayer>(layers);
             Layers.Sort((left, right) => left.Id - right.Id);
@@ -46,7 +50,6 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
             var wVal = m_noiseBuffer[wProbe];
 
             return (xVal + yVal + zVal + wVal)*.25f;
-
         }
 
         public bool Filter(string parameter, float value)
@@ -71,6 +74,44 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
                 distance += d * d;
             }
             return distance;
+        }
+
+        protected DepthCacheEntry GetDepthCache(int x, int z, int w)
+        {
+            var query = new Vector3(x, z, w);
+            if (m_depthCache.ContainsKey(query))
+            {
+                return m_depthCache[query];
+            }
+            DepthCacheEntry cache;
+            if (m_cacheExipiraQueue.Count > MaxCacheSize)
+            {
+                cache = m_cacheExipiraQueue.Dequeue();
+                m_depthCache.Remove(cache.Key);
+                cache.Key = query;
+                cache.Depth = 0;
+                cache.LayerIndex = 0;
+            }
+            else
+            {
+                cache = new DepthCacheEntry(query);
+            }
+            m_depthCache[query] = cache;
+            m_cacheExipiraQueue.Enqueue(cache);
+            return cache;
+        }
+
+        protected class DepthCacheEntry
+        {
+            public int LayerIndex;
+            public float Depth;
+            public Vector3 Key;
+            public DepthCacheEntry(Vector3 key)
+            {
+                Key = key;
+                LayerIndex = 0;
+                Depth = 0;
+            }
         }
 
         public abstract Block Apply(int upperBound, int worldPositionX, int worldPositionY, int worldPositionZ, int worldPositionW);

@@ -69,7 +69,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
                     var overhangStart = m_sealevel + MathHelper.Clamp(detailNoise * 4, -1, 1) * 2;
                     var biome = m_biomeGenerator.GetRegionGenerator(cX, cZ, cW);
                     var province = m_provinceGenerator.GetRegionGenerator(cX, cZ, cW);
-					for (var y = 0; y < m_chunkSize; ++y)
+					for (var y = m_chunkSize - 1; y >= 0 ; --y)
 					{
                         var cY = chunkY + y;
                         Block block;
