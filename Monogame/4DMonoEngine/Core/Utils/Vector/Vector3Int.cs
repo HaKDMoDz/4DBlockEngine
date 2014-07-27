@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 
 namespace _4DMonoEngine.Core.Utils.Vector
 {
@@ -21,6 +22,33 @@ namespace _4DMonoEngine.Core.Utils.Vector
             Y = (int) vector.Y;
             Z = (int) vector.Z;
         }
+
+        public float DistanceSquared(ref Vector3Int otherVector)
+        {
+            var dX = otherVector.X - X;
+            var dY = otherVector.X - X;
+            var dZ = otherVector.X - X;
+            return dX * dX + dY * dY + dZ * dZ;
+        }
+
+        public float DistanceSquared(ref Vector3 otherVector)
+        {
+            var dX = otherVector.X - X;
+            var dY = otherVector.X - X;
+            var dZ = otherVector.X - X;
+            return dX * dX + dY * dY + dZ * dZ;
+        }
+
+        public float Distance(ref Vector3Int otherVector)
+        {
+            return (float)Math.Sqrt(DistanceSquared(ref otherVector));
+        }
+
+        public float Distance(ref Vector3 otherVector)
+        {
+            return (float)Math.Sqrt(DistanceSquared(ref otherVector));
+        }
+
 
         public override bool Equals(object obj)
         {

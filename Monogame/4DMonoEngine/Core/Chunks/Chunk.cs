@@ -14,7 +14,7 @@ namespace _4DMonoEngine.Core.Chunks
 {
     public enum ChunkState
     {
-        AwaitingGenerate,
+        AwaitingGenerate = 0,
         Generating,
         AwaitingLighting,
         Lighting,

@@ -30,6 +30,8 @@ namespace _4DMonoEngine.Core.Chunks
             Starting,
             Started,
         }
+
+        private const int MaxChurnTimeBeforeReque = 2000;
         private const byte CacheRange = 6;
         private BoundingBox m_cacheRangeBoundingBox;
         /*TODO : Implement LOD here
@@ -71,6 +73,8 @@ namespace _4DMonoEngine.Core.Chunks
         private readonly Logger m_logger;
         private StartUpState m_startUpState;
 
+        private readonly Queue<Chunk> m_processingQueue;
+
         public ChunkCache(Game game, uint seed) : base(game)
         {
             m_logger = MainEngine.GetEngineInstance().GetLogger("ChunkCache");
@@ -86,6 +90,7 @@ namespace _4DMonoEngine.Core.Chunks
             m_cacheCenterPosition = new Vector4();
             m_wrappedPositionHandler = EventHelper.Wrap<Vector3Args>(UpdateCachePosition);
             m_startUpState = StartUpState.NotStarted;
+            m_processingQueue = new Queue<Chunk>();
 #if DEBUG
             StateStatistics = new Dictionary<ChunkState, int> // init. the debug stastics.
                                        {
@@ -181,7 +186,7 @@ namespace _4DMonoEngine.Core.Chunks
 
         public bool IsInViewRange(Chunk chunk)
         {
-            return m_viewRangeBoundingBox.Contains(chunk.BoundingBox) == ContainmentType.Contains;
+            return m_viewRangeBoundingBox.Contains(chunk.BoundingBox) != ContainmentType.Disjoint;
         }
 
         public bool IsInViewRange(int x, int y, int z)
@@ -192,7 +197,7 @@ namespace _4DMonoEngine.Core.Chunks
 
         public bool IsInCacheRange(Chunk chunk)
         {
-            return m_cacheRangeBoundingBox.Contains(chunk.BoundingBox) == ContainmentType.Contains;
+            return m_cacheRangeBoundingBox.Contains(chunk.BoundingBox) != ContainmentType.Disjoint;
         }
 
         public bool IsInCacheRange(int x, int y, int z)
@@ -221,14 +226,16 @@ namespace _4DMonoEngine.Core.Chunks
             while (true)
             {
                 Process();
+                Thread.Sleep(10);
             }
 // ReSharper disable once FunctionNeverReturns
         }
 
         private void Process()
         {
-            foreach (var chunk in m_chunkStorage.Values.ToArray())
+            while (!m_cachePositionUpdated && m_processingQueue.Count > 0)
             {
+                var chunk = m_processingQueue.Dequeue();
                 if (IsInViewRange(chunk))
                 {
                     ProcessChunkInViewRange(chunk);
@@ -238,11 +245,8 @@ namespace _4DMonoEngine.Core.Chunks
                     ProcessChunkInCacheRange(chunk);
                 }
             }
-            if (m_cachePositionUpdated)
-            {
-                m_cachePositionUpdated = false;
-                RecacheChunks();
-            }
+            m_cachePositionUpdated = false;
+            RecacheChunks();
         }
 
         private void RecacheChunks()
@@ -252,6 +256,8 @@ namespace _4DMonoEngine.Core.Chunks
                 m_chunkStorage.Remove(chunk.ChunkCachePosition.X, chunk.ChunkCachePosition.Y, chunk.ChunkCachePosition.Z);
                 chunk.PrepForRemoval();
             }
+            m_processingQueue.Clear();
+            var toAdd = new List<Chunk>();
             var chunkPosition = new Vector3Int((int)(m_cacheCenterPosition.X / Chunk.SizeInBlocks), (int)(m_cacheCenterPosition.Y / Chunk.SizeInBlocks), ((int)m_cacheCenterPosition.Z / Chunk.SizeInBlocks));
             for (var z = -CacheRange; z <= CacheRange; z++)
             {
@@ -259,27 +265,58 @@ namespace _4DMonoEngine.Core.Chunks
                 {
                     for (var x = -CacheRange; x <= CacheRange; x++)
                     {
-                        if (m_chunkStorage.ContainsKey(chunkPosition.X + x,
+                        Chunk chunk;
+                        if (!m_chunkStorage.ContainsKey(chunkPosition.X + x,
                             chunkPosition.Y + y, chunkPosition.Z + z))
+                        {
+                            chunk =
+                                new Chunk(
+                                    new Vector3Int(chunkPosition.X + x, chunkPosition.Y + y, chunkPosition.Z + z),
+                                    Blocks, BlockIndexByWorldPosition, GetNeighborChunk);
+                            m_chunkStorage[
+                                chunk.ChunkCachePosition.X, chunk.ChunkCachePosition.Y, chunk.ChunkCachePosition.Z] =
+                                chunk;
+                        }
+                        else
+                        {
+                            chunk = m_chunkStorage[chunkPosition.X + x,
+                                chunkPosition.Y + y, chunkPosition.Z + z];
+                        }
+                        if ((IsInViewRange(chunk) && chunk.ChunkState == ChunkState.Ready)
+                            || (!IsInViewRange(chunk) && chunk.ChunkState == ChunkState.AwaitingLighting))
                         {
                             continue;
                         }
-                        var chunk = new Chunk(new Vector3Int(chunkPosition.X + x, chunkPosition.Y + y, chunkPosition.Z + z), Blocks, BlockIndexByWorldPosition, GetNeighborChunk);
-                        m_chunkStorage[chunk.ChunkCachePosition.X, chunk.ChunkCachePosition.Y, chunk.ChunkCachePosition.Z] = chunk;
+                        toAdd.Add(chunk);
                     }
                 }
+            }
+            var center = new Vector3(m_cacheCenterPosition.X - Chunk.SizeInBlocks / 2, m_cacheCenterPosition.Y - Chunk.SizeInBlocks / 2, m_cacheCenterPosition.Z - Chunk.SizeInBlocks / 2);
+            toAdd.Sort((chunk1, chunk2) =>
+            {
+                var ret = (int) (chunk1.Position.DistanceSquared(ref center) - chunk2.Position.DistanceSquared(ref center));
+                if (ret == 0)
+                {
+                    return (chunk2.ChunkState - chunk1.ChunkState);
+                }
+                return ret;
+            });
+            foreach (var chunk in toAdd)
+            {
+                m_processingQueue.Enqueue(chunk);
             }
         }
 
         private void ProcessChunkInCacheRange(Chunk chunk)
         {
-            if (chunk.ChunkState == ChunkState.AwaitingGenerate)
+            if (chunk.ChunkState != ChunkState.AwaitingGenerate)
             {
-                chunk.ChunkState = ChunkState.Generating;
-                m_generator.GenerateDataForChunk(chunk.Position.X, chunk.Position.Y, chunk.Position.Z, 0);
-                chunk.UpdateBoundingBox();
-                chunk.ChunkState = ChunkState.AwaitingLighting;
+                return;
             }
+            chunk.ChunkState = ChunkState.Generating;
+            m_generator.GenerateDataForChunk(chunk.Position.X, chunk.Position.Y, chunk.Position.Z, 0);
+            chunk.UpdateBoundingBox();
+            chunk.ChunkState = ChunkState.AwaitingLighting;
         }
 
         private void ProcessChunkInViewRange(Chunk chunk)
@@ -411,7 +448,7 @@ namespace _4DMonoEngine.Core.Chunks
             return !m_chunkStorage.ContainsKey(x, y, z) ? null : m_chunkStorage[x, y, z];
         }
 
-        public Chunk GetNeighborChunk(Chunk origin, FaceDirection edge)
+        private Chunk GetNeighborChunk(Chunk origin, FaceDirection edge)
         {
             switch (edge)
             {
@@ -466,11 +503,6 @@ namespace _4DMonoEngine.Core.Chunks
                 default:
                     return null;
             }
-        }
-
-        public Chunk GetChunkByWorldPosition(Vector3 position)
-        {
-            return GetChunkByWorldPosition((int)position.X, (int)position.Y, (int)position.Z);
         }
     }
 }
