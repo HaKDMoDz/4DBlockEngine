@@ -14,7 +14,7 @@ namespace _4DMonoEngine.Core.Processors
         public delegate VertexBuilderTarget GetTarget(int x, int y, int z);
         private const byte MaxSun = 255;
         private const byte MinLight = 17;
-        private const float SDropoff = 0.6f;
+        private const float SDropoff = 0.8f;
         private readonly Queue<LightQueueContainer>[] m_lightQueuesToAdd;
         private readonly Queue<LightQueueContainer>[] m_lightQueuesToRemove;
         private readonly T[] m_blockSource;
@@ -145,55 +145,60 @@ namespace _4DMonoEngine.Core.Processors
 
         internal void Process(int chunkIndexX, int chunkIndexY, int chunkIndexZ, SparseArray3D<Vector3Byte> lights)
         {
-            ResetLight(chunkIndexX, chunkIndexY, chunkIndexZ,lights);
+            GetLightsOnShell(chunkIndexX, chunkIndexY, chunkIndexZ,lights);
             PropogateFromSources();
         }
 
-        private void ResetLight(int chunkIndexX, int chunkIndexY, int chunkIndexZ, SparseArray3D<Vector3Byte> lights)
+        private void GetLightsOnShell(int chunkIndexX, int chunkIndexY, int chunkIndexZ, SparseArray3D<Vector3Byte> lights)
         {
-            for (var x = -1; x < m_chunkSize + 1; ++x)
+            for (var x = 0; x < m_chunkSize; ++x)
             {
-                for (var z = -1; z < m_chunkSize + 1; ++z)
+                for (var z = 0; z < m_chunkSize; ++z)
                 {
-                    for (var y = -1; y < m_chunkSize + 1; ++y)
+                    for (var y = m_chunkSize - 1; y >= 0 ; --y)
                     {
                         var cX = chunkIndexX + x;
                         var cY = chunkIndexY + y;
                         var cZ = chunkIndexZ + z;
-                        var blockIndex = m_mappingFunction(cX, cY, cZ);
-                        if (x < 0 || y < 0 || z < 0 || x == m_chunkSize || y == m_chunkSize || z == m_chunkSize)
-                        {
-                            if (m_blockSource[blockIndex].LightSun > MinLight)
-                            {
-                                PropogateFromLight(cX, cY, cZ, Channel.Sun, m_blockSource[blockIndex].LightSun, y == m_chunkSize);
-                            }
-                            if (m_blockSource[blockIndex].LightRed > MinLight)
-                            {
-                                PropogateFromLight(cX, cY, cZ, Channel.Red, m_blockSource[blockIndex].LightRed);
-                            }
-                            if (m_blockSource[blockIndex].LightGreen > MinLight)
-                            {
-                                PropogateFromLight(cX, cY, cZ, Channel.Green, m_blockSource[blockIndex].LightGreen);
-                            }
-                            if (m_blockSource[blockIndex].LightBlue > MinLight)
-                            {
-                                PropogateFromLight(cX, cY, cZ, Channel.Blue, m_blockSource[blockIndex].LightBlue);
-                            }
-                        }
-                        else
-                        {
-                            m_blockSource[blockIndex].LightRed = MinLight;
-                            m_blockSource[blockIndex].LightGreen = MinLight;
-                            m_blockSource[blockIndex].LightBlue = MinLight;
-                            m_blockSource[blockIndex].LightSun = MinLight;
+                       // if (x == 0 || y == 0 || z == 0 || x == m_chunkSize -1  || y == m_chunkSize - 1 || z == m_chunkSize -1)
+                     //   {
+                            ConditionallyInsertLight(cX, cY, cZ);
+                      //  }
+                      //  else
+                     //   {
                             if (lights.ContainsKey(cX, cY, cZ))
                             {
                                 PropogateFromLight(cX, cY, cZ, lights[cX, cY, cZ]);
                             }
-                        }
+                      //  }
                     }
                 }
             }
+        }
+
+        private void ConditionallyInsertLight(int x, int y, int z)
+        {
+            var currentLight = new Vector4();
+            var block = m_blockSource[m_mappingFunction(x, y, z)];
+            GetMaxLight(x, y, z, ref currentLight);
+            if (currentLight.X > block.LightRed)
+            {
+                PropogateFromLight(x, y, z, Channel.Red, (byte) currentLight.X);
+            }
+            if (currentLight.Y > block.LightGreen)
+            {
+                PropogateFromLight(x, y, z, Channel.Green, (byte) currentLight.Y);
+            }
+            if (currentLight.Z > block.LightBlue)
+            {
+                PropogateFromLight(x, y, z, Channel.Blue, (byte) currentLight.Z);
+            }
+            if (currentLight.W <= block.LightSun)
+            {
+                return;
+            }
+            var down = m_blockSource[m_mappingFunction(x, y + 1, z)].LightSun >= (byte) currentLight.W;
+            PropogateFromLight(x, y, z, Channel.Sun, (byte) currentLight.W, down);
         }
 
         public void AddBlock(int x, int y, int z)
@@ -204,18 +209,22 @@ namespace _4DMonoEngine.Core.Processors
         public void RemoveBlock(int x, int y, int z)
         {
             var currentLight = new Vector4();
-            MaxLight(x + 1, y, z, ref currentLight);
-            MaxLight(x - 1, y, z, ref currentLight);
-            MaxLight(x, y, z + 1 , ref currentLight);
-            MaxLight(x, y, z - 1, ref currentLight);
-            MaxLight(x, y + 1, z, ref currentLight);
-            MaxLight(x, y - 1, z, ref currentLight);
+            GetMaxLight(x, y, z, ref currentLight);
             PropogateFromLight(x, y, z, Channel.Red, (byte)currentLight.X);
             PropogateFromLight(x, y, z, Channel.Green, (byte)currentLight.Y);
             PropogateFromLight(x, y, z, Channel.Blue, (byte)currentLight.Z);
-            var down = m_blockSource[m_mappingFunction(x, y + 1, z)].LightSun >= (byte) currentLight.W;
+            var down = m_blockSource[m_mappingFunction(x, y + 1, z)].LightSun >= (byte)currentLight.W;
             PropogateFromLight(x, y, z, Channel.Sun, (byte)currentLight.W, down);
+        }
 
+        private void GetMaxLight(int x, int y, int z, ref Vector4 currentLight)
+        {
+            MaxLight(x + 1, y, z, ref currentLight);
+            MaxLight(x - 1, y, z, ref currentLight);
+            MaxLight(x, y, z + 1, ref currentLight);
+            MaxLight(x, y, z - 1, ref currentLight);
+            MaxLight(x, y + 1, z, ref currentLight);
+            MaxLight(x, y - 1, z, ref currentLight);
         }
 
         private void MaxLight(int x, int y, int z, ref Vector4 currentLight)
@@ -224,6 +233,7 @@ namespace _4DMonoEngine.Core.Processors
             var lightRed = m_blockSource[blockIndex].LightRed;
             var lightGreen = m_blockSource[blockIndex].LightGreen;
             var lightBlue = m_blockSource[blockIndex].LightBlue;
+            var lightSun = m_blockSource[blockIndex].LightSun;
             if (currentLight.X < lightRed)
             {
                 currentLight.X = lightRed;
@@ -236,7 +246,6 @@ namespace _4DMonoEngine.Core.Processors
             {
                 currentLight.Z = lightBlue;
             }
-            var lightSun = m_blockSource[blockIndex].LightSun;
             if (currentLight.W < lightSun)
             {
                 currentLight.W = lightSun;
@@ -386,9 +395,11 @@ namespace _4DMonoEngine.Core.Processors
 
         private void PropogateFromSource(Channel channel)
         {
-            Queue<LightQueueContainer> sources = GetAddQueueForChannel(channel);
+            var sources = GetAddQueueForChannel(channel);
+            var visited = 0;
             while (sources.Count > 0)
             {
+                ++visited;
                 var container = sources.Dequeue();
                 var x = container.X;
                 var y = container.Y;
@@ -408,9 +419,14 @@ namespace _4DMonoEngine.Core.Processors
                     continue;
                 }
                 var light = container.Light;
+                var currentLight = GetChannel(blockIndex, channel);
                 if (!container.PropogateDown || light < MaxSun || opacity > 0)
                 {
                     light = light * (1 - opacity) * SDropoff;
+                }
+                if (light <= currentLight)
+                {
+                    continue;
                 }
                 if (light <= MinLight)
                 {
@@ -424,14 +440,24 @@ namespace _4DMonoEngine.Core.Processors
                 ConditionallyPropogate(x, y, z - 1, channel, light);
                 ConditionallyPropogate(x, y + 1, z, channel, light);
                 ConditionallyPropogate(x, y - 1, z, channel, light, channel == Channel.Sun);
-                
             }
+            Console.WriteLine(visited);
         }
 
         private void ConditionallyPropogate(int x, int y, int z, Channel channel, float incomingLight, bool lightDown = false)
         {
             var blockIndex = m_mappingFunction(x, y, z);
-            if (m_blockSource[blockIndex].Opacity >= 1 || GetChannel(blockIndex, channel) >= incomingLight || GetQueuedLightLevel(channel, blockIndex) >= incomingLight)
+            var opacity = m_blockSource[blockIndex].Opacity;
+            if (opacity >= 1)
+            {
+                return;
+            }
+            var testLight = incomingLight;
+            if (!lightDown || incomingLight < MaxSun || opacity > 0)
+            {
+                testLight = incomingLight * (1 - opacity) * SDropoff;
+            }
+            if (GetChannel(blockIndex, channel) > testLight || GetQueuedLightLevel(channel, blockIndex) > testLight)
             {
                 return;
             }
