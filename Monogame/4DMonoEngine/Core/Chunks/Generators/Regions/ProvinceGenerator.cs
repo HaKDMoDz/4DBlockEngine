@@ -6,14 +6,18 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
 {
     internal class ProvinceGenerator : WorldRegionTerrainGenerator
     {
+        private object m_lockObject;
+
         public ProvinceGenerator(float[] noiseBuffer, WorldRegionData province)
             : base(noiseBuffer, province.Name, province.Layers, province.Parameters)
-        {}
+        {
+            m_lockObject = new object();
+        }
 
         public override Block Apply(int upperBound, int worldPositionX, int worldPositionY, int worldPositionZ, int worldPositionW)
         {
             DepthCacheEntry cache;
-            lock (this)
+            lock (m_lockObject)
             {
                 cache = GetDepthCache(worldPositionX, worldPositionZ, worldPositionW);
             }
