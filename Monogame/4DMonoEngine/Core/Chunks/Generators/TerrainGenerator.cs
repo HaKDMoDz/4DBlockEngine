@@ -47,10 +47,9 @@ namespace _4DMonoEngine.Core.Chunks.Generators
             m_voroni = new CellNoise(random.NextUInt());
             m_sealevel = settings.SeaLevel;
             m_mountainHeight = settings.MountainHeight - m_sealevel;
-            var centroidScale = settings.BiomeCentroidSampleScale;
             var rescale = settings.BiomeSampleRescale;
-            m_biomeGenerator = new BiomeGeneratorCollection(random.NextUInt(), GetHeight, settings.Biomes, centroidScale, rescale, m_sealevel, m_mountainHeight);
-            m_provinceGenerator = new ProvinceGeneratorCollection(random.NextUInt(), GetHeight, settings.Provinces, centroidScale, rescale, m_sealevel, m_mountainHeight);
+            m_biomeGenerator = new BiomeGeneratorCollection(random.NextUInt(), GetHeight, settings.Biomes, rescale, m_sealevel, m_mountainHeight);
+            m_provinceGenerator = new ProvinceGeneratorCollection(random.NextUInt(), GetHeight, settings.Provinces, rescale, m_sealevel, m_mountainHeight);
             m_detailScale = settings.DetailScale;
             m_sinkHoleDepth = settings.SinkHoleDepth;
             m_biomeThickness = settings.BiomeThickness;
@@ -68,6 +67,8 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 			        var groundLevel = GetHeight(cX, cZ, cW);
 					var detailNoise =  m_detail2.Perlin3Dfmb(cX, cZ, cW, 64, 0, 8);
                     var overhangStart = m_sealevel + MathHelper.Clamp(detailNoise * 4, -1, 1) * 2;
+                    var biome = m_biomeGenerator.GetRegionGenerator(cX, cZ, cW);
+                    var province = m_provinceGenerator.GetRegionGenerator(cX, cZ, cW);
 					for (var y = 0; y < m_chunkSize; ++y)
 					{
                         var cY = chunkY + y;
@@ -83,7 +84,6 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 					    }
                         else if (cY >= groundLevel - m_biomeThickness)
 					    {
-					        var biome = m_biomeGenerator.GetRegionGenerator(cX, cZ, cW);
 					        if (cY > overhangStart)
 					        {
 					            var density = (MathHelper.Clamp(m_volume.Perlin4Dfbm(cX, cY, cZ, cW, 64, 0, 4)*3, -1, 1) + 1)*0.5f;
@@ -96,7 +96,6 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 					    }
 					    else
 					    {
-					        var province = m_provinceGenerator.GetRegionGenerator(cX, cZ, cW);
 					        block = province.Apply((int)groundLevel - m_biomeThickness, cX, cY, cZ, cW);
 					    }
                         m_blocks[m_mappingFunction(cX, cY, cZ)] = block;

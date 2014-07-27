@@ -19,34 +19,27 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
 
     internal abstract class WorldRegionGeneratorCollection<T> where T : WorldRegionData
     {
-        protected readonly int m_seaLevel; // 64;
-        protected readonly int m_mountainHeight; // 64;
-        private readonly int m_centroidSampleScale; // 16;
+        protected readonly int SeaLevel; // 64;
+        protected readonly int MountainHeight; // 64;
         protected readonly int BiomeSampleRescale; // 512;
-        private static readonly Object LockObject  = new object();
 
         private readonly Dictionary<string, WorldRegionTerrainGenerator> m_generators;
-        private readonly CellNoise m_cellNoise;
         protected readonly SimplexNoise SimplexNoise;
         protected readonly SimplexNoise SimplexNoise2;
-        private readonly Dictionary<ulong, RegionData> m_biomes;
         protected readonly GetHeight GetHeightFunction;
         public delegate float GetHeight(float x, float z, float w);
 
-        protected WorldRegionGeneratorCollection(ulong seed, GetHeight getHeightFunction, IEnumerable<string> regions, int centeiodSampleScale, int biomeSampleRescale, int seaLevel, int mountainHeight)
+        protected WorldRegionGeneratorCollection(ulong seed, GetHeight getHeightFunction, IEnumerable<string> regions, int biomeSampleRescale, int seaLevel, int mountainHeight)
         {
-            m_centroidSampleScale = centeiodSampleScale;
             BiomeSampleRescale = biomeSampleRescale;
-            m_seaLevel = seaLevel;
-            m_mountainHeight = mountainHeight;
+            SeaLevel = seaLevel;
+            MountainHeight = mountainHeight;
 
-            m_cellNoise = new CellNoise(seed);
             SimplexNoise = new SimplexNoise(seed);
             SimplexNoise2 = new SimplexNoise(seed + 0x8fd3952e35bb901f); // the 2 generators just need to be offset by some arbitrary value
             m_generators = new Dictionary<string, WorldRegionTerrainGenerator>();
             InitializeAsync(seed + 0x3a98bfad, regions); //another arbitrary offset
             GetHeightFunction = getHeightFunction;
-            m_biomes = new Dictionary<ulong, RegionData>();
         }
 
         private async void InitializeAsync(ulong seed, IEnumerable<string> regions)
@@ -71,31 +64,17 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
                 m_generators.Add(regionData.GetKey(), GeneratorBuilder(noiseCache, regionData));
             }
         }
-        
-        public RegionData GetRegionData(float x, float y, float z)
-        {
-            var data = m_cellNoise.Voroni(x / m_centroidSampleScale, y / m_centroidSampleScale, z / m_centroidSampleScale);
-            lock (LockObject)
-            {
-                if (m_biomes.ContainsKey(data.Id))
-                {
-                    return m_biomes[data.Id];
-                }
-                var centroid = new Vector3(x, y, z) + data.Delta*m_centroidSampleScale;
-                m_biomes[data.Id] = InternalGetRegionData(x, y, z, centroid);
-                return m_biomes[data.Id];
-            }
-        }
 
         protected abstract WorldRegionTerrainGenerator GeneratorBuilder(float[] noiseCache, WorldRegionData data);
-
-        protected abstract RegionData InternalGetRegionData(float x, float y, float z, Vector3 centroid);
 
         public WorldRegionTerrainGenerator GetRegionGenerator(float x, float y, float z)
         {
             var biome = GetRegionData(x, y, z);
             return m_generators[biome.Type];
         }
+
+        protected abstract RegionData GetRegionData(float x, float y, float z);
+        
 
         protected string GetRegionType(IDictionary parameters)
         {

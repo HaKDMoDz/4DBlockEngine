@@ -396,10 +396,8 @@ namespace _4DMonoEngine.Core.Processors
         private void PropogateFromSource(Channel channel)
         {
             var sources = GetAddQueueForChannel(channel);
-            var visited = 0;
             while (sources.Count > 0)
             {
-                ++visited;
                 var container = sources.Dequeue();
                 var x = container.X;
                 var y = container.Y;
@@ -441,7 +439,6 @@ namespace _4DMonoEngine.Core.Processors
                 ConditionallyPropogate(x, y + 1, z, channel, light);
                 ConditionallyPropogate(x, y - 1, z, channel, light, channel == Channel.Sun);
             }
-            Console.WriteLine(visited);
         }
 
         private void ConditionallyPropogate(int x, int y, int z, Channel channel, float incomingLight, bool lightDown = false)

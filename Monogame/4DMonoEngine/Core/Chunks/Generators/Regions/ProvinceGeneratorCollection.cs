@@ -9,8 +9,8 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
     internal class ProvinceGeneratorCollection : WorldRegionGeneratorCollection<ProvinceData>
     {
 
-        public ProvinceGeneratorCollection(ulong seed, GetHeight getHeightFunction, IEnumerable<string> provinces,int centeiodSampleScale, int biomeSampleRescale, int seaLevel, int mountainHeight)
-            : base(seed, getHeightFunction, provinces, centeiodSampleScale, biomeSampleRescale, seaLevel, mountainHeight)
+        public ProvinceGeneratorCollection(ulong seed, GetHeight getHeightFunction, IEnumerable<string> provinces, int biomeSampleRescale, int seaLevel, int mountainHeight)
+            : base(seed, getHeightFunction, provinces, biomeSampleRescale, seaLevel, mountainHeight)
         {}
 
         protected override WorldRegionTerrainGenerator GeneratorBuilder(float[] noiseCache, WorldRegionData data)
@@ -18,15 +18,15 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
             return new ProvinceGenerator(noiseCache, (ProvinceData)data);
         }
 
-        protected override RegionData InternalGetRegionData(float x, float y, float z, Vector3 centroid)
+        protected override RegionData GetRegionData(float x, float y, float z)
         {
             var region = new RegionData();
-            var centroidHeight = GetHeightFunction(centroid.X, centroid.Y, centroid.Z);
-            var heightRatio = MathHelper.Clamp((centroidHeight - m_seaLevel) / m_mountainHeight, 0, 1);
-            region.GeologicalActivity = ((MathHelper.Clamp(SimplexNoise.Perlin3Dfmb(centroid.X, centroid.Y, centroid.Z, BiomeSampleRescale * 8, 0, 5) * 5, -1, 1) + 1) / 2);
+            var centroidHeight = GetHeightFunction(x, y, z);
+            var heightRatio = MathHelper.Clamp((centroidHeight - SeaLevel) / MountainHeight, 0, 1);
+            region.GeologicalActivity = ((MathHelper.Clamp(SimplexNoise.Perlin3Dfmb(x, y, z, BiomeSampleRescale * 8, 0, 5) * 5, -1, 1) + 1) / 2);
             var parameters = new OrderedDictionary
             {
-                {"Rarity", (MathHelper.Clamp(SimplexNoise2.Perlin3Dfmb(centroid.X, centroid.Y, centroid.Z, BiomeSampleRescale * 8, 0, 5) * 5, -1, 1) + 1) / 2},
+                {"Rarity", (MathHelper.Clamp(SimplexNoise2.Perlin3Dfmb(x, y, z, BiomeSampleRescale * 8, 0, 5) * 5, -1, 1) + 1) / 2},
                 {"Elevation", heightRatio},
                 {"GeologicalActivity", region.GeologicalActivity}
             };
