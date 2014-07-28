@@ -44,4 +44,9 @@
 		"TileU" : 0,
 		"TileV" : 0.6875
 	},
+	{
+		"Name" : "Water",
+		"TileU" : 0.875,
+		"TileV" : 0.75
+	},
 ]

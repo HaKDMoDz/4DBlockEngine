@@ -5,7 +5,6 @@
 	"MountainHeight" : 128,
 	"DetailScale" : 16,
 	"SinkHoleDepth" : 8,
-    "BiomeCentroidSampleScale" : 16,
     "BiomeSampleRescale" : 512,
     "BiomeThickness" : 8,
     "BlockTypeMap" :
@@ -17,7 +16,11 @@
         {
             "Key":"Special",
             "Value":["Cloud","Empty"]
-        }
+        },
+        {
+            "Key":"Fluids",
+            "Value":["Water"]
+        },
     ],
     "BlockTileMapUnitSize" : 0.0625
 }

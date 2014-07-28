@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -74,6 +75,7 @@ namespace _4DMonoEngine.Core.Chunks
         private StartUpState m_startUpState;
 
         private readonly Queue<Chunk> m_processingQueue;
+        private readonly ConcurrentQueue<WorldEdit> m_EditQueue; 
 
         public ChunkCache(Game game, uint seed) : base(game)
         {
@@ -91,6 +93,7 @@ namespace _4DMonoEngine.Core.Chunks
             m_wrappedPositionHandler = EventHelper.Wrap<Vector3Args>(UpdateCachePosition);
             m_startUpState = StartUpState.NotStarted;
             m_processingQueue = new Queue<Chunk>();
+            m_EditQueue = new ConcurrentQueue<WorldEdit>();
 #if DEBUG
             StateStatistics = new Dictionary<ChunkState, int> // init. the debug stastics.
                                        {
@@ -157,13 +160,20 @@ namespace _4DMonoEngine.Core.Chunks
                 return;
             }
             m_cachePositionUpdated = true;
+            var oldPosition = m_cacheCenterPosition;
             m_cacheCenterPosition.X = x;
             m_cacheCenterPosition.Y = y;
             m_cacheCenterPosition.Z = z;
             UpdateBoundingBoxes();
-            if (m_startUpState == StartUpState.NotStarted)
+            switch (m_startUpState)
             {
-                m_startUpState = StartUpState.AwaitingStart;
+                case StartUpState.NotStarted:
+                    m_startUpState = StartUpState.AwaitingStart;
+                    break;
+                case StartUpState.Started:
+                    //m_EditQueue.Enqueue(new WorldEdit(new Vector3Int((int)oldPosition.X, (int)oldPosition.Y, (int)oldPosition.Z), WorldEdit.WorldEditType.RemoveLight));
+                   // m_EditQueue.Enqueue(new WorldEdit(new Vector3Int(x, y, z), WorldEdit.WorldEditType.AddLight, new Vector3Byte(255, 255, 255)));
+                    break;
             }
         }
 
@@ -243,6 +253,30 @@ namespace _4DMonoEngine.Core.Chunks
                 else if (IsInCacheRange(chunk))
                 {
                     ProcessChunkInCacheRange(chunk);
+                }
+            }
+            WorldEdit result;
+            while (m_EditQueue.TryDequeue(out result))
+            {
+                var chunk = GetChunkByWorldPosition(result.Position);
+                if (chunk == null)
+                {
+                    continue;
+                }
+                switch (result.EditType)
+                {
+                    case WorldEdit.WorldEditType.RemoveBlock:
+                        break;
+                    case WorldEdit.WorldEditType.AddBlock:
+                        break;
+                    case WorldEdit.WorldEditType.RemoveLight:
+                        m_lightingEngine.RemoveLight(chunk.LightSources, result.Position);
+                        break;
+                    case WorldEdit.WorldEditType.AddLight:
+                        m_lightingEngine.AddLight(chunk.LightSources, result.Position, result.NewLight);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
                 }
             }
             m_cachePositionUpdated = false;
@@ -443,6 +477,11 @@ namespace _4DMonoEngine.Core.Chunks
             return !m_chunkStorage.ContainsKey(x / Chunk.SizeInBlocks, y / Chunk.SizeInBlocks, z / Chunk.SizeInBlocks) ? null : m_chunkStorage[x / Chunk.SizeInBlocks, y / Chunk.SizeInBlocks, z / Chunk.SizeInBlocks];
         }
 
+        public Chunk GetChunkByWorldPosition(Vector3Int position)
+        {
+            return GetChunkByWorldPosition(position.X, position.Y, position.Z);
+        }
+
         public Chunk GetChunkByRelativePosition(int x, int y, int z)
         {
             return !m_chunkStorage.ContainsKey(x, y, z) ? null : m_chunkStorage[x, y, z];
@@ -502,6 +541,28 @@ namespace _4DMonoEngine.Core.Chunks
                     return m_wrappedPositionHandler;
                 default:
                     return null;
+            }
+        }
+
+        private struct WorldEdit
+        {
+            public enum WorldEditType
+            {
+                RemoveBlock,
+                AddBlock,
+                RemoveLight,
+                AddLight
+            }
+
+            public Vector3Int Position;
+            public WorldEditType EditType;
+            public Vector3Byte NewLight;
+
+            public WorldEdit(Vector3Int position, WorldEditType editType, Vector3Byte newLight = new Vector3Byte())
+            {
+                Position = position;
+                EditType = editType;
+                NewLight = newLight;
             }
         }
     }

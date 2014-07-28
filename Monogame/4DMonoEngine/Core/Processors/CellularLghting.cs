@@ -12,8 +12,8 @@ namespace _4DMonoEngine.Core.Processors
     internal class CellularLighting<T> where T : ILightable
     {
         public delegate VertexBuilderTarget GetTarget(int x, int y, int z);
-        private const byte MaxSun = 255;
-        private const byte MinLight = 17;
+        public const byte MaxSun = 255;
+        public const byte MinLight = 17;
         private const float SDropoff = 0.8f;
         private readonly Queue<LightQueueContainer>[] m_lightQueuesToAdd;
         private readonly Queue<LightQueueContainer>[] m_lightQueuesToRemove;
@@ -128,7 +128,8 @@ namespace _4DMonoEngine.Core.Processors
 
         private void SetQueuedLightLevel(Channel channel, int index, float value)
         {
-            m_queuedValuesByChannel[(int) channel][index] = value;
+            var dict = m_queuedValuesByChannel[(int)channel];
+            dict[index] = value;
         }
 
         private float GetQueuedLightLevel(Channel channel, int index)
@@ -275,6 +276,11 @@ namespace _4DMonoEngine.Core.Processors
             PropogateFromSources();
         }
 
+        public void AddLight(SparseArray3D<Vector3Byte> lights, Vector3Int position, Vector3Byte light)
+        {
+            AddLight(lights, position.X, position.Y, position.Z, light);
+        }
+
         public void RemoveLight(SparseArray3D<Vector3Byte> lights, int x, int y, int z)
         {
             if (!lights.ContainsKey(x, y, z))
@@ -284,6 +290,11 @@ namespace _4DMonoEngine.Core.Processors
             lights.Remove(x, y, z);
             ClearLightChannelsFromCell(x, y, z);
             PropogateFromSources();
+        }
+
+        public void RemoveLight(SparseArray3D<Vector3Byte> lights, Vector3Int position)
+        {
+            RemoveLight(lights, position.X, position.Y, position.Z);
         }
 
         private void ClearAllChannelsFromCell(int x, int y, int z)

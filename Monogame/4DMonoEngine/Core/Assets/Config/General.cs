@@ -20,8 +20,6 @@ namespace _4DMonoEngine.Core.Assets.Config
         [DataMember]
         public int SinkHoleDepth { get; set; }
         [DataMember]
-        public int BiomeCentroidSampleScale { get; set; }
-        [DataMember]
         public int BiomeSampleRescale { get; set; }
         [DataMember]
         public int BiomeThickness { get; set; }

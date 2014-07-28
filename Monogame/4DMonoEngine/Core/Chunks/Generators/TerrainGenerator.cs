@@ -1,6 +1,8 @@
 ﻿using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Chunks.Generators.Regions;
 using Microsoft.Xna.Framework;
+using _4DMonoEngine.Core.Common.Interfaces;
+using _4DMonoEngine.Core.Processors;
 using _4DMonoEngine.Core.Utils;
 using _4DMonoEngine.Core.Utils.Noise;
 using _4DMonoEngine.Core.Utils.Random;
@@ -76,11 +78,11 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 
 					    if (cY > groundLevel + 10)
 					    {
-                            block = new Block(Block.None) {LightSun = Chunk.MaxSunValue};
+                            block = new Block(Block.None) { LightSun = CellularLighting<Block>.MaxSun };
 					    }
 					    else if (cY > groundLevel)
 					    {
-					        block = Block.Empty;
+                            block = new Block(Block.None) { LightSun = CellularLighting<Block>.MinLight };
 					    }
                         else if (cY >= groundLevel - m_biomeThickness)
 					    {
@@ -100,15 +102,14 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 					    }
                         m_blocks[m_mappingFunction(cX, cY, cZ)] = block;
 					}
-                    //TODO : fill with water
-                    /*
-                    for (var y = 0; y < m_chunkSize && chunkWorldPosition.Y * m_chunkSize + y < SeaLevel; ++y)
-					{						
-						if(chunkData[x, y, z, w] == 0)
-						{
-							chunkData[x, y, z, w] = 3;
-						}
-					}*/
+                    
+                    for (var y = 0; y < m_chunkSize && chunkY + y < m_sealevel; ++y)
+					{		
+                        var cY = chunkY + y;
+					    var blockIndex = m_mappingFunction(cX, cY, cZ);
+                        if(!m_blocks[blockIndex].Exists)
+                            m_blocks[blockIndex] = new Block(BlockDictionary.GetInstance().GetBlockIdForName("Water"));
+					}
 				}
 		    }
             //TODO : query if chunk has all neighbors loaded so we can run our erosion step
