@@ -1,0 +1,12 @@
+[
+	{
+		"Name" : "Water",
+		"BlockId" : 8,
+		"TextureNames" : ["Water"],
+		"Opacity" : 1,
+		"Durability" : 0.4,
+		"Elasticity" : 0.1,
+		"Adhesion" : 0.9,
+		"Mass" : 8
+	}
+]
