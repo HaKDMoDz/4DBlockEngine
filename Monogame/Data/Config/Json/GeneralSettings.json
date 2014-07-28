@@ -1,5 +1,5 @@
 {
-	"Biomes" : ["Grassland", "Desert", "PineBarren"],
+	"Biomes" : ["Grassland", "Desert", "PineBarren", "Polar"],
 	"Provinces" : ["Platform"],
 	"SeaLevel" : 64,
 	"MountainHeight" : 128,
@@ -11,7 +11,7 @@
     [
     	{
     		"Key":"Terrain",
-    		"Value":["Grass","Dirt","Stone","StoneDark","Sand","SandStone"]
+    		"Value":["Grass","Dirt","Stone","StoneDark","Sand","SandStone", "Snow"]
     	},
         {
             "Key":"Special",

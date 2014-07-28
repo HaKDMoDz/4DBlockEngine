@@ -58,5 +58,15 @@
 		"Elasticity" : 0.1,
 		"Adhesion" : 0.9,
 		"Mass" : 8
+	},
+	{
+		"Name" : "Snow",
+		"BlockId" : 9,
+		"TextureNames" : ["SnowSide", "SnowSide", "Snow", "Dirt", "SnowSide", "SnowSide"],
+		"Opacity" : 1,
+		"Durability" : 0.4,
+		"Elasticity" : 0.1,
+		"Adhesion" : 0.9,
+		"Mass" : 8
 	}
 ]

@@ -49,4 +49,14 @@
 		"TileU" : 0.875,
 		"TileV" : 0.75
 	},
+	{
+		"Name" : "Snow",
+		"TileU" : 0.125,
+		"TileV" : 0.25
+	},
+	{
+		"Name" : "SnowSide",
+		"TileU" : 0.25,
+		"TileV" : 0.25
+	},
 ]
