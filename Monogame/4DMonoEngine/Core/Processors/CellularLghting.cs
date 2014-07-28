@@ -21,6 +21,7 @@ namespace _4DMonoEngine.Core.Processors
         private readonly MappingFunction m_mappingFunction;
         private readonly int m_chunkSize;
         private readonly Dictionary<int, float>[] m_queuedValuesByChannel;
+        private readonly Dictionary<int, float>[] m_queuedDeletesByChannel;
         private readonly GetTarget m_getTarget;
         private readonly Channel[] m_channels;
 
@@ -43,11 +44,13 @@ namespace _4DMonoEngine.Core.Processors
             m_lightQueuesToAdd = new Queue<LightQueueContainer>[count];
             m_lightQueuesToRemove = new Queue<LightQueueContainer>[count];
             m_queuedValuesByChannel = new Dictionary<int, float>[count];
+            m_queuedDeletesByChannel = new Dictionary<int, float>[count];
             for (var i = 0; i < count; i++)
             {
                 m_lightQueuesToAdd[i] = new Queue<LightQueueContainer>();
                 m_lightQueuesToRemove[i] = new Queue<LightQueueContainer>();
                 m_queuedValuesByChannel[i] = new Dictionary<int, float>();
+                m_queuedDeletesByChannel[i] = new Dictionary<int, float>();
             }
             m_getTarget = getTarget;
         }
@@ -144,6 +147,24 @@ namespace _4DMonoEngine.Core.Processors
             dict.Remove(index);
         }
 
+        private void SetQueuedDelete(Channel channel, int index, float value)
+        {
+            var dict = m_queuedValuesByChannel[(int)channel];
+            dict[index] = value;
+        }
+
+        private float GetQueuedDelete(Channel channel, int index)
+        {
+            var dict = m_queuedValuesByChannel[(int)channel];
+            return dict.ContainsKey(index) ? dict[index] : 0;
+        }
+
+        private void RemoveQueuedDelete(Channel channel, int index)
+        {
+            var dict = m_queuedValuesByChannel[(int)channel];
+            dict.Remove(index);
+        }
+
         internal void Process(int chunkIndexX, int chunkIndexY, int chunkIndexZ, SparseArray3D<Vector3Byte> lights)
         {
             GetLightsOnShell(chunkIndexX, chunkIndexY, chunkIndexZ,lights);
@@ -161,17 +182,11 @@ namespace _4DMonoEngine.Core.Processors
                         var cX = chunkIndexX + x;
                         var cY = chunkIndexY + y;
                         var cZ = chunkIndexZ + z;
-                       // if (x == 0 || y == 0 || z == 0 || x == m_chunkSize -1  || y == m_chunkSize - 1 || z == m_chunkSize -1)
-                     //   {
-                            ConditionallyInsertLight(cX, cY, cZ);
-                      //  }
-                      //  else
-                     //   {
-                            if (lights.ContainsKey(cX, cY, cZ))
-                            {
-                                PropogateFromLight(cX, cY, cZ, lights[cX, cY, cZ]);
-                            }
-                      //  }
+                        ConditionallyInsertLight(cX, cY, cZ);
+                        if (lights.ContainsKey(cX, cY, cZ))
+                        {
+                            PropogateFromLight(cX, cY, cZ, lights[cX, cY, cZ]);
+                        }
                     }
                 }
             }
@@ -316,9 +331,9 @@ namespace _4DMonoEngine.Core.Processors
 
         private void ClearChannelFromCell(int x, int y, int z, int blockIndex, Channel channel)
         {
-            var incomingSunLight = ResetChannel(blockIndex, channel);
+            var incomingSunLight = GetChannel(blockIndex, channel);
             var container = new LightQueueContainer(x, y, z, incomingSunLight);
-            GetRemoveQueueForChannel(channel).Enqueue(container);
+            EnqueueClear(container, channel, m_mappingFunction(x, y, z));
             ClearCellsAndAddBoundries(channel);
         }
 
@@ -338,43 +353,70 @@ namespace _4DMonoEngine.Core.Processors
                 }
                 target.SetDirty(x, y, z);
                 var blockIndex = m_mappingFunction(x, y, z);
+                RemoveQueuedDelete(channel, blockIndex);
                 var propogate = false;
-                var isSource = false;
+               // var isSource = false;
                 var light = container.Light;
                 var opacity = m_blockSource[blockIndex].Opacity;
                 if (opacity >= 1)
                 {
-                    SetChannel(blockIndex, channel, 0);
                     continue;
                 }
-                if (!container.PropogateDown || light < MaxSun || opacity > 0)
-                {
-                    light = light * (1 - opacity) * SDropoff;
-                }
-                if (light > m_blockSource[blockIndex].LightSun || (container.PropogateDown && light >= Chunk.MaxSunValue))
+                if (light >= GetChannel(blockIndex, channel) || (container.PropogateDown && light >= Chunk.MaxSunValue))
                 {
                     propogate = true;
-                    SetChannel(blockIndex, channel, 0);
+                    SetChannel(blockIndex, channel, channel == Channel.Sun ? MinLight : (byte)0);
                 }
-                else
+               /* else
                 {
                     isSource = true;
-                }
+                }*/
 
                 if (propogate)
                 {
-                    lightQueueToRemove.Enqueue(new LightQueueContainer(x + 1, y, z, light));
-                    lightQueueToRemove.Enqueue(new LightQueueContainer(x - 1, y, z, light));
-                    lightQueueToRemove.Enqueue(new LightQueueContainer(x, y, z + 1, light));
-                    lightQueueToRemove.Enqueue(new LightQueueContainer(x, y, z - 1, light));
-                    lightQueueToRemove.Enqueue(new LightQueueContainer(x, y + 1, z, light));
-                    lightQueueToRemove.Enqueue(new LightQueueContainer(x, y - 1, z, light, true));
-                }
-                if (isSource)
+                    if (!container.PropogateDown || light < MaxSun || opacity > 0)
+                    {
+                        light = light * (1 - opacity) * SDropoff;
+                    }
+                    ConditionallyClear(x + 1, y, z, channel, light);
+                    ConditionallyClear(x - 1, y, z, channel, light);
+                    ConditionallyClear(x, y, z + 1, channel, light);
+                    ConditionallyClear(x, y, z - 1, channel, light);
+                    ConditionallyClear(x, y + 1, z, channel, light);
+                    ConditionallyClear(x, y - 1, z, channel, light, channel == Channel.Sun);
+               }
+                /*if (isSource)
                 {
                     EnqueueLight(new LightQueueContainer(x, y, z, GetChannel(blockIndex, channel)), channel, blockIndex);
-                }
+                }*/
             }
+        }
+
+        private void ConditionallyClear(int x, int y, int z, Channel channel, float incomingLight, bool lightDown = false)
+        {
+            var blockIndex = m_mappingFunction(x, y, z);
+            var opacity = m_blockSource[blockIndex].Opacity;
+            if (opacity >= 1 && incomingLight > MinLight)
+            {
+                return;
+            }
+            var testLight = incomingLight;
+            /*if (!lightDown || incomingLight < MaxSun || opacity > 0)
+            {
+                testLight = incomingLight * (1 - opacity) * SDropoff;
+            }*/
+            var nextCellLight = GetChannel(blockIndex, channel);
+            if (nextCellLight < MinLight || nextCellLight > testLight || GetQueuedDelete(channel, blockIndex) > testLight)
+            {
+                return;
+            }
+            EnqueueClear(new LightQueueContainer(x, y, z, incomingLight, lightDown), channel, blockIndex);
+        }
+
+        private void EnqueueClear(LightQueueContainer container, Channel channel, int blockIndex)
+        {
+            GetRemoveQueueForChannel(channel).Enqueue(container);
+            SetQueuedDelete(channel, blockIndex, container.Light);
         }
 
         private void PropogateFromLight(int x, int y, int z, Vector3Byte currentLight)
@@ -424,6 +466,7 @@ namespace _4DMonoEngine.Core.Processors
                 var opacity = m_blockSource[blockIndex].Opacity;
                 if (opacity >= 1)
                 {
+                    //TODO : replace this with a check for a light emission level from the block dictionary
                     SetChannel(blockIndex, channel, 0);
                     continue;
                 }

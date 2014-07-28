@@ -164,7 +164,7 @@ namespace _4DMonoEngine.Core.Processors
             var blueBr = (block5.LightBlue + block6.LightBlue + block7.LightBlue + block0.LightBlue) >> 2;
             var blueBl = (block7.LightBlue + block8.LightBlue + block1.LightBlue + block0.LightBlue) >> 2;
 
-            var flipped = (sunTl + redTl + greenTl + blueTl) + (sunBr + redBr + greenBr + blueBr) <
+            var flipped = (sunTl + redTl + greenTl + blueTl) + (sunBr + redBr + greenBr + blueBr) >=
                            (sunTr + redTr + greenTr + blueTr) + (sunBl + redBl + greenBl + blueBl);
 
             var localTl = new HalfVector4(sunTl / 255.0f, redTl / 255.0f, greenTl / 255.0f, blueTl / 255.0f);

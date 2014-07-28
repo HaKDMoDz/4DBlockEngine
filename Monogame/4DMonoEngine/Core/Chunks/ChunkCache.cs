@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.PerformanceData;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -160,25 +161,37 @@ namespace _4DMonoEngine.Core.Chunks
                 return;
             }
             m_cachePositionUpdated = true;
-            var oldPosition = m_cacheCenterPosition;
             m_cacheCenterPosition.X = x;
             m_cacheCenterPosition.Y = y;
             m_cacheCenterPosition.Z = z;
             UpdateBoundingBoxes();
-            switch (m_startUpState)
+            if (m_startUpState == StartUpState.NotStarted)
             {
-                case StartUpState.NotStarted:
-                    m_startUpState = StartUpState.AwaitingStart;
-                    break;
-                case StartUpState.Started:
-                    //m_EditQueue.Enqueue(new WorldEdit(new Vector3Int((int)oldPosition.X, (int)oldPosition.Y, (int)oldPosition.Z), WorldEdit.WorldEditType.RemoveLight));
-                   // m_EditQueue.Enqueue(new WorldEdit(new Vector3Int(x, y, z), WorldEdit.WorldEditType.AddLight, new Vector3Byte(255, 255, 255)));
-                    break;
+                m_startUpState = StartUpState.AwaitingStart;
             }
         }
 
+      //  private bool add = true;
+      //  private int count = 0;
         public override void Update(GameTime gameTime)
         {
+         /*   if (m_startUpState == StartUpState.Started)
+            {
+                if (count++ > 1000 && m_EditQueue.Count == 0)
+                {
+                    count = 0;
+                    if (add)
+                    {
+                        m_EditQueue.Enqueue(new WorldEdit(new Vector3Int(-25, 68, 10), WorldEdit.WorldEditType.AddLight, new Vector3Byte(255, 255, 255)));
+                    }
+                    else
+                    {
+                        m_EditQueue.Enqueue(new WorldEdit(new Vector3Int(-25, 68, 10), WorldEdit.WorldEditType.RemoveLight));
+                    }
+                    add = !add;
+                    m_cachePositionUpdated = true;
+                }
+            }*/
             if (m_startUpState != StartUpState.AwaitingStart)
             {
                 return;
@@ -270,9 +283,11 @@ namespace _4DMonoEngine.Core.Chunks
                     case WorldEdit.WorldEditType.AddBlock:
                         break;
                     case WorldEdit.WorldEditType.RemoveLight:
+                        Console.WriteLine("clearing light");
                         m_lightingEngine.RemoveLight(chunk.LightSources, result.Position);
                         break;
                     case WorldEdit.WorldEditType.AddLight:
+                        Console.WriteLine("adding light");
                         m_lightingEngine.AddLight(chunk.LightSources, result.Position, result.NewLight);
                         break;
                     default:

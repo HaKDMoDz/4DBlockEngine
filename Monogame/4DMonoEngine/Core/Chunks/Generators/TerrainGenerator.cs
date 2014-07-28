@@ -1,7 +1,6 @@
 ﻿using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Chunks.Generators.Regions;
 using Microsoft.Xna.Framework;
-using _4DMonoEngine.Core.Common.Interfaces;
 using _4DMonoEngine.Core.Processors;
 using _4DMonoEngine.Core.Utils;
 using _4DMonoEngine.Core.Utils.Noise;
@@ -78,7 +77,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 
 					    if (cY > groundLevel + 10)
 					    {
-                            block = new Block(Block.None) { LightSun = CellularLighting<Block>.MaxSun };
+					        block = new Block(Block.None) {LightSun = CellularLighting<Block>.MaxSun}; //MinLight };
 					    }
 					    else if (cY > groundLevel)
 					    {
@@ -107,8 +106,8 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 					{		
                         var cY = chunkY + y;
 					    var blockIndex = m_mappingFunction(cX, cY, cZ);
-                        if(!m_blocks[blockIndex].Exists)
-                            m_blocks[blockIndex] = new Block(BlockDictionary.GetInstance().GetBlockIdForName("Water"));
+					    if (!m_blocks[blockIndex].Exists)
+					        m_blocks[blockIndex] = new Block(BlockDictionary.GetInstance().GetBlockIdForName("Water"));// {LightGreen = 255};
 					}
 				}
 		    }
