@@ -107,7 +107,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
                         var cY = chunkY + y;
 					    var blockIndex = m_mappingFunction(cX, cY, cZ);
 					    if (!m_blocks[blockIndex].Exists)
-					        m_blocks[blockIndex] = new Block(BlockDictionary.GetInstance().GetBlockIdForName("Water"));// {LightGreen = 255};
+					        m_blocks[blockIndex] = new Block(BlockDictionary.GetInstance().GetBlockIdForName("Water"));// {LightRed = 255};
 					}
 				}
 		    }

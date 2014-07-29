@@ -3,14 +3,8 @@ float4x4 View; // the camera-view matrix.
 float4x4 Projection; // the camera-projection.
 float3 CameraPosition; // the camera-position.
 
-float TimeOfDay; // Time of day.
-
 float4 HorizonColor; // Horizon color used for fogging.
-float4 SunColor;		
-float4 NightColor;
-
-float4 MorningTint;		
-float4 EveningTint;	
+float4 SunColor;
 
 float FogNear; // Near fog plane.
 float FogFar; // Far fog plane.
@@ -55,14 +49,7 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 
     output.blockTextureCoord = input.blockTextureCoord;
 
-	float sunColor = SunColor;
-
-	if(TimeOfDay <= 12)
-		sunColor *= TimeOfDay / 12;	
-	else
-		sunColor *= (TimeOfDay - 24) / -12;	
-
-	output.Color.rgb = clamp(input.Light.x + input.Light.yzw, 0, 1);
+	output.Color.rgb = clamp(input.Light.x * SunColor + input.Light.yzw, 0, 1);
 	output.Color.a = 1;
 
     return output;
@@ -80,21 +67,8 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 
 	float4 sunColor = SunColor;	 
 	float4 fogColor = HorizonColor;
-    float4 nightColor = NightColor;
 
-	nightColor *= (4 - input.blockTextureCoord.y) * .125f;
-
-	if(TimeOfDay <= 12)
-		fogColor *= TimeOfDay / 12;
-	else
-		fogColor *= (TimeOfDay - 24) / -12;	
-
-	fogColor += (MorningTint * .05) * ((24 - TimeOfDay)/24);
-	fogColor += (EveningTint * .05) * (TimeOfDay / 24);	
-	sunColor += nightColor;
-	fogColor += nightColor;
-
-	return color;//lerp(fogColor, color ,fog);
+	return lerp(fogColor, color ,fog);
 }
 
 technique BlockTechnique

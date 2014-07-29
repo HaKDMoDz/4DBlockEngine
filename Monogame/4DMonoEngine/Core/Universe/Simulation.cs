@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Windows.Controls;
+using System.Windows.Media.Media3D;
 using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Chunks;
 using _4DMonoEngine.Core.Common.AbstractClasses;
@@ -10,7 +12,7 @@ namespace _4DMonoEngine.Core.Universe
 {
     public class Simulation : DrawableGameComponent
     {
-        private const float GameHourInRealSeconds = 120;
+        private const float GameHourInRealSeconds = 2;
 
         internal Player Player
         {
@@ -30,7 +32,7 @@ namespace _4DMonoEngine.Core.Universe
         public Simulation(Game game, uint seed)
             : base(game)
         {
-            m_fogVector = new Vector2(Chunk.SizeInBlocks * (ChunkCache.ViewRange - 2), Chunk.SizeInBlocks * (ChunkCache.ViewRange));
+            m_fogVector = new Vector2(Chunk.SizeInBlocks * ChunkCache.ViewRange, Chunk.SizeInBlocks * (ChunkCache.ViewRange + 4));
             m_worldComponents = new List<Renderable>();
             m_chunkCache = new ChunkCache(game, seed);
             m_worldComponents.Add(m_chunkCache);
@@ -41,7 +43,9 @@ namespace _4DMonoEngine.Core.Universe
 
         public float GetTimeOfDay()
         {
-            return  ((int)(DateTime.Now.TimeOfDay.TotalSeconds / GameHourInRealSeconds) % 24) / 24.0f;
+            var ret = (DateTime.Now.TimeOfDay.TotalSeconds / GameHourInRealSeconds);
+            var remainder = ret - (int) ret;
+            return (float)((((int) ret)%24) + remainder);
         }
 
         public Vector2 GetFogVector()

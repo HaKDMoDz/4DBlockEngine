@@ -408,15 +408,8 @@ namespace _4DMonoEngine.Core.Chunks
             m_blockEffect.Parameters["BlockTextureAtlas"].SetValue(m_blockTextureAtlas);
 
             // atmospheric settings
-            m_blockEffect.Parameters["SunColor"].SetValue(RenderingConstants.SunColor);
-            m_blockEffect.Parameters["NightColor"].SetValue(RenderingConstants.NightColor);
-            m_blockEffect.Parameters["HorizonColor"].SetValue(RenderingConstants.HorizonColor);
-            m_blockEffect.Parameters["MorningTint"].SetValue(RenderingConstants.MorningTint);
-            m_blockEffect.Parameters["EveningTint"].SetValue(RenderingConstants.EveningTint);
-
-            // time of day parameters
-            m_blockEffect.Parameters["TimeOfDay"].SetValue(m_getTimeOfDay());
-
+            m_blockEffect.Parameters["SunColor"].SetValue(GetSunColor());
+            m_blockEffect.Parameters["HorizonColor"].SetValue(GetHorizonColor());
             // fog parameters
             m_blockEffect.Parameters["FogNear"].SetValue(m_getFogVector().X);
             m_blockEffect.Parameters["FogFar"].SetValue(m_getFogVector().Y);
