@@ -119,6 +119,8 @@
     <Compile Include="Core\Common\AbstractClasses\Renderable.cs" />
     <Compile Include="Core\Common\AbstractClasses\Updateable.cs" />
     <Compile Include="Core\Common\AbstractClasses\WorldRenderable.cs" />
+    <Compile Include="Core\Universe\Fluids\FluidCell.cs" />
+    <Compile Include="Core\Universe\Fluids\FluidContainer.cs" />
     <Compile Include="Core\Utils\Noise\CellNoise2D.cs" />
     <Compile Include="Core\Utils\Noise\SimplexCommon.cs" />
     <Compile Include="Core\Utils\Noise\SimplexNoise2D.cs" />

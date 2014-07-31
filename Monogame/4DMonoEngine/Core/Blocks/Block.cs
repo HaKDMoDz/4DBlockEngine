@@ -53,19 +53,24 @@ namespace _4DMonoEngine.Core.Blocks
             set { m_lightBlue = value; }
         }
 
+        public ushort Type
+        {
+            get { return m_type; }
+        }
+
         public HalfVector2[] GetTextureMapping(FaceDirection faceDir)
         {
-            return BlockDictionary.GetInstance().GetTextureMapping(m_type, faceDir);
+            return BlockDictionary.GetInstance().GetTextureMapping(Type, faceDir);
         }
 
         public bool Exists
         {
-            get { return m_type != None; }
+            get { return Type != None; }
         }
 
         public float Opacity
         {
-            get { return BlockDictionary.GetInstance().GetStaticData(m_type).Opacity; }
+            get { return BlockDictionary.GetInstance().GetStaticData(Type).Opacity; }
         }
     }
 }
