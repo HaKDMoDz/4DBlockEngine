@@ -15,7 +15,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
         private SimplexNoise3D m_elevation;
         private SimplexNoise3D m_detail;
         private SimplexNoise3D m_detail2;
-        private SimplexNoise3D m_volume;
+        private SimplexNoise4D m_volume;
         private CellNoise3D m_voroni;
         private BiomeGeneratorCollection m_biomeGenerator;
         private ProvinceGeneratorCollection m_provinceGenerator;
@@ -44,7 +44,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
             m_elevation = new SimplexNoise3D(random.NextUInt());
             m_detail = new SimplexNoise3D(random.NextUInt());
             m_detail2 = new SimplexNoise3D(random.NextUInt());
-            m_volume = new SimplexNoise3D(random.NextUInt());
+            m_volume = new SimplexNoise4D(random.NextUInt());
             m_voroni = new CellNoise3D(random.NextUInt());
             m_sealevel = settings.SeaLevel;
             m_mountainHeight = settings.MountainHeight - m_sealevel;
@@ -87,7 +87,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 					    {
 					        if (cY > overhangStart)
 					        {
-					            var density = (MathHelper.Clamp(m_volume.Perlin4Dfbm(cX, cY, cZ, cW, 64, 0, 4)*3, -1, 1) + 1)*0.5f;
+					            var density = (MathHelper.Clamp(m_volume.FractalBrownianMotion(cX, cY, cZ, cW, 64, 0, 4)*3, -1, 1) + 1)*0.5f;
 					            block = density > 0.125 ? biome.Apply((int) groundLevel, cX, cY, cZ, cW) : Block.Empty;
 					        }
 					        else

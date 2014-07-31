@@ -120,6 +120,8 @@
     <Compile Include="Core\Common\AbstractClasses\Updateable.cs" />
     <Compile Include="Core\Common\AbstractClasses\WorldRenderable.cs" />
     <Compile Include="Core\Utils\Noise\CellNoise2D.cs" />
+    <Compile Include="Core\Utils\Noise\SimplexCommon.cs" />
+    <Compile Include="Core\Utils\Noise\SimplexNoise2D.cs" />
     <Compile Include="Core\Utils\Noise\SimplexNoise4D.cs" />
     <Compile Include="Core\Utils\Random\BallInBin.cs" />
     <Compile Include="Core\Utils\Random\DeckOfCards.cs" />
