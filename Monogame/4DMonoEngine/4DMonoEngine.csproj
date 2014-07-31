@@ -119,6 +119,8 @@
     <Compile Include="Core\Common\AbstractClasses\Renderable.cs" />
     <Compile Include="Core\Common\AbstractClasses\Updateable.cs" />
     <Compile Include="Core\Common\AbstractClasses\WorldRenderable.cs" />
+    <Compile Include="Core\Utils\Noise\CellNoise2D.cs" />
+    <Compile Include="Core\Utils\Noise\SimplexNoise4D.cs" />
     <Compile Include="Core\Utils\Random\BallInBin.cs" />
     <Compile Include="Core\Utils\Random\DeckOfCards.cs" />
     <Compile Include="Core\Common\Extensions\NumberExtensions.cs" />
@@ -129,8 +131,8 @@
     <Compile Include="Core\Logging\Logger.cs" />
     <Compile Include="Core\Logging\LogManager.cs" />
     <Compile Include="Core\Logging\LogTarget.cs" />
-    <Compile Include="Core\Utils\Noise\CellNoise.cs" />
-    <Compile Include="Core\Utils\Noise\SimplexNoise.cs" />
+    <Compile Include="Core\Utils\Noise\CellNoise3D.cs" />
+    <Compile Include="Core\Utils\Noise\SimplexNoise3D.cs" />
     <Compile Include="Core\Utils\Random\FastRandom.cs" />
     <Compile Include="Core\Utils\Vector\Vector2Int.cs" />
     <Compile Include="Core\Utils\Vector\Vector3Byte.cs" />
@@ -171,7 +173,7 @@
     <Compile Include="Core\Input\InputManager.cs" />
     <Compile Include="Core\UI\UserInterface.cs" />
     <Compile Include="Core\Universe\CloudTarget.cs" />
-    <Compile Include="Core\Universe\FluidSimulation.cs" />
+    <Compile Include="Core\Universe\Fluids\FluidSimulation.cs" />
     <Compile Include="Core\Universe\Sky.cs" />
     <Compile Include="Core\Commands\FlyCommand.cs" />
     <Compile Include="Core\Universe\Player.cs" />

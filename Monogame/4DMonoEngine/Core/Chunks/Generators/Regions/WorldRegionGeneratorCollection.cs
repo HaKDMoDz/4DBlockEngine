@@ -24,8 +24,8 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
         protected readonly int BiomeSampleRescale; // 512;
 
         private readonly Dictionary<string, WorldRegionTerrainGenerator> m_generators;
-        protected readonly SimplexNoise SimplexNoise;
-        protected readonly SimplexNoise SimplexNoise2;
+        protected readonly SimplexNoise3D SimplexNoise3D;
+        protected readonly SimplexNoise3D SimplexNoise2;
         protected readonly GetHeight GetHeightFunction;
         public delegate float GetHeight(float x, float z, float w);
 
@@ -35,8 +35,8 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
             SeaLevel = seaLevel;
             MountainHeight = mountainHeight;
 
-            SimplexNoise = new SimplexNoise(seed);
-            SimplexNoise2 = new SimplexNoise(seed + 0x8fd3952e35bb901f); // the 2 generators just need to be offset by some arbitrary value
+            SimplexNoise3D = new SimplexNoise3D(seed);
+            SimplexNoise2 = new SimplexNoise3D(seed + 0x8fd3952e35bb901f); // the 2 generators just need to be offset by some arbitrary value
             m_generators = new Dictionary<string, WorldRegionTerrainGenerator>();
             InitializeAsync(seed + 0x3a98bfad, regions); //another arbitrary offset
             GetHeightFunction = getHeightFunction;
@@ -44,11 +44,11 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
 
         private async void InitializeAsync(ulong seed, IEnumerable<string> regions)
         {
-            var simplexNoise = new SimplexNoise(seed);
+            var simplexNoise = new SimplexNoise3D(seed);
             var noiseCache = new float[1000];
             for (var i = 0; i < noiseCache.Length; i++)
             {
-                noiseCache[i] = (MathHelper.Clamp(simplexNoise.Perlin3Dfmb(i, 0, 0, 64, 0, 2) * 4, -1, 1) + 1) * 0.5f;
+                noiseCache[i] = (MathHelper.Clamp(simplexNoise.FractalBrownianMotion(i, 0, 0, 64, 0, 2) * 4, -1, 1) + 1) * 0.5f;
             }
             foreach (var region in regions)
             {

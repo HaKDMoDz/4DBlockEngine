@@ -3,21 +3,21 @@ using Microsoft.Xna.Framework;
 
 namespace _4DMonoEngine.Core.Utils.Noise
 {
-    public class CellNoise
+    public class CellNoise3D
     {
-        private static readonly int[] PoissonCount = new int[]  
-	    {4, 3, 1, 1, 1, 2, 4, 2, 2, 2, 5, 1, 0, 2, 1, 2, 2, 0, 4, 3, 2, 1, 2, 1, 3, 2, 2, 4, 2, 2, 5, 1, 2, 3,
-		    2, 2, 2, 2, 2, 3, 2, 4, 2, 5, 3, 2, 2, 2, 5, 3, 3, 5, 2, 1, 3, 3, 4, 4, 2, 3, 0, 4, 2, 2, 2, 1, 3, 2,
-		    2, 2, 3, 3, 3, 1, 2, 0, 2, 1, 1, 2, 2, 2, 2, 5, 3, 2, 3, 2, 3, 2, 2, 1, 0, 2, 1, 1, 2, 1, 2, 2, 1, 3,
-		    4, 2, 2, 2, 5, 4, 2, 4, 2, 2, 5, 4, 3, 2, 2, 5, 4, 3, 3, 3, 5, 2, 2, 2, 2, 2, 3, 1, 1, 4, 2, 1, 3, 3,
-		    4, 3, 2, 4, 3, 3, 3, 4, 5, 1, 4, 2, 4, 3, 1, 2, 3, 5, 3, 2, 1, 3, 1, 3, 3, 3, 2, 3, 1, 5, 5, 4, 2, 2,
-		    4, 1, 3, 4, 1, 5, 3, 3, 5, 3, 4, 3, 2, 2, 1, 1, 1, 1, 1, 2, 4, 5, 4, 5, 4, 2, 1, 5, 1, 1, 2, 3, 3, 3,
-		    2, 5, 2, 3, 3, 2, 0, 2, 1, 1, 4, 2, 1, 3, 2, 1, 2, 2, 3, 2, 5, 5, 3, 4, 5, 5, 2, 4, 4, 5, 3, 2, 2, 2,
-		    1, 4, 2, 3, 3, 4, 2, 5, 4, 2, 4, 2, 2, 2, 4, 5, 3, 2};
+        private static readonly int[] PoissonCount =
+        {4, 3, 1, 1, 1, 2, 4, 2, 2, 2, 5, 1, 0, 2, 1, 2, 2, 0, 4, 3, 2, 1, 2, 1, 3, 2, 2, 4, 2, 2, 5, 1, 2, 3,
+            2, 2, 2, 2, 2, 3, 2, 4, 2, 5, 3, 2, 2, 2, 5, 3, 3, 5, 2, 1, 3, 3, 4, 4, 2, 3, 0, 4, 2, 2, 2, 1, 3, 2,
+            2, 2, 3, 3, 3, 1, 2, 0, 2, 1, 1, 2, 2, 2, 2, 5, 3, 2, 3, 2, 3, 2, 2, 1, 0, 2, 1, 1, 2, 1, 2, 2, 1, 3,
+            4, 2, 2, 2, 5, 4, 2, 4, 2, 2, 5, 4, 3, 2, 2, 5, 4, 3, 3, 3, 5, 2, 2, 2, 2, 2, 3, 1, 1, 4, 2, 1, 3, 3,
+            4, 3, 2, 4, 3, 3, 3, 4, 5, 1, 4, 2, 4, 3, 1, 2, 3, 5, 3, 2, 1, 3, 1, 3, 3, 3, 2, 3, 1, 5, 5, 4, 2, 2,
+            4, 1, 3, 4, 1, 5, 3, 3, 5, 3, 4, 3, 2, 2, 1, 1, 1, 1, 1, 2, 4, 5, 4, 5, 4, 2, 1, 5, 1, 1, 2, 3, 3, 3,
+            2, 5, 2, 3, 3, 2, 0, 2, 1, 1, 4, 2, 1, 3, 2, 1, 2, 2, 3, 2, 5, 5, 3, 4, 5, 5, 2, 4, 4, 5, 3, 2, 2, 2,
+            1, 4, 2, 3, 3, 4, 2, 5, 4, 2, 4, 2, 2, 2, 4, 5, 3, 2};
 
         private const float FeaturePointMap = 1.0f/4294967296.0f;
         private readonly ulong m_seed;
-	    public CellNoise(ulong seed)
+	    public CellNoise3D(ulong seed)
         {
 		    m_seed = seed;
         }
@@ -65,18 +65,15 @@ namespace _4DMonoEngine.Core.Utils.Noise
             var ids = new uint[2];
             var deltas = new Vector3[2];
             Worley(new Vector3(px, py, pz), 2, basisFunctions, deltas, ids);
-            var data = new VoroniData();
-            data.Blend = basisFunctions[1] - basisFunctions[0];
-            data.Id = ids[0];
-            data.Delta = deltas[0];
+            var data = new VoroniData {Blend = basisFunctions[1] - basisFunctions[0], Id = ids[0], Delta = deltas[0]};
             return data;
         }
 
-        private void Worley(Vector3 at, int maxOrder, float[] basisFunctions, Vector3[] deltas, uint[] ID)
+        private void Worley(Vector3 at, int maxOrder, float[] basisFunctions, Vector3[] deltas, uint[] id)
         {
-            int intAtX = MathUtilities.FastFloor(at.X);
-            int intAtY = MathUtilities.FastFloor(at.Y);
-            int intAtZ = MathUtilities.FastFloor(at.Z);
+            var intAtX = MathUtilities.FastFloor(at.X);
+            var intAtY = MathUtilities.FastFloor(at.Y);
+            var intAtZ = MathUtilities.FastFloor(at.Z);
 
             for (var i = 0; i < maxOrder; ++i)
             {
@@ -84,7 +81,7 @@ namespace _4DMonoEngine.Core.Utils.Noise
                 deltas[i] = new Vector3();
             }
 
-            AddSamples(intAtX, intAtY, intAtZ, maxOrder, ref at, deltas, basisFunctions, ID);
+            AddSamples(intAtX, intAtY, intAtZ, maxOrder, ref at, deltas, basisFunctions, id);
 
             var x2 = at.X - intAtX;
             var y2 = at.Y - intAtY;
@@ -102,111 +99,111 @@ namespace _4DMonoEngine.Core.Utils.Noise
             //6 face cubes
             if (x2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX - 1, intAtY, intAtZ, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX - 1, intAtY, intAtZ, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (y2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX, intAtY - 1, intAtZ, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX, intAtY - 1, intAtZ, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (z2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX, intAtY, intAtZ - 1, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX, intAtY, intAtZ - 1, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (mx2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX + 1, intAtY, intAtZ, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX + 1, intAtY, intAtZ, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (my2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX, intAtY + 1, intAtZ, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX, intAtY + 1, intAtZ, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (mz2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX, intAtY, intAtZ + 1, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX, intAtY, intAtZ + 1, maxOrder, ref at, deltas, basisFunctions, id);
             }
 
             //12 edge cubes
             if (x2 + y2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX - 1, intAtY - 1, intAtZ, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX - 1, intAtY - 1, intAtZ, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (x2 + z2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX - 1, intAtY, intAtZ - 1, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX - 1, intAtY, intAtZ - 1, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (y2 + z2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX, intAtY - 1, intAtZ - 1, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX, intAtY - 1, intAtZ - 1, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (mx2 + my2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX + 1, intAtY + 1, intAtZ, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX + 1, intAtY + 1, intAtZ, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (mx2 + mz2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX + 1, intAtY, intAtZ + 1, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX + 1, intAtY, intAtZ + 1, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (my2 + mz2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX, intAtY + 1, intAtZ + 1, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX, intAtY + 1, intAtZ + 1, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (x2 + my2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX - 1, intAtY + 1, intAtZ, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX - 1, intAtY + 1, intAtZ, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (x2 + mz2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX - 1, intAtY, intAtZ + 1, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX - 1, intAtY, intAtZ + 1, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (y2 + mz2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX, intAtY - 1, intAtZ + 1, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX, intAtY - 1, intAtZ + 1, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (mx2 + y2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX + 1, intAtY - 1, intAtZ, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX + 1, intAtY - 1, intAtZ, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (mx2 + z2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX + 1, intAtY, intAtZ - 1, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX + 1, intAtY, intAtZ - 1, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (my2 + z2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX, intAtY + 1, intAtZ - 1, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX, intAtY + 1, intAtZ - 1, maxOrder, ref at, deltas, basisFunctions, id);
             }
 
             //8 corner cubes
             if (x2 + y2 + z2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX - 1, intAtY - 1, intAtZ - 1, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX - 1, intAtY - 1, intAtZ - 1, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (x2 + y2 + mz2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX - 1, intAtY - 1, intAtZ + 1, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX - 1, intAtY - 1, intAtZ + 1, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (x2 + my2 + z2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX - 1, intAtY + 1, intAtZ - 1, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX - 1, intAtY + 1, intAtZ - 1, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (x2 + my2 + mz2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX - 1, intAtY + 1, intAtZ + 1, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX - 1, intAtY + 1, intAtZ + 1, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (mx2 + y2 + z2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX + 1, intAtY - 1, intAtZ - 1, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX + 1, intAtY - 1, intAtZ - 1, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (mx2 + y2 + mz2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX + 1, intAtY - 1, intAtZ + 1, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX + 1, intAtY - 1, intAtZ + 1, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (mx2 + my2 + z2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX + 1, intAtY + 1, intAtZ - 1, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX + 1, intAtY + 1, intAtZ - 1, maxOrder, ref at, deltas, basisFunctions, id);
             }
             if (mx2 + my2 + mz2 < basisFunctions[maxOrder - 1])
             {
-                AddSamples(intAtX + 1, intAtY + 1, intAtZ + 1, maxOrder, ref at, deltas, basisFunctions, ID);
+                AddSamples(intAtX + 1, intAtY + 1, intAtZ + 1, maxOrder, ref at, deltas, basisFunctions, id);
             }
 
             for (var i = 0; i < maxOrder; ++i)
@@ -215,7 +212,7 @@ namespace _4DMonoEngine.Core.Utils.Noise
             }
         }
 
-        private void AddSamples(int x, int y, int z, int maxOrder, ref Vector3 at, Vector3[] deltas, float[] basisFunctions, uint[] ID)
+        private void AddSamples(int x, int y, int z, int maxOrder, ref Vector3 at, Vector3[] deltas, float[] basisFunctions, uint[] id)
         {
             var seed = (uint)(702395077 * x + 915488749 * y + 2120969693 * z);
             var count = PoissonCount[seed >> 24];
@@ -245,17 +242,13 @@ namespace _4DMonoEngine.Core.Utils.Noise
                     {
                         basisFunctions[i] = basisFunctions[i - 1];
                         deltas[i] = deltas[i - 1];
-                        ID[i] = ID[i - 1];
+                        id[i] = id[i - 1];
                     }
                     basisFunctions[index] = d2;
                     deltas[index] = new Vector3(dx, dy, dz);
-                    ID[index] = thisId;
+                    id[index] = thisId;
                 }
             }
-        }
-        private static int fastfloor(double x)
-        {
-            return x > 0 ? (int)x : (int)x - 1;
         }
     }
 }

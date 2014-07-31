@@ -12,11 +12,11 @@ namespace _4DMonoEngine.Core.Chunks.Generators
     {
         public uint Seed { get; private set; }
         private readonly int m_chunkSize;
-        private SimplexNoise m_elevation;
-        private SimplexNoise m_detail;
-        private SimplexNoise m_detail2;
-        private SimplexNoise m_volume;
-        private CellNoise m_voroni;
+        private SimplexNoise3D m_elevation;
+        private SimplexNoise3D m_detail;
+        private SimplexNoise3D m_detail2;
+        private SimplexNoise3D m_volume;
+        private CellNoise3D m_voroni;
         private BiomeGeneratorCollection m_biomeGenerator;
         private ProvinceGeneratorCollection m_provinceGenerator;
         private readonly Block[] m_blocks;
@@ -41,11 +41,11 @@ namespace _4DMonoEngine.Core.Chunks.Generators
         {
             var random = new FastRandom(Seed);
             var settings = await MainEngine.GetEngineInstance().GeneralSettings;
-            m_elevation = new SimplexNoise(random.NextUInt());
-            m_detail = new SimplexNoise(random.NextUInt());
-            m_detail2 = new SimplexNoise(random.NextUInt());
-            m_volume = new SimplexNoise(random.NextUInt());
-            m_voroni = new CellNoise(random.NextUInt());
+            m_elevation = new SimplexNoise3D(random.NextUInt());
+            m_detail = new SimplexNoise3D(random.NextUInt());
+            m_detail2 = new SimplexNoise3D(random.NextUInt());
+            m_volume = new SimplexNoise3D(random.NextUInt());
+            m_voroni = new CellNoise3D(random.NextUInt());
             m_sealevel = settings.SeaLevel;
             m_mountainHeight = settings.MountainHeight - m_sealevel;
             var rescale = settings.BiomeSampleRescale;
@@ -66,7 +66,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 			    {
                     var cZ = chunkZ + z;
 			        var groundLevel = GetHeight(cX, cZ, cW);
-					var detailNoise =  m_detail2.Perlin3Dfmb(cX, cZ, cW, 64, 0, 8);
+					var detailNoise =  m_detail2.FractalBrownianMotion(cX, cZ, cW, 64, 0, 8);
                     var overhangStart = m_sealevel + MathHelper.Clamp(detailNoise * 4, -1, 1) * 2;
                     var biome = m_biomeGenerator.GetRegionGenerator(cX, cZ, cW);
                     var province = m_provinceGenerator.GetRegionGenerator(cX, cZ, cW);
@@ -118,12 +118,12 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 
         private float GetHeight(float x, float z, float w)
 	    {
-		    var seaElevation = MathHelper.Clamp(m_elevation.Perlin3Dfmb(x, z, w, 512, 0.1715f, 4), -.5f, 0);
-            var gain = MathHelper.Clamp(((MathHelper.Clamp(m_detail.Perlin3Dfmb(x, z, w, 256, 0, 2) * 5, -1, 1) + 1) / 2), 0.01f, 1);
-            var offset = MathHelper.Clamp(((MathHelper.Clamp(m_detail2.Perlin3Dfmb(x, z, w, 256, 0, 2) * 5, -1, 1) + 1) / 2), 0.01f, 1);
-		    var elevationValue = seaElevation < 0 ? seaElevation : m_elevation.RidgedMultiFractal3D (x, z, w, 128, offset, gain, 4);
+		    var seaElevation = MathHelper.Clamp(m_elevation.FractalBrownianMotion(x, z, w, 512, 0.1715f, 4), -.5f, 0);
+            var gain = MathHelper.Clamp(((MathHelper.Clamp(m_detail.FractalBrownianMotion(x, z, w, 256, 0, 2) * 5, -1, 1) + 1) / 2), 0.01f, 1);
+            var offset = MathHelper.Clamp(((MathHelper.Clamp(m_detail2.FractalBrownianMotion(x, z, w, 256, 0, 2) * 5, -1, 1) + 1) / 2), 0.01f, 1);
+		    var elevationValue = seaElevation < 0 ? seaElevation : m_elevation.RidgedMultiFractal (x, z, w, 128, offset, gain, 4);
             var groundLevel = elevationValue * m_mountainHeight + m_sealevel;
-		    var detailApplied = groundLevel +  m_detail.Perlin3Dfmb(x, z, w, 64, 0, 8) * m_detailScale;
+		    var detailApplied = groundLevel +  m_detail.FractalBrownianMotion(x, z, w, 64, 0, 8) * m_detailScale;
             if (!(groundLevel > m_sealevel + m_sinkHoleDepth))
             {
                 return detailApplied;

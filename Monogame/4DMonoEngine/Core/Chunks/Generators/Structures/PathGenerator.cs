@@ -10,32 +10,32 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
     {
         protected static float RiverEndMaxHeight = 64;
         protected static float RiversStartMinHeight = 92;
-        protected static float s_pathSectionNoiseScale = 1 / 64f;
+        protected const float PathSectionNoiseScale = 1/64f;
 
-        protected List<List<PathData>> activePaths;
-        protected List<List<PathData>> completedPaths;
-        protected List<Dictionary<long, PathGraphNode>> pathNodes;
-        protected CellNoise cellNoise;
+        protected readonly List<List<PathData>> ActivePaths;
+        protected readonly List<List<PathData>> CompletedPaths;
+        protected readonly List<Dictionary<long, PathGraphNode>> PathNodes;
+        protected readonly CellNoise3D CellNoise3D;
 
         public PathGenerator(uint seed)
         {
-            cellNoise = new CellNoise(seed);
-            pathNodes = new List<Dictionary<long, PathGraphNode>>();
-            activePaths = new List<List<PathData>>();
-            completedPaths = new List<List<PathData>>();
+            CellNoise3D = new CellNoise3D(seed);
+            PathNodes = new List<Dictionary<long, PathGraphNode>>();
+            ActivePaths = new List<List<PathData>>();
+            CompletedPaths = new List<List<PathData>>();
         }
 
         protected void BuildPathSections(int x, int z, int w)
         {
-            var active = activePaths[w];
-            var completed = completedPaths[w];
-            var nodeMap = pathNodes[w];
+            var active = ActivePaths[w];
+            var completed = CompletedPaths[w];
+            var nodeMap = PathNodes[w];
             //determine if any new pathing regions are added
-            var segmentation = cellNoise.Voroni(x * s_pathSectionNoiseScale, z * s_pathSectionNoiseScale, w * s_pathSectionNoiseScale);
+            var segmentation = CellNoise3D.Voroni(x * PathSectionNoiseScale, z * PathSectionNoiseScale, w * PathSectionNoiseScale);
             if (!nodeMap.ContainsKey(segmentation.Id))
             {
                 var node = new PathGraphNode();
-                node.position = new Vector3(x, z, w) + segmentation.Delta / s_pathSectionNoiseScale;
+                node.position = new Vector3(x, z, w) + segmentation.Delta / PathSectionNoiseScale;
                 //determine if there are any new sources or sinks in this group
 
             }
@@ -69,24 +69,24 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
 
         protected PathGraphNode BuildPathNode(int x, int z, int w, PathType type)
         {
-            var nodeMap = pathNodes[w];
+            var nodeMap = PathNodes[w];
             //determine if any new pathing regions are added
-            CellNoise.VoroniData segmentation;
+            CellNoise3D.VoroniData segmentation;
             //TODO : do we need to generate different segmentations per path type?
             switch (type)
             {
                 case PathType.ROAD:
-                    segmentation = cellNoise.Voroni(x * s_pathSectionNoiseScale, z * s_pathSectionNoiseScale, w * s_pathSectionNoiseScale);
+                    segmentation = CellNoise3D.Voroni(x * PathSectionNoiseScale, z * PathSectionNoiseScale, w * PathSectionNoiseScale);
                     break;
                 default:
-                    segmentation = cellNoise.Voroni(x * s_pathSectionNoiseScale, z * s_pathSectionNoiseScale, w * s_pathSectionNoiseScale);
+                    segmentation = CellNoise3D.Voroni(x * PathSectionNoiseScale, z * PathSectionNoiseScale, w * PathSectionNoiseScale);
                     break;
             }
             //TODO : THIS MAY FAIL SINCE THE IDs MAY NOT BE UNIQUE BETWEEN GENERATORS
             if (!nodeMap.ContainsKey(segmentation.Id))
             {
                 var node = new PathGraphNode();
-                node.position = new Vector3(x, z, w) + segmentation.Delta / s_pathSectionNoiseScale;
+                node.position = new Vector3(x, z, w) + segmentation.Delta / PathSectionNoiseScale;
                 //determine if there are any new sources or sinks in this group
                 return node;
             }

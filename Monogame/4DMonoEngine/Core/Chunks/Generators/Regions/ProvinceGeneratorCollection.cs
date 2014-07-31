@@ -23,10 +23,10 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
             var region = new RegionData();
             var centroidHeight = GetHeightFunction(x, y, z);
             var heightRatio = MathHelper.Clamp((centroidHeight - SeaLevel) / MountainHeight, 0, 1);
-            region.GeologicalActivity = ((MathHelper.Clamp(SimplexNoise.Perlin3Dfmb(x, y, z, BiomeSampleRescale * 8, 0, 5) * 5, -1, 1) + 1) / 2);
+            region.GeologicalActivity = ((MathHelper.Clamp(SimplexNoise3D.FractalBrownianMotion(x, y, z, BiomeSampleRescale * 8, 0, 5) * 5, -1, 1) + 1) / 2);
             var parameters = new OrderedDictionary
             {
-                {"Rarity", (MathHelper.Clamp(SimplexNoise2.Perlin3Dfmb(x, y, z, BiomeSampleRescale * 8, 0, 5) * 5, -1, 1) + 1) / 2},
+                {"Rarity", (MathHelper.Clamp(SimplexNoise2.FractalBrownianMotion(x, y, z, BiomeSampleRescale * 8, 0, 5) * 5, -1, 1) + 1) / 2},
                 {"Elevation", heightRatio},
                 {"GeologicalActivity", region.GeologicalActivity}
             };

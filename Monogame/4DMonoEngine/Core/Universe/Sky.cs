@@ -65,7 +65,7 @@ namespace _4DMonoEngine.Core.Universe
         private const int OffsetY = 120;
 
         private readonly CloudBlock[] m_clouds;
-        private readonly SimplexNoise m_noise;
+        private readonly SimplexNoise4D m_noise;
         private  VertexBuilder<CloudBlock> m_vertexBuilder;
         private readonly CloudTarget[] m_cloudVertexTargets;
         public float CloudSpeed { get; set; }
@@ -77,7 +77,7 @@ namespace _4DMonoEngine.Core.Universe
 
         public Sky(Game game, uint seed) : base(game)
         {
-            m_noise = new SimplexNoise(seed);
+            m_noise = new SimplexNoise4D(seed);
             m_clouds = new CloudBlock[ArraySizeXz * SizeY * ArraySizeXz];
             m_cloudVertexTargets = new CloudTarget[ChunksXz * ChunksXz];
             for (var x = 0; x < ChunksXz; x++)
@@ -184,7 +184,7 @@ namespace _4DMonoEngine.Core.Universe
                     {
                         var offset = -Math.Abs(3 - y) * 0.25f + (m_cloudDensity - .5f);
                         m_clouds[CloudIndexByRelativePosition(x, y, z)] =
-                            m_noise.Perlin4Dfbm(x + OffsetXz / Scale + m_cloudPosition * 4,
+                            m_noise.FractalBrownianMotion(x + OffsetXz / Scale + m_cloudPosition * 4,
                                 y + OffsetY, z + OffsetXz / Scale + m_cloudPosition * 4, m_cloudPosition,
                                 16, offset, 2) > 0
                                 ? CloudBlock.Cloud

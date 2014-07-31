@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
-
-//TODO : get this cleaned up and running
+using _4DMonoEngine.Core.Blocks;
+using _4DMonoEngine.Core.Utils;
 using _4DMonoEngine.Core.Utils.Vector;
 
-namespace _4DMonoEngine.Core.Universe
+namespace _4DMonoEngine.Core.Universe.Fluids
 {
     public class FluidSimulation
     {
@@ -21,38 +18,23 @@ namespace _4DMonoEngine.Core.Universe
         private const float MinFlow = 0.000001f;
         private Object m_world; //TODO: What should this be
         protected List<FluidContainer> m_containers;
-        protected bool m_stepDone;
         private bool m_setupDone;
-
-        private readonly long m_maskXz;
-        private readonly long m_maskY;
-        private readonly int m_shiftX;
-        private readonly int m_shiftY;
-
         protected FluidCell solidCell;
         protected List<FluidCell> m_cellAccumulator;
         protected readonly Queue<List<FluidCell>> addQueue;
+        private readonly MappingFunction m_mappingFunction;
+        private readonly Block[] m_blocks;
 
         //TODO : make a physics thread and put this on it
 
-        public FluidSimulation()
+        public FluidSimulation(MappingFunction mappingFunction, Block[] blocks)
         {
-            /*m_world = world;
-            var bitsXZ = (int) Math.Log((uint) world.width*2, 2);
-            var bitsY = (int) Math.Log(world.height, 2);
-            m_shiftX = bitsY + bitsXZ;
-            m_shiftY = bitsXZ;
-            m_maskXz = (long) Mathf.Pow(2, bitsXZ) - 1;
-            m_maskY = (long) Mathf.Pow(2, bitsY) - 1;*/
+            m_mappingFunction = mappingFunction;
+            m_blocks = blocks;
             m_containers = new List<FluidContainer>();
             solidCell = new FluidCell(CellType.Solid);
             addQueue = new Queue<List<FluidCell>>();
             m_cellAccumulator = new List<FluidCell>();
-        }
-
-        public long CellHash(long x, long y, long z)
-        {
-            throw new NotImplementedException();
         }
 
         public void AddFluidAt(int x, int y, int z, int w, float amount, bool isSource)
@@ -61,15 +43,15 @@ namespace _4DMonoEngine.Core.Universe
             {
                 return;
             }
-            var cell = new FluidCell(x, y, z, w, CellType.Water, amount) {isSource = isSource};
+            var cell = new FluidCell(x, y, z, w, CellType.Water, amount) {IsSource = isSource};
             foreach (var existing in m_cellAccumulator)
             {
-                if (existing.x != cell.x || existing.y != cell.y || existing.z != cell.z || existing.w != cell.w)
+                if (existing.X != cell.X || existing.Y != cell.Y || existing.Z != cell.Z || existing.W != cell.W)
                 {
                     continue;
                 }
-                existing.levelNextStep = MathHelper.Clamp(existing.levelNextStep + amount, 0 , 1);
-                existing.level = existing.levelNextStep;
+                existing.LevelNextStep = MathHelper.Clamp(existing.LevelNextStep + amount, 0 , 1);
+                existing.Level = existing.LevelNextStep;
                 cell = null;
                 break;
             }
@@ -79,54 +61,60 @@ namespace _4DMonoEngine.Core.Universe
             }
         }
 
-        public void UpdateBlockAt(int x, int y, int z, int w, bool solid)
+        public void UpdateBlockAt(int x, int y, int z, bool solid)
         {
             foreach (var container in m_containers)
             {
-                if (!(container.alive && container.Contains(x, y, z) && container.w == w))
+                if (!(container.Alive && container.Contains(x, y, z)))
                 {
                     continue;
                 }
-                var hash = CellHash(x, y, z);
+                var hash = m_mappingFunction(x, y, z);
                 container.update = true;
-                if (container.cellDictionary.ContainsKey(hash))
+                if (container.CellDictionary.ContainsKey(hash))
                 {
-                    var cell = container.cellDictionary[hash];
+                    var cell = container.CellDictionary[hash];
                     if (solid)
                     {
-                        container.cellDictionary.Remove(hash);
-                        container.cells.Remove(cell);
+                        container.CellDictionary.Remove(hash);
+                        container.Cells.Remove(cell);
                     }
                     else
                     {
-                        cell.awake = true;
+                        cell.Awake = true;
                         container.BuildNeighborhood(cell);
                     }
                 }
+                //TODO : this is crap
                 for (var i = -1; i <= 1; ++i)
                 {
-                    if (i == 0) continue;
-                    hash = CellHash(x + i, y, z);
-                    if (container.cellDictionary.ContainsKey(hash))
+                    if (i == 0)
                     {
-                        var cell = container.cellDictionary[hash];
-                        cell.awake = true;
+                        continue;
+                    }
+                    FluidCell cell;
+                    hash = m_mappingFunction(x + i, y, z);
+                    if (container.CellDictionary.ContainsKey(hash))
+                    {
+                        cell = container.CellDictionary[hash];
+                        cell.Awake = true;
                         container.BuildNeighborhood(cell);
                     }
-                    hash = CellHash(x, y + i, z);
-                    if (container.cellDictionary.ContainsKey(hash))
+                    hash = m_mappingFunction(x, y + i, z);
+                    if (container.CellDictionary.ContainsKey(hash))
                     {
-                        var cell = container.cellDictionary[hash];
-                        cell.awake = true;
+                        cell = container.CellDictionary[hash];
+                        cell.Awake = true;
                         container.BuildNeighborhood(cell);
                     }
-                    hash = CellHash(x, y, z + i);
-                    if (container.cellDictionary.ContainsKey(hash))
+                    hash = m_mappingFunction(x, y, z + i);
+                    if (!container.CellDictionary.ContainsKey(hash))
                     {
-                        var cell = container.cellDictionary[hash];
-                        cell.awake = true;
-                        container.BuildNeighborhood(cell);
+                        continue;
                     }
+                    cell = container.CellDictionary[hash];
+                    cell.Awake = true;
+                    container.BuildNeighborhood(cell);
                 }
             }
         }
@@ -149,7 +137,7 @@ namespace _4DMonoEngine.Core.Universe
             if (addQueue.Count > 0)
             {
                 var cellsToAdd = addQueue.Dequeue();
-                var container = new FluidContainer {world = m_world, Simulation = this, w = 0};
+                var container = new FluidContainer(m_mappingFunction);
                 m_containers.Add(container);
                 foreach (var next in cellsToAdd)
                 {
@@ -169,18 +157,18 @@ namespace _4DMonoEngine.Core.Universe
             {
                 var keepContainer = true;
                 var discard = m_containers[i];
-                if (!discard.alive)
+                if (!discard.Alive)
                 {
                     continue;
                 }
                 for (var j = i + 1; j < m_containers.Count; ++j)
                 {
                     var keep = m_containers[j];
-                    if (!(keep.alive && discard.Intersects(keep)))
+                    if (!(keep.Alive && discard.Intersects(keep)))
                     {
                         continue;
                     }
-                    foreach (var cell in discard.cells)
+                    foreach (var cell in discard.Cells)
                     {
                         keep.Add(cell);
                     }
@@ -197,31 +185,31 @@ namespace _4DMonoEngine.Core.Universe
 
         protected class FluidContainer
         {
-            public Object world; //TODO : Simulation? ChunckCache? Some sort of Facade?
-            public FluidSimulation Simulation;
             private Vector3Int m_min;
             private Vector3Int m_max;
-            public int w;
             public bool update; //does this area need to update?
-            public bool alive;
-            public List<FluidCell> cells;
-            public Dictionary<long, FluidCell> cellDictionary;
-            public List<FluidCell> updated;
+            public bool Alive;
+            public readonly List<FluidCell> Cells;
+            public readonly Dictionary<long, FluidCell> CellDictionary;
+            public readonly List<FluidCell> Updated;
+            private readonly MappingFunction m_mappingFunction;
 
-            public FluidContainer()
+
+            public FluidContainer(MappingFunction mappingFunction)
             {
+                m_mappingFunction = mappingFunction;
                 update = true;
-                alive = true;
+                Alive = true;
                 m_min = new Vector3Int(int.MaxValue, int.MaxValue, int.MaxValue);
                 m_max = new Vector3Int(-int.MaxValue, -int.MaxValue, -int.MaxValue);
-                cells = new List<FluidCell>();
-                cellDictionary = new Dictionary<long, FluidCell>();
-                updated = new List<FluidCell>();
+                Cells = new List<FluidCell>();
+                CellDictionary = new Dictionary<long, FluidCell>();
+                Updated = new List<FluidCell>();
             }
 
             public bool Contains(FluidCell cell)
             {
-                return Contains(cell.x, cell.y, cell.z);
+                return Contains(cell.X, cell.Y, cell.Z);
             }
 
             public bool Contains(int x, int y, int z)
@@ -246,18 +234,18 @@ namespace _4DMonoEngine.Core.Universe
 
             public void Add(FluidCell cell)
             {
-                var cellHash = Simulation.CellHash(cell.x, cell.y, cell.z);
-                if (cellDictionary.ContainsKey(cellHash))
+                var cellHash = m_mappingFunction(cell.X, cell.Y, cell.Z);
+                if (CellDictionary.ContainsKey(cellHash))
                 {
-                    var existingCell = cellDictionary[cellHash];
-                    if (existingCell.type != CellType.Solid)
+                    var existingCell = CellDictionary[cellHash];
+                    if (existingCell.Type != CellType.Solid)
                     {
-                        existingCell.level += cell.level;
-                        existingCell.levelNextStep += cell.level;
-                        if (existingCell.levelNextStep > MinLevel && existingCell.type == CellType.Air)
+                        existingCell.Level += cell.Level;
+                        existingCell.LevelNextStep += cell.Level;
+                        if (existingCell.LevelNextStep > MinLevel && existingCell.Type == CellType.Air)
                         {
-                            existingCell.type = CellType.Water;
-                            cells.Add(existingCell);
+                            existingCell.Type = CellType.Water;
+                            Cells.Add(existingCell);
                             BuildNeighborhood(existingCell);
                             RecalculateBounds(existingCell);
                         }
@@ -265,9 +253,9 @@ namespace _4DMonoEngine.Core.Universe
                 }
                 else
                 {
-                    cell.container = this;
-                    cells.Add(cell);
-                    cellDictionary.Add(cellHash, cell);
+                    cell.Container = this;
+                    Cells.Add(cell);
+                    CellDictionary.Add(cellHash, cell);
                     BuildNeighborhood(cell);
                     RecalculateBounds(cell);
                 }
@@ -277,52 +265,52 @@ namespace _4DMonoEngine.Core.Universe
             //TODO : break this out into sub functions
             public void Step()
             {
-                foreach (var cell in cells)
+                foreach (var cell in Cells)
                 {
-                    if (cell.awake && cell.type == CellType.Water) //In theory this check is redundant...
+                    if (cell.Awake && cell.Type == CellType.Water) //In theory this check is redundant...
                     {
                         cell.Propagate();
                     }
                 }
                 var hasChanged = false;
                 var potentialPruningNeeded = false;
-                foreach (var cell in updated)
+                foreach (var cell in Updated)
                 {
-                    if (cell.type == CellType.Solid)
+                    if (cell.Type == CellType.Solid)
                     {
                         hasChanged = true;
                         potentialPruningNeeded = true;
                     }
-                    if (Math.Abs(cell.level - cell.levelNextStep) >= MinFlow/2.0f)
+                    if (Math.Abs(cell.Level - cell.LevelNextStep) >= MinFlow/2.0f)
                     {
                         hasChanged = true;
-                        cell.awake = true;
+                        cell.Awake = true;
                     }
-                    cell.level = cell.levelNextStep;
-                    if (cell.type == CellType.Water && cell.level < MinLevel)
+                    cell.Level = cell.LevelNextStep;
+                    if (cell.Type == CellType.Water && cell.Level < MinLevel)
                     {
                         potentialPruningNeeded = true;
-                        cell.type = CellType.Air;
+                        cell.Type = CellType.Air;
                     }
-                    if (!(cell.type == CellType.Air && cell.level > MinLevel))
+                    if (!(cell.Type == CellType.Air && cell.Level > MinLevel))
                     {
                         continue;
                     }
-                    cell.type = CellType.Water;
+                    cell.Type = CellType.Water;
                     RecalculateBounds(cell);
                     BuildNeighborhood(cell);
-                    cells.Add(cell);
+                    Cells.Add(cell);
                 }
-                updated.Clear();
+                Updated.Clear();
                 if (potentialPruningNeeded)
                 {
                     m_min = new Vector3Int(int.MaxValue, int.MaxValue, int.MaxValue);
                     m_max = new Vector3Int(-int.MaxValue, -int.MaxValue, -int.MaxValue);
                     var removeList = new List<FluidCell>();
-                    foreach (var cell in cells)
+                    foreach (var cell in Cells)
                     {
-                        if (cell.type == CellType.Solid ||
-                            cell.type == CellType.Air)
+                        if (cell.Type == CellType.Solid ||
+                            cell.Type == CellType.Air)
                         {
                             removeList.Add(cell);
                         }
@@ -333,89 +321,89 @@ namespace _4DMonoEngine.Core.Universe
                     }
                     foreach (var cell in removeList)
                     {
-                        cells.Remove(cell);
-                        if ((cell.up != null && cell.up.type == CellType.Water) ||
-                            (cell.north != null && cell.north.type == CellType.Water) ||
-                            (cell.east != null && cell.east.type == CellType.Water) ||
-                            (cell.south != null && cell.south.type == CellType.Water) ||
-                            (cell.west != null && cell.west.type == CellType.Water) ||
-                            (cell.down != null && cell.down.type == CellType.Water))
+                        Cells.Remove(cell);
+                        if ((cell.Up != null && cell.Up.Type == CellType.Water) ||
+                            (cell.North != null && cell.North.Type == CellType.Water) ||
+                            (cell.East != null && cell.East.Type == CellType.Water) ||
+                            (cell.South != null && cell.South.Type == CellType.Water) ||
+                            (cell.West != null && cell.West.Type == CellType.Water) ||
+                            (cell.Down != null && cell.Down.Type == CellType.Water))
                         {
                             continue;
                         }
-                        var cellHash = Simulation.CellHash(cell.x, cell.y, cell.z);
-                        cellDictionary.Remove(cellHash);
+                        var cellHash = m_mappingFunction(cell.X, cell.Y, cell.Z);
+                        CellDictionary.Remove(cellHash);
                     }
                 }
-                alive = cells.Count != 0;
+                Alive = Cells.Count != 0;
                 update = hasChanged;
             }
 
             private void RecalculateBounds(FluidCell cell)
             {
-                if (cell.x > m_max.X)
+                if (cell.X > m_max.X)
                 {
-                    m_max.X = cell.x + 1;
+                    m_max.X = cell.X + 1;
                 }
-                if (cell.x < m_min.X)
+                if (cell.X < m_min.X)
                 {
-                    m_min.X = cell.x - 1;
-                }
-
-                if (cell.y > m_max.Y)
-                {
-                    m_max.Y = cell.y + 1;
-                }
-                if (cell.y < m_min.Y)
-                {
-                    m_min.Y = cell.y - 1;
+                    m_min.X = cell.X - 1;
                 }
 
-                if (cell.z > m_max.Z)
+                if (cell.Y > m_max.Y)
                 {
-                    m_max.Z = cell.z + 1;
+                    m_max.Y = cell.Y + 1;
                 }
-                if (cell.z < m_min.Z)
+                if (cell.Y < m_min.Y)
                 {
-                    m_min.Z = cell.z - 1;
+                    m_min.Y = cell.Y - 1;
+                }
+
+                if (cell.Z > m_max.Z)
+                {
+                    m_max.Z = cell.Z + 1;
+                }
+                if (cell.Z < m_min.Z)
+                {
+                    m_min.Z = cell.Z - 1;
                 }
             }
 
             public void BuildNeighborhood(FluidCell cell)
             {
-                cell.up = GetOrCreateCell(cell.x, cell.y + 1, cell.z);
-                cell.up.down = cell;
-                cell.down = GetOrCreateCell(cell.x, cell.y - 1, cell.z);
-                cell.down.up = cell;
-                cell.north = GetOrCreateCell(cell.x, cell.y, cell.z + 1);
-                cell.north.south = cell;
-                cell.east = GetOrCreateCell(cell.x + 1, cell.y, cell.z);
-                cell.east.west = cell;
-                cell.south = GetOrCreateCell(cell.x, cell.y, cell.z - 1);
-                cell.south.north = cell;
-                cell.west = GetOrCreateCell(cell.x - 1, cell.y, cell.z);
-                cell.west.east = cell;
+                cell.Up = GetOrCreateCell(cell.X, cell.Y + 1, cell.Z);
+                cell.Up.Down = cell;
+                cell.Down = GetOrCreateCell(cell.X, cell.Y - 1, cell.Z);
+                cell.Down.Up = cell;
+                cell.North = GetOrCreateCell(cell.X, cell.Y, cell.Z + 1);
+                cell.North.South = cell;
+                cell.East = GetOrCreateCell(cell.X + 1, cell.Y, cell.Z);
+                cell.East.West = cell;
+                cell.South = GetOrCreateCell(cell.X, cell.Y, cell.Z - 1);
+                cell.South.North = cell;
+                cell.West = GetOrCreateCell(cell.X - 1, cell.Y, cell.Z);
+                cell.West.East = cell;
             }
 
-            public FluidCell GetOrCreateCell(int x, int y, int z)
+            private FluidCell GetOrCreateCell(int x, int y, int z)
             {
                 FluidCell cell;
-                byte block = 0;//TODO : world.GetBlockAt(x, y, z, w);
+                byte block = GetBlockAt(x, y, z);
                 if (block != 0)
                 {
                     cell = Simulation.solidCell;
                 }
                 else
                 {
-                    var cellHash = Simulation.CellHash(x, y, z);
-                    if (cellDictionary.ContainsKey(cellHash))
+                    var cellHash = m_mappingFunction(x, y, z);
+                    if (CellDictionary.ContainsKey(cellHash))
                     {
-                        cell = cellDictionary[cellHash];
+                        cell = CellDictionary[cellHash];
                     }
                     else
                     {
-                        cell = new FluidCell(x, y, z, w, CellType.Air, 0) {container = this};
-                        cellDictionary.Add(cellHash, cell);
+                        cell = new FluidCell(x, y, z, W, CellType.Air, 0) {Container = this};
+                        CellDictionary.Add(cellHash, cell);
                     }
                 }
                 return cell;
@@ -424,97 +412,97 @@ namespace _4DMonoEngine.Core.Universe
 
         protected class FluidCell
         {
-            public int x;
-            public int y;
-            public int z;
-            public int w;
-            public float level;
-            public float levelNextStep;
-            public CellType type;
-            public FluidCell up;
-            public FluidCell down;
-            public FluidCell north;
-            public FluidCell east;
-            public FluidCell south;
-            public FluidCell west;
-            public FluidContainer container;
-            public bool isSource;
-            public bool awake;
+            public readonly int X;
+            public readonly int Y;
+            public readonly int Z;
+            public readonly int W;
+            public float Level;
+            public float LevelNextStep;
+            public CellType Type;
+            public FluidCell Up;
+            public FluidCell Down;
+            public FluidCell North;
+            public FluidCell East;
+            public FluidCell South;
+            public FluidCell West;
+            public FluidContainer Container;
+            public bool IsSource;
+            public bool Awake;
 
             public FluidCell(CellType type)
             {
-                this.type = type;
+                Type = type;
             }
 
             public FluidCell(int x, int y, int z, int w, CellType type, float level)
             {
-                this.x = x;
-                this.y = y;
-                this.z = z;
-                this.w = w;
-                this.type = type;
-                this.level = level;
-                this.levelNextStep = level;
-                this.awake = true;
+                X = x;
+                Y = y;
+                Z = z;
+                W = w;
+                Type = type;
+                Level = level;
+                LevelNextStep = level;
+                Awake = true;
             }
 
             //TODO : break into sub functions
             public void Propagate()
             {
-                if (isSource)
+                if (IsSource)
                 {
-                    level = MathHelper.Max(level, 1);
-                    levelNextStep = level;
+                    Level = MathHelper.Max(Level, 1);
+                    LevelNextStep = Level;
                 }
-                var levelRemaining = level;
+                var levelRemaining = Level;
                 float outFlow = 0;
-                if (level > MaxLevel && levelRemaining > (up.level + MaxCompression*2) && up.type != CellType.Solid)
+                if (Level > MaxLevel && levelRemaining > (Up.Level + MaxCompression*2) && Up.Type != CellType.Solid)
                 {
-                    outFlow = ClampFlow(levelRemaining - GetStableStateVertical(up.level, levelRemaining),
+                    outFlow = ClampFlow(levelRemaining - GetStableStateVertical(Up.Level, levelRemaining),
                         levelRemaining);
-                    levelNextStep -= outFlow;
+                    LevelNextStep -= outFlow;
                     levelRemaining -= outFlow;
-                    up.levelNextStep += outFlow;
-                    up.awake = true;
-                    container.updated.Add(up);
+                    Up.LevelNextStep += outFlow;
+                    Up.Awake = true;
+                    Container.Updated.Add(Up);
                 }
                 else
                 {
-                    if (down.type != CellType.Solid)
+                    if (Down.Type != CellType.Solid)
                     {
-                        outFlow = ClampFlow(GetStableStateVertical(levelRemaining, down.level) - down.level,
+                        outFlow = ClampFlow(GetStableStateVertical(levelRemaining, Down.Level) - Down.Level,
                             levelRemaining);
                         if (outFlow > 0)
                         {
-                            levelNextStep -= outFlow;
+                            LevelNextStep -= outFlow;
                             levelRemaining -= outFlow;
-                            down.levelNextStep += outFlow;
-                            down.awake = true;
-                            container.updated.Add(down);
+                            Down.LevelNextStep += outFlow;
+                            Down.Awake = true;
+                            Container.Updated.Add(Down);
                         }
                     }
                     if (levelRemaining > 0)
                     {
                         float average = 0;
                         var count = 0;
-                        if (north.type != CellType.Solid && north.level < level)
+                        if (North.Type != CellType.Solid && North.Level < Level)
                         {
-                            average += north.level;
+                            average += North.Level;
                             count += 1;
                         }
-                        if (east.type != CellType.Solid && east.level < level)
+                        if (East.Type != CellType.Solid && East.Level < Level)
                         {
-                            average += east.level;
+                            average += East.Level;
                             count += 1;
                         }
-                        if (south.type != CellType.Solid && south.level < level)
+                        if (South.Type != CellType.Solid && South.Level < Level)
                         {
-                            average += south.level;
+                            average += South.Level;
                             count += 1;
                         }
-                        if (west.type != CellType.Solid && west.level < level)
+                        if (West.Type != CellType.Solid && West.Level < Level)
                         {
-                            average += west.level;
+                            average += West.Level;
                             count += 1;
                         }
                         if (count > 0)
@@ -523,64 +511,64 @@ namespace _4DMonoEngine.Core.Universe
                             outFlow = ClampFlow(levelRemaining - average, levelRemaining);
                             if (outFlow > 0)
                             {
-                                levelNextStep -= outFlow;
+                                LevelNextStep -= outFlow;
                                 levelRemaining -= outFlow;
                                 outFlow /= count;
-                                if (north.type != CellType.Solid && north.level <= levelRemaining)
+                                if (North.Type != CellType.Solid && North.Level <= levelRemaining)
                                 {
-                                    north.levelNextStep += outFlow;
-                                    north.awake = true;
-                                    container.updated.Add(north);
+                                    North.LevelNextStep += outFlow;
+                                    North.Awake = true;
+                                    Container.Updated.Add(North);
                                 }
-                                if (east.type != CellType.Solid && east.level <= levelRemaining)
+                                if (East.Type != CellType.Solid && East.Level <= levelRemaining)
                                 {
-                                    east.levelNextStep += outFlow;
-                                    east.awake = true;
-                                    container.updated.Add(east);
+                                    East.LevelNextStep += outFlow;
+                                    East.Awake = true;
+                                    Container.Updated.Add(East);
                                 }
-                                if (south.type != CellType.Solid && south.level <= levelRemaining)
+                                if (South.Type != CellType.Solid && South.Level <= levelRemaining)
                                 {
-                                    south.levelNextStep += outFlow;
-                                    south.awake = true;
-                                    container.updated.Add(south);
+                                    South.LevelNextStep += outFlow;
+                                    South.Awake = true;
+                                    Container.Updated.Add(South);
                                 }
-                                if (west.type != CellType.Solid && west.level <= levelRemaining)
+                                if (West.Type != CellType.Solid && West.Level <= levelRemaining)
                                 {
-                                    west.levelNextStep += outFlow;
-                                    west.awake = true;
-                                    container.updated.Add(west);
+                                    West.LevelNextStep += outFlow;
+                                    West.Awake = true;
+                                    Container.Updated.Add(West);
                                 }
                             }
                         }
                     }
                     if (levelRemaining > 0)
                     {
-                        if (up.type != CellType.Solid)
+                        if (Up.Type != CellType.Solid)
                         {
-                            outFlow = ClampFlow(levelRemaining - GetStableStateVertical(up.level, levelRemaining),
+                            outFlow = ClampFlow(levelRemaining - GetStableStateVertical(Up.Level, levelRemaining),
                                 levelRemaining);
                             if (outFlow > 0)
                             {
-                                levelNextStep -= outFlow;
+                                LevelNextStep -= outFlow;
                                 levelRemaining -= outFlow;
-                                up.levelNextStep += outFlow;
-                                up.awake = true;
-                                container.updated.Add(up);
+                                Up.LevelNextStep += outFlow;
+                                Up.Awake = true;
+                                Container.Updated.Add(Up);
                             }
                         }
-                        if (levelRemaining <= EvaporationLevel && up.type == CellType.Air)
+                        if (levelRemaining <= EvaporationLevel && Up.Type == CellType.Air)
                         {
-                            levelNextStep -= EvaporationRate;
+                            LevelNextStep -= EvaporationRate;
                         }
                     }
                 }
-                if (Math.Abs(level - levelNextStep) >= MinFlow / 2.0f)
+                if (Math.Abs(Level - LevelNextStep) >= MinFlow / 2.0f)
                 {
-                    container.updated.Add(this);
+                    Container.Updated.Add(this);
                 }
-                else if (!isSource)
+                else if (!IsSource)
                 {
-                    awake = false;
+                    Awake = false;
                 }
             }
 
