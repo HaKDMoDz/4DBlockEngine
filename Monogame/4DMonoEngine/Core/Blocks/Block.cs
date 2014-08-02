@@ -20,7 +20,7 @@ namespace _4DMonoEngine.Core.Blocks
         {
           //  m_dynamicBlockData = null;
             m_type = type;
-            m_color = 0;
+            m_color = (15 << 8) | (15 << 4) | 15;
             m_lightSun = 0;
             m_lightRed = 0;
             m_lightGreen = 0;

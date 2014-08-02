@@ -32,7 +32,7 @@ namespace _4DMonoEngine.Core.Common.Structs
             new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.Position, 0),
             new VertexElement(sizeof (float)*3,VertexElementFormat.HalfVector2, VertexElementUsage.TextureCoordinate,0),
             new VertexElement(sizeof (float)*4, VertexElementFormat.HalfVector4,VertexElementUsage.Color, 0),
-            new VertexElement(sizeof (float)*8, VertexElementFormat.HalfVector4,VertexElementUsage.Color, 1)
+            new VertexElement(sizeof (float)*6, VertexElementFormat.HalfVector4,VertexElementUsage.Color, 1)
         });
 
         public Vector3 Position

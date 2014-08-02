@@ -50,7 +50,7 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 
     output.blockTextureCoord = input.blockTextureCoord;
 
-	output.Color.rgb = clamp(input.Light.x * SunColor + input.Light.yzw, 0, 1) * input.Tint.rgb;
+	output.Color.rgb = clamp(input.Light.x * SunColor + input.Light.yzw, 0, 1) *input.Tint.rgb;
 	output.Color.a = 1;
 
     return output;
