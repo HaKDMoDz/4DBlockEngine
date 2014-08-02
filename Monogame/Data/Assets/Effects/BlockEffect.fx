@@ -25,6 +25,7 @@ struct VertexShaderInput
 	float4 Position				: SV_POSITION;
 	float2 blockTextureCoord	: TEXCOORD0;	// block texture uv-mapping coordinates.
 	float4 Light				: COLOR0;		// Light (sun, r, g, b)
+	float4 Tint					: COLOR1;		
 };
 
 struct VertexShaderOutput
@@ -49,7 +50,7 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 
     output.blockTextureCoord = input.blockTextureCoord;
 
-	output.Color.rgb = clamp(input.Light.x * SunColor + input.Light.yzw, 0, 1);
+	output.Color.rgb = clamp(input.Light.x * SunColor + input.Light.yzw, 0, 1) * input.Tint.rgb;
 	output.Color.a = 1;
 
     return output;

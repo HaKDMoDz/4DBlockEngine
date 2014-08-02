@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework.Graphics.PackedVector;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics.PackedVector;
 using _4DMonoEngine.Core.Blocks.Dynamic;
 using _4DMonoEngine.Core.Common.Enums;
 using _4DMonoEngine.Core.Common.Interfaces;
@@ -10,6 +11,7 @@ namespace _4DMonoEngine.Core.Blocks
         public const ushort None = 0;
         //private DynamicBlock m_dynamicBlockData;
         private readonly ushort m_type;
+        private ushort m_color;
         private byte m_lightSun;
         private byte m_lightRed;
         private byte m_lightGreen;
@@ -18,6 +20,7 @@ namespace _4DMonoEngine.Core.Blocks
         {
           //  m_dynamicBlockData = null;
             m_type = type;
+            m_color = 0;
             m_lightSun = 0;
             m_lightRed = 0;
             m_lightGreen = 0;
@@ -51,6 +54,20 @@ namespace _4DMonoEngine.Core.Blocks
         {
             get { return m_lightBlue; }
             set { m_lightBlue = value; }
+        }
+
+        public Color GetTint()
+        {
+            var red = ((m_color >> 8) & 15) * 16;
+            var green = ((m_color >> 4) & 15) * 16;
+            var blue = (m_color & 15) * 16;
+            return new Color(red, green, blue);
+        }
+
+        public ushort Color
+        {
+            get { return m_color; }
+            set { m_color = value; }
         }
 
         public ushort Type

@@ -1,7 +1,7 @@
-﻿using System;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Graphics.PackedVector;
+using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Common.AbstractClasses;
 using _4DMonoEngine.Core.Common.Enums;
 using _4DMonoEngine.Core.Common.Interfaces;
@@ -179,8 +179,8 @@ namespace _4DMonoEngine.Core.Processors
                                                 ref HalfVector4 localLightTl, ref HalfVector4 localLightTr, ref HalfVector4 localLightBl, ref HalfVector4 localLightBr)
         {
             var textureUvMappings = m_blockSource[blockIndex].GetTextureMapping(faceDir);
+            var tint = m_blockSource[blockIndex].GetTint(); //TODO : if tint stays, make it calculated per vertex on the same face
             Vector3 vertexTl, vertexTr, vertexBr, vertexBl;
-
             switch (faceDir)
             {
                 case FaceDirection.XIncreasing:
@@ -228,10 +228,10 @@ namespace _4DMonoEngine.Core.Processors
                 vertexBl = (vertexBl - m_origin) * m_blockScale + m_origin;
             }
 
-            vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexTl, textureUvMappings[0], localLightTl));
-            vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexTr, textureUvMappings[1], localLightTr));
-            vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexBr, textureUvMappings[3], localLightBr));
-            vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexBl, textureUvMappings[2], localLightBl));
+            vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexTl, textureUvMappings[0], localLightTl, tint));
+            vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexTr, textureUvMappings[1], localLightTr, tint));
+            vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexBr, textureUvMappings[3], localLightBr, tint));
+            vertexBuilderTarget.VertexList.Add(new BlockVertex(vertexBl, textureUvMappings[2], localLightBl, tint));
             AddIndex(vertexBuilderTarget, flipped);
         }
 

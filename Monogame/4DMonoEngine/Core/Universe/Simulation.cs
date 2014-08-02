@@ -12,7 +12,7 @@ namespace _4DMonoEngine.Core.Universe
 {
     public class Simulation : DrawableGameComponent
     {
-        private const float GameHourInRealSeconds = 2;
+        private const float GameHourInRealSeconds = 60;
 
         internal Player Player
         {
@@ -43,9 +43,10 @@ namespace _4DMonoEngine.Core.Universe
 
         public float GetTimeOfDay()
         {
-            var ret = (DateTime.Now.TimeOfDay.TotalSeconds / GameHourInRealSeconds);
+           /* var ret = (DateTime.Now.TimeOfDay.TotalSeconds / GameHourInRealSeconds);
             var remainder = ret - (int) ret;
-            return (float)((((int) ret)%24) + remainder);
+            return (float)((((int) ret)%24) + remainder);*/
+            return 12;
         }
 
         public Vector2 GetFogVector()

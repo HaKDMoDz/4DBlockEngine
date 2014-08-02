@@ -12,12 +12,14 @@ namespace _4DMonoEngine.Core.Common.Structs
         private Vector3 m_position;
         private HalfVector2 m_blockTextureCoordinate;
         private HalfVector4 m_light;
+        private HalfVector4 m_tint;
 
-        public BlockVertex(Vector3 position, HalfVector2 blockTextureCoordinate, HalfVector4 light)
+        public BlockVertex(Vector3 position, HalfVector2 blockTextureCoordinate, HalfVector4 light, Color tint)
         {
             m_position = position;
             m_blockTextureCoordinate = blockTextureCoordinate;
             m_light = light;
+            m_tint = new HalfVector4(tint.ToVector4());
         }
 
         VertexDeclaration IVertexType.VertexDeclaration
@@ -29,7 +31,8 @@ namespace _4DMonoEngine.Core.Common.Structs
         {
             new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.Position, 0),
             new VertexElement(sizeof (float)*3,VertexElementFormat.HalfVector2, VertexElementUsage.TextureCoordinate,0),
-            new VertexElement(sizeof (float)*4, VertexElementFormat.HalfVector4,VertexElementUsage.Color, 0)
+            new VertexElement(sizeof (float)*4, VertexElementFormat.HalfVector4,VertexElementUsage.Color, 0),
+            new VertexElement(sizeof (float)*8, VertexElementFormat.HalfVector4,VertexElementUsage.Color, 1)
         });
 
         public Vector3 Position
@@ -44,10 +47,16 @@ namespace _4DMonoEngine.Core.Common.Structs
             set { m_blockTextureCoordinate = value; }
         }
 
-       public HalfVector4 Light
+        public HalfVector4 Light
         {
             get { return m_light; }
             set { m_light = value; }
+        }
+
+        public HalfVector4 Tint
+        {
+            get { return m_tint; }
+            set { m_tint = value; }
         }
 
         public static int SizeInBytes

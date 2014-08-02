@@ -13,9 +13,9 @@ using _4DMonoEngine.Core.Common.Enums;
 using _4DMonoEngine.Core.Common.Interfaces;
 using _4DMonoEngine.Core.Graphics;
 using _4DMonoEngine.Core.Processors;
-using _4DMonoEngine.Core.Utils;
 using _4DMonoEngine.Core.Utils.Noise;
 using _4DMonoEngine.Core.Utils.Vector;
+using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
 namespace _4DMonoEngine.Core.Universe
@@ -32,6 +32,12 @@ namespace _4DMonoEngine.Core.Universe
         public byte LightRed { get; set; }
         public byte LightGreen { get; set; }
         public byte LightBlue { get; set; }
+
+        public Color GetTint()
+        {
+            return Color.White;
+        }
+
         public float Opacity
         {
             get { return BlockDictionary.GetInstance().GetStaticData(m_type).Opacity; }
