@@ -86,27 +86,38 @@ namespace _4DMonoEngine.Core.Utils.Noise
             // Work out the hashed gradient indices of the three simplex corners
             var ii = i & 255;
             var jj = j & 255;
-            var gi0 = Perm[ii + Perm[jj]];
-            var gi1 = Perm[ii + i1 + Perm[jj + j1]];
-            var gi2 = Perm[ii + 1 + Perm[jj + 1]];
+            var gi0 = Perm[ii + Perm[jj]] % 12;
+            var gi1 = Perm[ii + i1 + Perm[jj + j1]] % 12;
+            var gi2 = Perm[ii + 1 + Perm[jj + 1]] % 12;
             // Calculate the contribution from the three corners
             var t0 = 0.5 - x0*x0-y0*y0;
-            if(t0<0) n0 = 0.0;
-            else {
-            t0 *= t0;
-            n0 = t0 * t0 * Dot(Grad2[gi0], x0, y0);  // (x,y) of grad3 used for 2D gradient
+            if (t0 < 0)
+            {
+                n0 = 0.0;
+            }
+            else 
+            {
+                t0 *= t0;
+                n0 = t0 * t0 * Dot(Grad2[gi0], x0, y0);  // (x,y) of grad3 used for 2D gradient
             }
             var t1 = 0.5 - x1*x1-y1*y1;
-            if(t1<0) n1 = 0.0;
+            if (t1 < 0)
+            {
+                n1 = 0.0;
+            }
             else {
-            t1 *= t1;
-            n1 = t1 * t1 * Dot(Grad2[gi1], x1, y1);
+                t1 *= t1;
+                n1 = t1 * t1 * Dot(Grad2[gi1], x1, y1);
             }
             var t2 = 0.5 - x2*x2-y2*y2;
-            if(t2<0) n2 = 0.0;
-            else {
-            t2 *= t2;
-            n2 = t2 * t2 * Dot(Grad2[gi2], x2, y2);
+            if (t2 < 0)
+            {
+                n2 = 0.0;
+            }
+            else 
+            {
+                t2 *= t2;
+                n2 = t2 * t2 * Dot(Grad2[gi2], x2, y2);
             }
             // Add contributions from each corner to get the final noise value.
             // The result is scaled to return values in the interval [-1,1].

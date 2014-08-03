@@ -1,6 +1,8 @@
-﻿using _4DMonoEngine.Core.Blocks;
+﻿using System;
+using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Chunks.Generators.Regions;
 using Microsoft.Xna.Framework;
+using _4DMonoEngine.Core.Chunks.Generators.Structures;
 using _4DMonoEngine.Core.Processors;
 using _4DMonoEngine.Core.Utils;
 using _4DMonoEngine.Core.Utils.Noise;
@@ -19,6 +21,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
         private CellNoise3D m_voroni;
         private BiomeGeneratorCollection m_biomeGenerator;
         private ProvinceGeneratorCollection m_provinceGenerator;
+        private PlantPopulator m_populator;
         private readonly Block[] m_blocks;
 
         private int m_sealevel;
@@ -46,6 +49,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
             m_detail2 = new SimplexNoise3D(random.NextUInt());
             m_volume = new SimplexNoise4D(random.NextUInt());
             m_voroni = new CellNoise3D(random.NextUInt());
+            m_populator = new PlantPopulator(random.NextUInt(), m_blocks, m_mappingFunction);
             m_sealevel = settings.SeaLevel;
             m_mountainHeight = settings.MountainHeight - m_sealevel;
             var rescale = settings.BiomeSampleRescale;
@@ -70,6 +74,10 @@ namespace _4DMonoEngine.Core.Chunks.Generators
                     var overhangStart = m_sealevel + MathHelper.Clamp(detailNoise * 4, -1, 1) * 2;
                     var biome = m_biomeGenerator.GetRegionGenerator(cX, cZ, cW);
                     var province = m_provinceGenerator.GetRegionGenerator(cX, cZ, cW);
+
+			      /*  var data = m_populator.CalculateNearestSamplePosition(cX, cZ);
+			        var color = (ushort)data.Id;*/
+
 					for (var y = m_chunkSize - 1; y >= 0 ; --y)
 					{
                         var cY = chunkY + y;
@@ -99,16 +107,24 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 					    {
 					        block = province.Apply((int)groundLevel - m_biomeThickness, cX, cY, cZ, cW);
 					    }
+
+					    //block.Color = color;
+
                         m_blocks[m_mappingFunction(cX, cY, cZ)] = block;
 					}
                     
-                    for (var y = 0; y < m_chunkSize && chunkY + y < m_sealevel; ++y)
+                    /*for (var y = 0; y < m_chunkSize && chunkY + y < m_sealevel; ++y)
 					{		
                         var cY = chunkY + y;
 					    var blockIndex = m_mappingFunction(cX, cY, cZ);
 					    if (!m_blocks[blockIndex].Exists)
 					        m_blocks[blockIndex] = new Block(BlockDictionary.GetInstance().GetBlockIdForName("Water"));// {LightRed = 255};
-					}
+					}*/
+
+			       /* if (Math.Abs(data.Delta.X - cX) < 0.01 && Math.Abs(data.Delta.Y - cZ) < 0.01)
+			        {
+			            m_populator.PopulateTree(cX, cZ, (int)groundLevel);
+			        }*/
 				}
 		    }
             //TODO : query if chunk has all neighbors loaded so we can run our erosion step

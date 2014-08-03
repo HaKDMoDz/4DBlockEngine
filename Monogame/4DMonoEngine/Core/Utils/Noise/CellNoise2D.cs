@@ -53,7 +53,7 @@ namespace _4DMonoEngine.Core.Utils.Noise
             public Vector2 Delta;
         }
 
-        public VoroniData Voroni(float px, float py,float scale)
+        public VoroniData Voroni(float px, float py, float scale)
         {
             return Voroni(px / scale, py / scale);
         }
