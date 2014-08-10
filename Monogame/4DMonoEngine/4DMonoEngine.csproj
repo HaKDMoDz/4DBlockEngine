@@ -70,6 +70,7 @@
     <Compile Include="Core\Assets\Config\BlockData.cs" />
     <Compile Include="Core\Assets\Config\BlockTextureData.cs" />
     <Compile Include="Core\Common\Enums\FaceDirection.cs" />
+    <Compile Include="Core\Common\Extensions\FunctionExtensions.cs" />
     <Compile Include="Core\Common\Interfaces\IInitializable.cs" />
     <Compile Include="Core\Events\EventHelper.cs" />
     <Compile Include="Core\Common\Interfaces\IAction.cs" />

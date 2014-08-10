@@ -22,6 +22,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
         private BiomeGeneratorCollection m_biomeGenerator;
         private ProvinceGeneratorCollection m_provinceGenerator;
         private PlantPopulator m_populator;
+        private PathGenerator m_riverGenerator;
         private readonly Block[] m_blocks;
 
         private int m_sealevel;
@@ -44,20 +45,22 @@ namespace _4DMonoEngine.Core.Chunks.Generators
         {
             var random = new FastRandom(Seed);
             var settings = await MainEngine.GetEngineInstance().GeneralSettings;
+            m_sealevel = settings.SeaLevel;
+            m_mountainHeight = settings.MountainHeight - m_sealevel;
+            var rescale = settings.BiomeSampleRescale;
+            m_detailScale = settings.DetailScale;
+            m_sinkHoleDepth = settings.SinkHoleDepth;
+            m_biomeThickness = settings.BiomeThickness;
             m_elevation = new SimplexNoise3D(random.NextUInt());
             m_detail = new SimplexNoise3D(random.NextUInt());
             m_detail2 = new SimplexNoise3D(random.NextUInt());
             m_volume = new SimplexNoise4D(random.NextUInt());
             m_voroni = new CellNoise3D(random.NextUInt());
             m_populator = new PlantPopulator(random.NextUInt(), m_blocks, m_mappingFunction);
-            m_sealevel = settings.SeaLevel;
-            m_mountainHeight = settings.MountainHeight - m_sealevel;
-            var rescale = settings.BiomeSampleRescale;
+            m_riverGenerator = new PathGenerator(random.NextUInt(), GetHeight);
+            m_riverGenerator.InitializePathSystem(0, 0, 0, 256);
             m_biomeGenerator = new BiomeGeneratorCollection(random.NextUInt(), GetHeight, settings.Biomes, rescale, m_sealevel, m_mountainHeight);
             m_provinceGenerator = new ProvinceGeneratorCollection(random.NextUInt(), GetHeight, settings.Provinces, rescale, m_sealevel, m_mountainHeight);
-            m_detailScale = settings.DetailScale;
-            m_sinkHoleDepth = settings.SinkHoleDepth;
-            m_biomeThickness = settings.BiomeThickness;
         }
 
 	    public void GenerateDataForChunk(int chunkX, int chunkY, int chunkZ, int chunkW)
@@ -77,6 +80,12 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 
 			      /*  var data = m_populator.CalculateNearestSamplePosition(cX, cZ);
 			        var color = (ushort)data.Id;*/
+			        bool isOnRiver = m_riverGenerator.IsOnRiver(cX, cZ);
+
+			        if (isOnRiver)
+			        {
+			            groundLevel = m_riverGenerator.GetHeightForRiver(cX, cZ, groundLevel);
+			        }
 
 					for (var y = m_chunkSize - 1; y >= 0 ; --y)
 					{
@@ -110,16 +119,22 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 
 					    //block.Color = color;
 
+					    if (isOnRiver && cY <= groundLevel && cY >= groundLevel - 1)
+					    {
+                            block = new Block(BlockDictionary.GetInstance().GetBlockIdForName("Water"));
+					        //block.Color = 15;
+					    }
+
                         m_blocks[m_mappingFunction(cX, cY, cZ)] = block;
 					}
                     
-                    /*for (var y = 0; y < m_chunkSize && chunkY + y < m_sealevel; ++y)
+                    for (var y = 0; y < m_chunkSize && chunkY + y < m_sealevel; ++y)
 					{		
                         var cY = chunkY + y;
 					    var blockIndex = m_mappingFunction(cX, cY, cZ);
 					    if (!m_blocks[blockIndex].Exists)
 					        m_blocks[blockIndex] = new Block(BlockDictionary.GetInstance().GetBlockIdForName("Water"));// {LightRed = 255};
-					}*/
+					}
 
 			       /* if (Math.Abs(data.Delta.X - cX) < 0.01 && Math.Abs(data.Delta.Y - cZ) < 0.01)
 			        {

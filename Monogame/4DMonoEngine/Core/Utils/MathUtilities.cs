@@ -5,6 +5,7 @@ namespace _4DMonoEngine.Core.Utils
 {
     public delegate int MappingFunction(int x, int y, int z);
     public delegate int MappingFunctionVector3(ref Vector3 position);
+    public delegate float GetHeight(float x, float z, float w);
 
     public static class MathUtilities
     {

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using _4DMonoEngine.Core.Assets.Config;
+using _4DMonoEngine.Core.Utils;
 using _4DMonoEngine.Core.Utils.Noise;
 
 namespace _4DMonoEngine.Core.Chunks.Generators.Regions
@@ -27,7 +28,6 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
         protected readonly SimplexNoise3D SimplexNoise3D;
         protected readonly SimplexNoise3D SimplexNoise2;
         protected readonly GetHeight GetHeightFunction;
-        public delegate float GetHeight(float x, float z, float w);
 
         protected WorldRegionGeneratorCollection(ulong seed, GetHeight getHeightFunction, IEnumerable<string> regions, int biomeSampleRescale, int seaLevel, int mountainHeight)
         {

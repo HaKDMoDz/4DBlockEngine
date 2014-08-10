@@ -33,7 +33,8 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
 
          public CellNoise2D.VoroniData CalculateNearestSamplePosition(float x, float z)
          {
-             var scaleAdjustment = (int)MathHelper.Clamp(m_densityFunction.FractalBrownianMotion(x, z, 512, 0, 4) * 5, -1, 1);
+             //TODO : tweak magic numbers
+             var scaleAdjustment = (int)MathHelper.Clamp(m_densityFunction.FractalBrownianMotion(x, z, 512, 0, 4) * 5, -1, 1);             
              var finalScale = m_sampleScale - scaleAdjustment*(m_sampleScale - m_minSampleScale);
              var data = m_cellNoise.Voroni(x, z, finalScale);
              var centroid = new Vector2

@@ -33,7 +33,6 @@ namespace _4DMonoEngine.Core.Chunks
             Started,
         }
 
-        private const int MaxChurnTimeBeforeReque = 2000;
         private const byte CacheRange = 6;
         private BoundingBox m_cacheRangeBoundingBox;
         /*TODO : Implement LOD here
