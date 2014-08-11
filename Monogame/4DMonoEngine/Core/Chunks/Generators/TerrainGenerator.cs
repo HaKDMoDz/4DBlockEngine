@@ -80,7 +80,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 
 			      /*  var data = m_populator.CalculateNearestSamplePosition(cX, cZ);
 			        var color = (ushort)data.Id;*/
-			        bool isOnRiver = m_riverGenerator.IsOnRiver(cX, cZ);
+			        var isOnRiver = m_riverGenerator.IsOnRiver(cX, cZ);
 
 			        if (isOnRiver)
 			        {

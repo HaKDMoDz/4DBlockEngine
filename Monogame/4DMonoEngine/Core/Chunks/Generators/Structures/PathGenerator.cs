@@ -93,7 +93,20 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
                     activeList.Enqueue(nextNode);
                 }
             }
-            var map = new Dictionary<uint, PathGraphNode>(m_general);
+            var map = new Dictionary<uint, PathGraphNode>(m_sinks);
+            foreach (var pathGraphNode in map)
+            {
+                var pos = pathGraphNode.Value.Position;
+                foreach (var edge in pathGraphNode.Value.Edges.Where(edge => edge.Value < 0))
+                {
+                    if (edge.Key.Position.Y < pos.Y)
+                    {
+                        pos.Y = edge.Key.Position.Y;
+                    }
+                }
+                pathGraphNode.Value.Position = pos;
+            }
+            map = new Dictionary<uint, PathGraphNode>(m_general);
             foreach (var pathGraphNode in map)
             {
                 if (pathGraphNode.Value.NodeType == PathNodeType.Sink)
@@ -101,6 +114,15 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
                     m_general.Remove(pathGraphNode.Key);
                     m_sinks.Add(pathGraphNode.Key, pathGraphNode.Value);
                 }
+                var pos = pathGraphNode.Value.Position;
+                foreach (var edge in pathGraphNode.Value.Edges.Where(edge => edge.Value < 0))
+                {
+                    if (edge.Key.Position.Y < pos.Y)
+                    {
+                        pos.Y = edge.Key.Position.Y;
+                    }
+                }
+                pathGraphNode.Value.Position = pos;
             }
             map = new Dictionary<uint, PathGraphNode>(m_sources);
             foreach (var pathGraphNode in map)
@@ -112,7 +134,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
                 }
                 else
                 {
-                    m_paths.Add(new PathNodeList(pathGraphNode.Value));
+                    m_paths.Add(new PathNodeList(pathGraphNode.Value, m_getHeight));
                 }
             }
             Console.WriteLine(timer.ElapsedMilliseconds);
@@ -126,7 +148,6 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
         protected int SortPool(PathGraphNode activeNode, PathGraphNode candidateNode1, PathGraphNode candidateNode2)
         {
             var result = (int)(candidateNode1.Position.Y - candidateNode2.Position.Y);
-            //TODO : test reordering tests
             if (result == 0)
             {
                 result = candidateNode1.Edges.Count - candidateNode2.Edges.Count;
@@ -142,7 +163,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
         protected void InsertNodeIntoMaps(uint nodeId, int x, int z, int w)
         {
             var height = m_getHeight(x, z, w);
-            var node = new PathGraphNode(new Vector3(x, height, z));
+            var node = new PathGraphNode(new Vector3(x, height, z), nodeId);
             if (height >= RiversStartMinHeight)
             {
                 node.NodeType = PathNodeType.Source;
@@ -162,30 +183,19 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
 
         public bool IsOnRiver(int x, int z)
         {
-            var stack = new Stack<PathGraphNode>();
             var testPoint = new Vector3(x, 0, z);
             foreach (var path in m_paths)
             {
                 if (path.BoundingBox.Contains(testPoint) != ContainmentType.Disjoint)
                 {
-                    var pathGraphNode = path.Head;
-                    var lastNodePos = new Vector3(pathGraphNode.Position.X, 0, pathGraphNode.Position.Z);
-                    stack.Push(pathGraphNode);
-                    while (stack.Count > 0)
+                    foreach (var graphNode in path.Head.Edges)
                     {
-                        var node = stack.Pop();
-                        var nodePos = new Vector3(node.Position.X, 0, node.Position.Z);
-                        var distance = DistanceFromPointToLineSegment(testPoint, lastNodePos, nodePos);
-                        if (distance <= 1.5)
+                        if (graphNode.Value > 0)
                         {
-                            return true;
-                        }
-                        lastNodePos = nodePos;
-                        foreach (var graphNode in node.Edges)
-                        {
-                            if (graphNode.Value > 0)
+                            var isOnRiver = IsOnRiver(x, z, graphNode.Key, path.Head, path);
+                            if (isOnRiver)
                             {
-                                stack.Push(graphNode.Key);
+                                return true;
                             }
                         }
                     }
@@ -194,38 +204,76 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
             return false;
         }
 
+        private bool IsOnRiver(int x, int z, PathGraphNode currentNode, PathGraphNode lastNode, PathNodeList path)
+        {
+            var testPoint = new Vector3(x, 0, z);
+            var lastNodePos = new Vector3(lastNode.Position.X, 0, lastNode.Position.Z);
+            var currentNodePos = new Vector3(currentNode.Position.X, 0, currentNode.Position.Z);
+            var distance = DistanceFromPointToLineSegment(testPoint, lastNodePos, currentNodePos);
+            var pathLeg = path.GetPathLeg(lastNode, currentNode);
+            var sliceIndex = (int)((Vector3.DistanceSquared(lastNodePos, testPoint) - distance * distance) / Vector3.DistanceSquared(lastNodePos, currentNodePos) * pathLeg.Count);
+            if (sliceIndex < pathLeg.Count)
+            {
+                var pathSlice = pathLeg[sliceIndex];
+                if (distance <= pathSlice.Radius)
+                {
+                    return true;
+                }
+            }
+            foreach (var graphNode in currentNode.Edges)
+            {
+                if (graphNode.Value > 0)
+                {
+                    var isOnRiver = IsOnRiver(x, z, graphNode.Key, currentNode, path);
+                    if (isOnRiver)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         public float GetHeightForRiver(int x, int z, float groundHeight)
         {
-            var stack = new Stack<PathGraphNode>();
             var testPoint = new Vector3(x, 0, z);
             foreach (var path in m_paths)
             {
                 if (path.BoundingBox.Contains(testPoint) != ContainmentType.Disjoint)
                 {
-                    var pathGraphNode = path.Head;
-                    var lastNode = pathGraphNode;
-                    stack.Push(pathGraphNode);
-                    while (stack.Count > 0)
+                    foreach (var graphNode in path.Head.Edges)
                     {
-                        var lastNodePos = new Vector3(lastNode.Position.X, 0, lastNode.Position.Z);
-                        var node = stack.Pop();
-                        var nodePos = new Vector3(node.Position.X, 0, node.Position.Z);
-                        var distance = DistanceFromPointToLineSegment(testPoint, lastNodePos, nodePos);
-                        if (distance <= 1.5)
+                        if (graphNode.Value > 0)
                         {
-                            /*var distance = 
-                            MathHelper.Lerp()  */
-                            return Math.Min(groundHeight, lastNode.Position.Y);
-                        }
-                        lastNode = node;
-                        foreach (var graphNode in node.Edges)
-                        {
-                            if (graphNode.Value > 0)
-                            {
-                                stack.Push(graphNode.Key);
-                            }
+                            groundHeight = Math.Min(groundHeight, GetHeightForRiver(x, z, groundHeight, graphNode.Key, path.Head, path));
                         }
                     }
+                }
+            }
+            return groundHeight;
+        }
+
+        private float GetHeightForRiver(int x, int z, float groundHeight, PathGraphNode currentNode, PathGraphNode lastNode, PathNodeList path)
+        {
+            var testPoint = new Vector3(x, 0, z);
+            var lastNodePos = new Vector3(lastNode.Position.X, 0, lastNode.Position.Z);
+            var currentNodePos = new Vector3(currentNode.Position.X, 0, currentNode.Position.Z);
+            var distance = DistanceFromPointToLineSegment(testPoint, lastNodePos, currentNodePos);
+            var pathLeg = path.GetPathLeg(lastNode, currentNode);
+            var sliceIndex = (int)((Vector3.DistanceSquared(lastNodePos, testPoint) - distance * distance) / Vector3.DistanceSquared(lastNodePos, currentNodePos) * pathLeg.Count);
+            if (sliceIndex < pathLeg.Count)
+            {
+                var pathSlice = pathLeg[sliceIndex];
+                if (distance <= pathSlice.Radius)
+                {
+                    return Math.Min(groundHeight, pathSlice.Position.Y - 1);
+                }
+            }
+            foreach (var graphNode in currentNode.Edges)
+            {
+                if (graphNode.Value > 0)
+                {
+                    groundHeight = Math.Min(groundHeight, GetHeightForRiver(x, z, groundHeight, graphNode.Key, currentNode, path));
                 }
             }
             return groundHeight;
@@ -264,19 +312,36 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
 
         }
 
+        public class PathGraphNode
+        {
+            public Dictionary<PathGraphNode, float> Edges;
+            public readonly uint Id;
+            public PathNodeType NodeType;
+            public Vector3 Position;
+            public PathGraphNode(Vector3 position, uint id, PathNodeType nodeType = PathNodeType.Invalid)
+            {
+                Edges = new Dictionary<PathGraphNode, float>();
+                NodeType = nodeType;
+                Id = id;
+                Position = position;
+            }
+        }
+
         public class PathNodeList
         {
-            public PathGraphNode Head;
-            public BoundingBox BoundingBox;
-
-            public PathNodeList(PathGraphNode head)
+            public readonly PathGraphNode Head;
+            public readonly BoundingBox BoundingBox;
+            private readonly Dictionary<PathGraphNode, Dictionary<PathGraphNode, Lazy<List<PathData>>>> m_slices;
+            public PathNodeList(PathGraphNode head, GetHeight getHeightFunction)
             {
+                var noise = new SimplexNoise2D(head.Id);
                 Head = head;
                 var stack = new Stack<PathGraphNode>();
                 var minPosX = float.MaxValue;
                 var minPosZ = float.MaxValue;
                 var maxPosX = -float.MaxValue;
                 var maxPosZ = -float.MaxValue;
+                m_slices = new Dictionary<PathGraphNode, Dictionary<PathGraphNode, Lazy<List<PathData>>>>();
                 stack.Push(head);
                 while (stack.Count > 0)
                 {
@@ -287,42 +352,111 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
                     if (nodePos.Z < minPosZ) minPosZ = nodePos.Z;
                     if (nodePos.X > maxPosX) maxPosX = nodePos.X;
                     if (nodePos.Z > maxPosZ) maxPosZ = nodePos.Z;
-                    
+                    if (node.Edges.Count(val => val.Value > 0) == 0)
+                    {
+                        continue;
+                    }
+                    m_slices[node] = new Dictionary<PathGraphNode, Lazy<List<PathData>>>();
                     foreach (var graphNode in node.Edges)
                     {
-                        if (graphNode.Value > 0)
+                        if (graphNode.Value < 0)
                         {
-                            stack.Push(graphNode.Key);
+                            continue;
                         }
+                        m_slices[node][graphNode.Key] = new Lazy<List<PathData>>(() => GeneratePath(noise,
+                            getHeightFunction, node,
+                            graphNode.Key));
+                        stack.Push(graphNode.Key);
                     }
+                    
                 }
                 BoundingBox = new BoundingBox(new Vector3(minPosX - 1.5f, 0, minPosZ - 1.5f), new Vector3(maxPosX + 1.5f, 0, maxPosZ + 1.5f));
             }
-        }
 
-        public class PathGraphNode
-        {
-            public Dictionary<PathGraphNode, float> Edges;
-            public PathNodeType NodeType;
-            public Vector3 Position;
-            public PathGraphNode(Vector3 position, PathNodeType nodeType = PathNodeType.Invalid)
+            public List<PathData> GetPathLeg(PathGraphNode origin, PathGraphNode destination)
             {
-                Edges = new Dictionary<PathGraphNode, float>();
-                NodeType = nodeType;
-                Position = position;
+                return m_slices[origin][destination].Value;
             }
+
+            private List<PathData> GeneratePath(SimplexNoise2D noise, GetHeight getHeightFunction, PathGraphNode origin, PathGraphNode destination)
+            {
+                var originProjection = new Vector2(origin.Position.X, origin.Position.Z);
+                var destinationProjection = new Vector2(destination.Position.X, destination.Position.Z);
+                var gradient = Vector2.Subtract(destinationProjection, originProjection);
+                var distance = gradient.LengthSquared();
+                gradient.Normalize();
+                //just checking if we'll get a NaN so the quality oprtator should be fine
+// ReSharper disable CompareOfFloatsByEqualityOperator
+                var deltaX = gradient.X == 0 ? 0 : 1 / Math.Abs(gradient.X);
+                var deltaZ = gradient.Y == 0 ? 0 : 1 / Math.Abs(gradient.Y);
+                if (deltaX == 0 && deltaZ == 0)
+                {
+                    return new List<PathData>();
+                }
+                var stepX = Math.Sign(gradient.X);
+                var stepZ = Math.Sign(gradient.Y);
+                var maxX = 0.0f;
+                var maxZ = 0.0f;
+                var x = (int)origin.Position.X;
+                var z = (int)origin.Position.Z;
+                var previousHeight = (int)origin.Position.Y;
+                var path = new List<PathData>();
+                do
+                {
+                    var node = BuildPathData(noise, x, z, 0, gradient, getHeightFunction, previousHeight);
+                    path.Add(node);
+                    previousHeight = (int)node.Position.Y;
+                    if (deltaZ == 0 || (deltaX != 0 && maxX < maxZ))
+                    {
+                        maxX += deltaX;
+                        x += stepX;
+                    }
+                    else
+                    {
+                        maxZ += deltaZ;
+                        z += stepZ;
+                    }
+                } while (Vector2.DistanceSquared(originProjection, new Vector2(x, z)) <= distance);
+// ReSharper restore CompareOfFloatsByEqualityOperator
+                return path;
+            }
+
+            private PathData BuildPathData(SimplexNoise2D noise, int x, int z, int w, Vector2 gradient, GetHeight getHeightFunction, int previousHeight)
+            {
+                var radius = noise.Perlin(x, z) * 1 + 2;
+                return  new PathData(radius, x, z, w, gradient, getHeightFunction, previousHeight);
+            }
+
         }
 
         public class PathData
         {
-            public List<Vector3> Cells;
-            public bool IsBuildingForward;
-            public PathGraphNode CurrentNode;
-            public PathData(bool isBuildingForward)
+            public readonly float Radius;
+            public readonly Vector3 Position;
+
+            public PathData(float radius, int x, int z, int w, Vector2 gradient, GetHeight getHeightFunction, int previousHeight)
             {
-                 IsBuildingForward = isBuildingForward;
-                Cells = new List<Vector3>();
+                Radius = radius;
+                Position = new Vector3(x, CalculateHeight(x, z, w, gradient, getHeightFunction, previousHeight), z);
             }
+
+            private int CalculateHeight(int x, int z, int w, Vector2 gradient, GetHeight getHeightFunction, int previousHeight)
+            {
+                var pos = new Vector2(x, z);
+                var samplePoint0 = new Vector2(gradient.Y, - gradient.X);
+                samplePoint0.Normalize();
+                samplePoint0 = (samplePoint0 * Radius) + pos;
+                var samplePoint1 = new Vector2(-gradient.Y, gradient.X);
+                samplePoint1.Normalize();
+                samplePoint1 = (samplePoint1 * Radius) + pos;
+
+                var height0 = getHeightFunction(samplePoint0.X, samplePoint0.Y, w);
+                var height1 = getHeightFunction(samplePoint1.X, samplePoint1.Y, w);
+
+                var nodeHeight = (int)(height0 < height1 ? height0 : height1);
+                return nodeHeight < previousHeight ? nodeHeight : previousHeight;
+            }
+
         }
 
         public enum PathNodeType

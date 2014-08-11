@@ -54,12 +54,12 @@ namespace _4DMonoEngine.Core.Utils.Noise
 		    return rValue  / divisor;
 	    }
 
-        private float Perlin(Vector2 pos)
+        public float Perlin(Vector2 pos)
 	    {
 		    return Perlin(pos.X, pos.Y);
 	    }
 
-        private float Perlin(double pX, double pY)
+        public float Perlin(double pX, double pY)
         {
             double n0, n1, n2; // Noise contributions from the three corners
             // Skew the input space to determine which simplex cell we're in
