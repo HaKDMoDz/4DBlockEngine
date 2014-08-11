@@ -80,11 +80,11 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 
 			      /*  var data = m_populator.CalculateNearestSamplePosition(cX, cZ);
 			        var color = (ushort)data.Id;*/
-			        var isOnRiver = m_riverGenerator.IsOnRiver(cX, cZ);
+			        var riverData = m_riverGenerator.GetRiverData(cX, cZ);
 
-			        if (isOnRiver)
+                    if (riverData != null)
 			        {
-			            groundLevel = m_riverGenerator.GetHeightForRiver(cX, cZ, groundLevel);
+			            groundLevel = riverData.Position.Y;
 			        }
 
 					for (var y = m_chunkSize - 1; y >= 0 ; --y)
@@ -119,10 +119,10 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 
 					    //block.Color = color;
 
-					    if (isOnRiver && cY <= groundLevel && cY >= groundLevel - 1)
+					    if (riverData != null && cY <= groundLevel && cY >= groundLevel - 1)
 					    {
                             block = new Block(BlockDictionary.GetInstance().GetBlockIdForName("Water"));
-					        //block.Color = 15;
+					        block.Color = (ushort)riverData.Id;
 					    }
 
                         m_blocks[m_mappingFunction(cX, cY, cZ)] = block;
