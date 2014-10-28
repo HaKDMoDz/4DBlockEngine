@@ -76,6 +76,23 @@ namespace _4DMonoEngine.Core.Utils
             return ((x % m) + m) % m;
         }
 
+        public static float DistanceFromPointToLineSegment(Vector2 point, Vector2 anchor, Vector2 end)
+        {
+            var d = end - anchor;
+            var length = d.Length();
+            if (Math.Abs(length) < 0.0001)
+            {
+                return (point - anchor).Length();
+            }
+            d.Normalize();
+            var intersect = Vector2.Dot((point - anchor), d);
+            if (intersect < 0)
+            {
+                return (point - anchor).Length();
+            }
+            return intersect > length ? (point - end).Length() : (point - (anchor + d * intersect)).Length();
+        }
+
         public static float DistanceFromPointToLineSegment(Vector3 point, Vector3 anchor, Vector3 end)
         {
             var d = end - anchor;

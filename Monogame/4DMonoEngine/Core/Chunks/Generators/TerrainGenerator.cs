@@ -84,6 +84,10 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 
                     if (riverData != null)
 			        {
+			           /* if (groundLevel < riverData.Position.Y)
+			            {
+			                Console.Out.WriteLine(x + ", " + z + ": " + (riverData.Position.Y - groundLevel));
+			            }*/
 			            groundLevel = riverData.Position.Y;
 			        }
 
@@ -116,13 +120,12 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 					    {
 					        block = province.Apply((int)groundLevel - m_biomeThickness, cX, cY, cZ, cW);
 					    }
-
-					    //block.Color = color;
-
+					  //  var tint = (int) ((detailNoise * 5 + 10));
+                     //   block.Color = (ushort)((tint << 8) | (tint << 4) | tint);
 					    if (riverData != null && cY <= groundLevel && cY >= groundLevel - 1)
 					    {
                             block = new Block(BlockDictionary.GetInstance().GetBlockIdForName("Water"));
-					        block.Color = (ushort)riverData.Id;
+					        //block.Color = (ushort)riverData.Id;
 					    }
 
                         m_blocks[m_mappingFunction(cX, cY, cZ)] = block;

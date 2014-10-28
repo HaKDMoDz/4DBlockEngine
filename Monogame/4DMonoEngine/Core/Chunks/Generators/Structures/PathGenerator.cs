@@ -187,50 +187,59 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
             PathData slice = null;
             foreach (var path in m_paths)
             {
-                if (path.BoundingBox.Contains(testPoint) != ContainmentType.Disjoint)
+                if (path.BoundingBox.Contains(testPoint) == ContainmentType.Disjoint)
                 {
-                    foreach (var graphNode in path.Head.Edges)
+                    continue;
+                }
+                foreach (var graphNode in path.Head.Edges)
+                {
+                    if (graphNode.Value <= 0)
                     {
-                        if (graphNode.Value > 0)
-                        {
-                            var currentSlice = GetRiverData(x, z, graphNode.Key, path.Head, path);
-                            if (currentSlice != null &&(slice == null || currentSlice.Position.Y < slice.Position.Y))
-                            {
-                                slice = currentSlice;
-                            }
-                        }
+                        continue;
+                    }
+                    var currentSlice = GetRiverData(x, z, graphNode.Key, path.Head, path);
+                    if (currentSlice != null &&(slice == null || currentSlice.Position.Y < slice.Position.Y))
+                    {
+                        slice = currentSlice;
                     }
                 }
             }
             return slice;
         }
 
-        private PathData GetRiverData(int x, int z, PathGraphNode currentNode, PathGraphNode lastNode, PathNodeList path)
+        private PathData GetRiverData(int x, int z, PathGraphNode nextNode, PathGraphNode lastNode, PathNodeList path)
         {
-            var testPoint = new Vector3(x, 0, z);
-            var lastNodePos = new Vector3(lastNode.Position.X, 0, lastNode.Position.Z);
-            var currentNodePos = new Vector3(currentNode.Position.X, 0, currentNode.Position.Z);
-            var distance = MathUtilities.DistanceFromPointToLineSegment(testPoint, lastNodePos, currentNodePos);
-            var pathLeg = path.GetPathLeg(lastNode, currentNode);
-            var sliceIndex = (int)((Vector3.DistanceSquared(lastNodePos, testPoint) - distance * distance) / Vector3.DistanceSquared(lastNodePos, currentNodePos) * pathLeg.Count);
-            if (sliceIndex < pathLeg.Count)
+            var testPoint = new Vector2(x, z);
+            var lastNodePos = new Vector2(lastNode.Position.X, lastNode.Position.Z);
+            var nextNodePos = new Vector2(nextNode.Position.X, nextNode.Position.Z);
+            var distance = MathUtilities.DistanceFromPointToLineSegment(testPoint, lastNodePos, nextNodePos);
+            var pathLeg = path.GetPathLeg(lastNode, nextNode);
+            var distSquared = Vector2.DistanceSquared(lastNodePos, testPoint) - distance*distance;
+            if (distSquared >= 0)
             {
-                var pathSlice = pathLeg[sliceIndex];
-                if (distance <= pathSlice.Radius)
+                var dist = Math.Sqrt(distSquared);
+                var ratio = dist/Vector2.Distance(lastNodePos, nextNodePos);
+                var sliceIndex = (int) (ratio*pathLeg.Count);
+                if (sliceIndex < pathLeg.Count)
                 {
-                    return pathSlice;
+                    var pathSlice = pathLeg[sliceIndex];
+                    if (distance <= pathSlice.Radius)
+                    {
+                        return pathSlice;
+                    }
                 }
             }
             PathData slice = null;
-            foreach (var graphNode in currentNode.Edges)
+            foreach (var graphNode in nextNode.Edges)
             {
-                if (graphNode.Value > 0)
+                if (graphNode.Value <= 0)
                 {
-                    var currentSlice = GetRiverData(x, z, graphNode.Key, currentNode, path);
-                    if (currentSlice != null && (slice == null || currentSlice.Position.Y < slice.Position.Y))
-                    {
-                        slice = currentSlice;
-                    }
+                    continue;
+                }
+                var currentSlice = GetRiverData(x, z, graphNode.Key, nextNode, path);
+                if (currentSlice != null && (slice == null || currentSlice.Position.Y < slice.Position.Y))
+                {
+                    slice = currentSlice;
                 }
             }
             return slice;
@@ -381,7 +390,10 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
             {
                 Radius = radius;
                 Position = new Vector3(x, CalculateHeight(x, z, w, gradient, getHeightFunction, previousHeight), z);
-                Id = ++s_nextUid;
+                lock (this)
+                {
+                    Id = ++s_nextUid;
+                }
             }
 
             private int CalculateHeight(int x, int z, int w, Vector2 gradient, GetHeight getHeightFunction, int previousHeight)
@@ -397,8 +409,10 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
 
                 var height0 = getHeightFunction(samplePoint0.X, samplePoint0.Y, w);
                 var height1 = getHeightFunction(samplePoint1.X, samplePoint1.Y, w);
+                var heightM = getHeightFunction(x, z, w);
 
                 var nodeHeight = (int)(height0 < height1 ? height0 : height1);
+                nodeHeight = (int) (heightM < nodeHeight ? heightM : nodeHeight);
                 return nodeHeight < previousHeight ? nodeHeight : previousHeight;
             }
 
