@@ -14,14 +14,12 @@ namespace _4DMonoEngine.Core.Processors
         public delegate VertexBuilderTarget GetTarget(int x, int y, int z);
         public const byte MaxSun = 255;
         public const byte MinLight = 17;
-        private const float SDropoff = 0.8f;
+        private const float SDropoff = 0.84f;
         private readonly Queue<LightQueueContainer>[] m_lightQueuesToAdd;
         private readonly Queue<LightQueueContainer>[] m_lightQueuesToRemove;
         private readonly T[] m_blockSource;
         private readonly MappingFunction m_mappingFunction;
         private readonly int m_chunkSize;
-        private readonly Dictionary<int, float>[] m_queuedValuesByChannel;
-        private readonly Dictionary<int, float>[] m_queuedDeletesByChannel;
         private readonly GetTarget m_getTarget;
         private readonly Channel[] m_channels;
 
@@ -43,14 +41,10 @@ namespace _4DMonoEngine.Core.Processors
             m_channels = new []{Channel.Sun, Channel.Red, Channel.Blue, Channel.Green};
             m_lightQueuesToAdd = new Queue<LightQueueContainer>[count];
             m_lightQueuesToRemove = new Queue<LightQueueContainer>[count];
-            m_queuedValuesByChannel = new Dictionary<int, float>[count];
-            m_queuedDeletesByChannel = new Dictionary<int, float>[count];
             for (var i = 0; i < count; i++)
             {
                 m_lightQueuesToAdd[i] = new Queue<LightQueueContainer>();
                 m_lightQueuesToRemove[i] = new Queue<LightQueueContainer>();
-                m_queuedValuesByChannel[i] = new Dictionary<int, float>();
-                m_queuedDeletesByChannel[i] = new Dictionary<int, float>();
             }
             m_getTarget = getTarget;
         }
@@ -127,42 +121,6 @@ namespace _4DMonoEngine.Core.Processors
         private Queue<LightQueueContainer> GetRemoveQueueForChannel(Channel channel)
         {
             return m_lightQueuesToRemove[(int)channel];
-        }
-
-        private void SetQueuedLightLevel(Channel channel, int index, float value)
-        {
-            var dict = m_queuedValuesByChannel[(int)channel];
-            dict[index] = value;
-        }
-
-        private float GetQueuedLightLevel(Channel channel, int index)
-        {
-            var dict = m_queuedValuesByChannel[(int)channel];
-            return dict.ContainsKey(index) ? dict[index] : 0;
-        }
-
-        private void RemoveQueuedLightLevel(Channel channel, int index)
-        {
-            var dict = m_queuedValuesByChannel[(int)channel];
-            dict.Remove(index);
-        }
-
-        private void SetQueuedDelete(Channel channel, int index, float value)
-        {
-            var dict = m_queuedValuesByChannel[(int)channel];
-            dict[index] = value;
-        }
-
-        private float GetQueuedDelete(Channel channel, int index)
-        {
-            var dict = m_queuedValuesByChannel[(int)channel];
-            return dict.ContainsKey(index) ? dict[index] : 0;
-        }
-
-        private void RemoveQueuedDelete(Channel channel, int index)
-        {
-            var dict = m_queuedValuesByChannel[(int)channel];
-            dict.Remove(index);
         }
 
         internal void Process(int chunkIndexX, int chunkIndexY, int chunkIndexZ, SparseArray3D<Vector3Byte> lights)
@@ -333,7 +291,7 @@ namespace _4DMonoEngine.Core.Processors
         {
             var incomingSunLight = GetChannel(blockIndex, channel);
             var container = new LightQueueContainer(x, y, z, incomingSunLight);
-            EnqueueClear(container, channel, m_mappingFunction(x, y, z));
+            EnqueueClear(container, channel);
             ClearCellsAndAddBoundries(channel);
         }
 
@@ -346,16 +304,8 @@ namespace _4DMonoEngine.Core.Processors
                 var x = container.X;
                 var y = container.Y;
                 var z = container.Z;
-                var target = m_getTarget(x, y, z);
-                if (target == null)
-                {
-                    continue;
-                }
-                target.SetDirty(x, y, z);
                 var blockIndex = m_mappingFunction(x, y, z);
-                RemoveQueuedDelete(channel, blockIndex);
                 var propogate = false;
-               // var isSource = false;
                 var light = container.Light;
                 var opacity = m_blockSource[blockIndex].Opacity;
                 if (opacity >= 1)
@@ -367,10 +317,6 @@ namespace _4DMonoEngine.Core.Processors
                     propogate = true;
                     SetChannel(blockIndex, channel, channel == Channel.Sun ? MinLight : (byte)0);
                 }
-               /* else
-                {
-                    isSource = true;
-                }*/
 
                 if (propogate)
                 {
@@ -385,10 +331,6 @@ namespace _4DMonoEngine.Core.Processors
                     ConditionallyClear(x, y + 1, z, channel, light);
                     ConditionallyClear(x, y - 1, z, channel, light, channel == Channel.Sun);
                }
-                /*if (isSource)
-                {
-                    EnqueueLight(new LightQueueContainer(x, y, z, GetChannel(blockIndex, channel)), channel, blockIndex);
-                }*/
             }
         }
 
@@ -400,23 +342,27 @@ namespace _4DMonoEngine.Core.Processors
             {
                 return;
             }
+            var target = m_getTarget(x, y, z);
+            if (target == null) //we wrapped around!
+            {
+                return;
+            }
+            target.SetDirty(x, y, z);
             var testLight = incomingLight;
-            /*if (!lightDown || incomingLight < MaxSun || opacity > 0)
+           /* if (!lightDown || incomingLight < MaxSun || opacity > 0)
             {
                 testLight = incomingLight * (1 - opacity) * SDropoff;
             }*/
             var nextCellLight = GetChannel(blockIndex, channel);
-            if (nextCellLight < MinLight || nextCellLight > testLight || GetQueuedDelete(channel, blockIndex) > testLight)
+            if (nextCellLight > MinLight && GetChannel(blockIndex, channel) - testLight >= (255 * SDropoff))
             {
-                return;
+                EnqueueClear(new LightQueueContainer(x, y, z, incomingLight, lightDown), channel);
             }
-            EnqueueClear(new LightQueueContainer(x, y, z, incomingLight, lightDown), channel, blockIndex);
         }
 
-        private void EnqueueClear(LightQueueContainer container, Channel channel, int blockIndex)
+        private void EnqueueClear(LightQueueContainer container, Channel channel)
         {
             GetRemoveQueueForChannel(channel).Enqueue(container);
-            SetQueuedDelete(channel, blockIndex, container.Light);
         }
 
         private void PropogateFromLight(int x, int y, int z, Vector3Byte currentLight)
@@ -429,13 +375,12 @@ namespace _4DMonoEngine.Core.Processors
         private void PropogateFromLight(int x, int y, int z, Channel channel, byte incomingLight, bool down = false)
         {
             var container = new LightQueueContainer(x, y, z, incomingLight, down);
-            EnqueueLight(container, channel, m_mappingFunction(x, y, z));
+            EnqueueLight(container, channel);
         }
 
-        private void EnqueueLight(LightQueueContainer container, Channel channel, int blockIndex)
+        private void EnqueueLight(LightQueueContainer container, Channel channel)
         {
             GetAddQueueForChannel(channel).Enqueue(container);
-            SetQueuedLightLevel(channel, blockIndex, container.Light);
         }
 
         private void PropogateFromSources()
@@ -457,12 +402,6 @@ namespace _4DMonoEngine.Core.Processors
                 var z = container.Z;
                 var blockIndex = m_mappingFunction(x, y, z);
                 var target = m_getTarget(x, y, z);
-                if (target == null) //we wrapped around!
-                {
-                    continue;
-                }
-                target.SetDirty(x, y, z);
-                RemoveQueuedLightLevel(channel, blockIndex);
                 var opacity = m_blockSource[blockIndex].Opacity;
                 if (opacity >= 1)
                 {
@@ -495,6 +434,7 @@ namespace _4DMonoEngine.Core.Processors
             }
         }
 
+
         private void ConditionallyPropogate(int x, int y, int z, Channel channel, float incomingLight, bool lightDown = false)
         {
             var blockIndex = m_mappingFunction(x, y, z);
@@ -503,16 +443,16 @@ namespace _4DMonoEngine.Core.Processors
             {
                 return;
             }
-            var testLight = incomingLight;
-            if (!lightDown || incomingLight < MaxSun || opacity > 0)
-            {
-                testLight = incomingLight * (1 - opacity) * SDropoff;
-            }
-            if (GetChannel(blockIndex, channel) > testLight || GetQueuedLightLevel(channel, blockIndex) > testLight)
+            var target = m_getTarget(x, y, z);
+            if (target == null) //we wrapped around!
             {
                 return;
             }
-            EnqueueLight(new LightQueueContainer(x, y, z, incomingLight, lightDown), channel, blockIndex);
+            target.SetDirty(x, y, z);
+            if (incomingLight - GetChannel(blockIndex, channel) >= (255 * (1 - SDropoff)))
+            {
+                EnqueueLight(new LightQueueContainer(x, y, z, incomingLight, lightDown), channel);
+            }
         }
 
         private struct LightQueueContainer
