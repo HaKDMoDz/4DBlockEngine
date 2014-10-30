@@ -15,14 +15,12 @@ namespace _4DMonoEngine.Core.Debugging.Ingame
         private readonly Camera m_camera;
         private bool m_active;
 
-        private readonly List<WeakReference<IInGameDebuggable>> m_debugList;
-        private readonly ConcurrentQueue<IInGameDebuggable>  m_debugQueue; 
+        private readonly List<WeakReference<IInGameDebuggable>> m_debugList; 
 
         public InGameDebugger(Game game, Camera camera)
             : base(game)
         {
             m_debugList = new List<WeakReference<IInGameDebuggable>>();
-            m_debugQueue = new ConcurrentQueue<IInGameDebuggable>();
             m_camera = camera;
         }
 
@@ -34,41 +32,40 @@ namespace _4DMonoEngine.Core.Debugging.Ingame
 
         public override void Draw(GameTime gameTime)
         {
-           
-                IInGameDebuggable tryReference;
-                while (m_debugQueue.TryDequeue(out tryReference))
-                {
-                    foreach (var weakReference in m_debugList)
-                    {
-                        IInGameDebuggable outDebug;
-                        if (!weakReference.TryGetTarget(out outDebug))
-                        {
-                            weakReference.SetTarget(tryReference);
-                            goto Continue;
-                        }
-                    }
-                    m_debugList.Add(new WeakReference<IInGameDebuggable>(tryReference));
-                Continue:
-                    ;
-                }
             if (m_active)
             {
-                m_spriteBatch.Begin();
-                foreach (var weakReference in m_debugList)
+                lock (m_debugList)
                 {
-                    IInGameDebuggable debuggable;
-                    if (weakReference.TryGetTarget(out debuggable))
+                    m_spriteBatch.Begin();
+                    foreach (var weakReference in m_debugList)
                     {
-                        debuggable.DrawInGameDebugVisual(Game.GraphicsDevice, m_camera, m_spriteBatch, m_spriteFont);
+                        IInGameDebuggable debuggable;
+                        if (weakReference.TryGetTarget(out debuggable))
+                        {
+                            debuggable.DrawInGameDebugVisual(Game.GraphicsDevice, m_camera, m_spriteBatch, m_spriteFont);
+                        }
                     }
+                    m_spriteBatch.End();
                 }
-                m_spriteBatch.End();
             }
         }
 
         public void RegisterInGameDebuggable(IInGameDebuggable debuggable)
         {
-            m_debugQueue.Enqueue(debuggable);
+            lock (m_debugList)
+            {
+                foreach (var weakReference in m_debugList)
+                {
+                    IInGameDebuggable outDebug;
+                    if (weakReference.TryGetTarget(out outDebug))
+                    {
+                        continue;
+                    }
+                    weakReference.SetTarget(debuggable);
+                    return;
+                }
+                m_debugList.Add(new WeakReference<IInGameDebuggable>(debuggable));
+            }
         }
 
         public void ToggleInGameDebugger()

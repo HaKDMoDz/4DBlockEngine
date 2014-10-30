@@ -126,7 +126,7 @@ namespace _4DMonoEngine.Core.Processors
         internal void Process(int chunkIndexX, int chunkIndexY, int chunkIndexZ, SparseArray3D<Vector3Byte> lights)
         {
             GetLightsOnShell(chunkIndexX, chunkIndexY, chunkIndexZ,lights);
-            PropogateFromSources();
+            PropogateFromSources(m_getTarget(chunkIndexX, chunkIndexY, chunkIndexZ));
         }
 
         private void GetLightsOnShell(int chunkIndexX, int chunkIndexY, int chunkIndexZ, SparseArray3D<Vector3Byte> lights)
@@ -246,7 +246,7 @@ namespace _4DMonoEngine.Core.Processors
             {
                 PropogateFromLight(x, y, z, Channel.Blue, light.Z);
             }
-            PropogateFromSources();
+            PropogateFromSources(m_getTarget(x, y, z));
         }
 
         public void AddLight(SparseArray3D<Vector3Byte> lights, Vector3Int position, Vector3Byte light)
@@ -262,7 +262,7 @@ namespace _4DMonoEngine.Core.Processors
             }
             lights.Remove(x, y, z);
             ClearLightChannelsFromCell(x, y, z);
-            PropogateFromSources();
+            PropogateFromSources(m_getTarget(x, y, z));
         }
 
         public void RemoveLight(SparseArray3D<Vector3Byte> lights, Vector3Int position)
@@ -292,10 +292,10 @@ namespace _4DMonoEngine.Core.Processors
             var incomingSunLight = GetChannel(blockIndex, channel);
             var container = new LightQueueContainer(x, y, z, incomingSunLight);
             EnqueueClear(container, channel);
-            ClearCellsAndAddBoundries(channel);
+            ClearCellsAndAddBoundries(m_getTarget(x, y, z), channel);
         }
 
-        private void ClearCellsAndAddBoundries(Channel channel)
+        private void ClearCellsAndAddBoundries(VertexBuilderTarget sourceTarget, Channel channel)
         {
             var lightQueueToRemove = GetRemoveQueueForChannel(channel);
             while (lightQueueToRemove.Count > 0)
@@ -324,37 +324,36 @@ namespace _4DMonoEngine.Core.Processors
                     {
                         light = light * (1 - opacity) * SDropoff;
                     }
-                    ConditionallyClear(x + 1, y, z, channel, light);
-                    ConditionallyClear(x - 1, y, z, channel, light);
-                    ConditionallyClear(x, y, z + 1, channel, light);
-                    ConditionallyClear(x, y, z - 1, channel, light);
-                    ConditionallyClear(x, y + 1, z, channel, light);
-                    ConditionallyClear(x, y - 1, z, channel, light, channel == Channel.Sun);
+                    ConditionallyClear(sourceTarget, x + 1, y, z, channel, light);
+                    ConditionallyClear(sourceTarget, x - 1, y, z, channel, light);
+                    ConditionallyClear(sourceTarget, x, y, z + 1, channel, light);
+                    ConditionallyClear(sourceTarget, x, y, z - 1, channel, light);
+                    ConditionallyClear(sourceTarget, x, y + 1, z, channel, light);
+                    ConditionallyClear(sourceTarget, x, y - 1, z, channel, light, channel == Channel.Sun);
                }
             }
         }
 
-        private void ConditionallyClear(int x, int y, int z, Channel channel, float incomingLight, bool lightDown = false)
+        private void ConditionallyClear(VertexBuilderTarget sourceTarget, int x, int y, int z, Channel channel, float incomingLight, bool lightDown = false)
         {
+            var target = m_getTarget(x, y, z);
+            if (target == null) //we wrapped around!
+            {
+                return;
+            }
+            if (target != sourceTarget)
+            {
+                target.SetLightingDirty(x, y, z);
+                return;
+            }
             var blockIndex = m_mappingFunction(x, y, z);
             var opacity = m_blockSource[blockIndex].Opacity;
             if (opacity >= 1 && incomingLight > MinLight)
             {
                 return;
             }
-            var target = m_getTarget(x, y, z);
-            if (target == null) //we wrapped around!
-            {
-                return;
-            }
-            target.SetDirty(x, y, z);
-            var testLight = incomingLight;
-           /* if (!lightDown || incomingLight < MaxSun || opacity > 0)
-            {
-                testLight = incomingLight * (1 - opacity) * SDropoff;
-            }*/
             var nextCellLight = GetChannel(blockIndex, channel);
-            if (nextCellLight > MinLight && GetChannel(blockIndex, channel) - testLight >= (255 * SDropoff))
+            if (nextCellLight > MinLight && nextCellLight > (byte)incomingLight)
             {
                 EnqueueClear(new LightQueueContainer(x, y, z, incomingLight, lightDown), channel);
             }
@@ -383,15 +382,15 @@ namespace _4DMonoEngine.Core.Processors
             GetAddQueueForChannel(channel).Enqueue(container);
         }
 
-        private void PropogateFromSources()
+        private void PropogateFromSources(VertexBuilderTarget sourceTarget)
         {
-            PropogateFromSource(Channel.Sun);
-            PropogateFromSource(Channel.Red);
-            PropogateFromSource(Channel.Green);
-            PropogateFromSource(Channel.Blue);
+            PropogateFromSource(sourceTarget, Channel.Sun);
+            PropogateFromSource(sourceTarget, Channel.Red);
+            PropogateFromSource(sourceTarget, Channel.Green);
+            PropogateFromSource(sourceTarget, Channel.Blue);
         }
 
-        private void PropogateFromSource(Channel channel)
+        private void PropogateFromSource(VertexBuilderTarget sourceTarget, Channel channel)
         {
             var sources = GetAddQueueForChannel(channel);
             while (sources.Count > 0)
@@ -401,7 +400,6 @@ namespace _4DMonoEngine.Core.Processors
                 var y = container.Y;
                 var z = container.Z;
                 var blockIndex = m_mappingFunction(x, y, z);
-                var target = m_getTarget(x, y, z);
                 var opacity = m_blockSource[blockIndex].Opacity;
                 if (opacity >= 1)
                 {
@@ -415,7 +413,7 @@ namespace _4DMonoEngine.Core.Processors
                 {
                     light = light * (1 - opacity) * SDropoff;
                 }
-                if (light <= currentLight)
+                if ((byte)light <= currentLight)
                 {
                     continue;
                 }
@@ -425,32 +423,35 @@ namespace _4DMonoEngine.Core.Processors
                     continue;
                 }
                 SetChannel(blockIndex, channel, (byte)light);
-                ConditionallyPropogate(x + 1, y, z, channel, light);
-                ConditionallyPropogate(x - 1, y, z, channel, light);
-                ConditionallyPropogate(x, y, z + 1, channel, light);
-                ConditionallyPropogate(x, y, z - 1, channel, light);
-                ConditionallyPropogate(x, y + 1, z, channel, light);
-                ConditionallyPropogate(x, y - 1, z, channel, light, channel == Channel.Sun);
+                ConditionallyPropogate(sourceTarget, x + 1, y, z, channel, light);
+                ConditionallyPropogate(sourceTarget, x - 1, y, z, channel, light);
+                ConditionallyPropogate(sourceTarget, x, y, z + 1, channel, light);
+                ConditionallyPropogate(sourceTarget, x, y, z - 1, channel, light);
+                ConditionallyPropogate(sourceTarget, x, y + 1, z, channel, light);
+                ConditionallyPropogate(sourceTarget, x, y - 1, z, channel, light, channel == Channel.Sun);
             }
         }
 
 
-        private void ConditionallyPropogate(int x, int y, int z, Channel channel, float incomingLight, bool lightDown = false)
+        private void ConditionallyPropogate(VertexBuilderTarget sourceTarget, int x, int y, int z, Channel channel, float incomingLight, bool lightDown = false)
         {
             var blockIndex = m_mappingFunction(x, y, z);
-            var opacity = m_blockSource[blockIndex].Opacity;
-            if (opacity >= 1)
+            if ((byte)incomingLight > GetChannel(blockIndex, channel))
             {
-                return;
-            }
-            var target = m_getTarget(x, y, z);
-            if (target == null) //we wrapped around!
-            {
-                return;
-            }
-            target.SetDirty(x, y, z);
-            if (incomingLight - GetChannel(blockIndex, channel) >= (255 * (1 - SDropoff)))
-            {
+                var target = m_getTarget(x, y, z);
+                if (target == null) //we wrapped around!
+                {
+                    return;
+                }
+                if (target != sourceTarget)
+                {
+                    target.SetMeshDirty(x, y, z);
+                }
+                var opacity = m_blockSource[blockIndex].Opacity;
+                if (opacity >= 1)
+                {
+                    return;
+                }
                 EnqueueLight(new LightQueueContainer(x, y, z, incomingLight, lightDown), channel);
             }
         }

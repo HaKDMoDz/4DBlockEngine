@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.Xna.Framework;
-using _4DMonoEngine.Core.Common.Extensions;
 using _4DMonoEngine.Core.Utils;
 using _4DMonoEngine.Core.Utils.Noise;
 using _4DMonoEngine.Core.Utils.Random;
@@ -16,7 +15,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
     {
         protected static float RiverEndMaxHeight = 64;
         protected static float RiversStartMinHeight = 92;
-        protected const float PathCellNoiseScale = 16f;
+        protected const float PathCellNoiseScale = 32;
         private const int SkipCount = 4;
 
         private readonly CellNoise2D m_cellNoise;

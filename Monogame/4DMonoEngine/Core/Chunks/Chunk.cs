@@ -131,7 +131,7 @@ namespace _4DMonoEngine.Core.Chunks
             {
                 BoundingBox.Min.Y = blockPositionY;
             }
-            SetDirty(blockPositionX, blockPositionY, blockPositionZ);
+            SetLightingDirty(blockPositionX, blockPositionY, blockPositionZ);
         }
 
         public void RemoveBlock(int blockPositionX, int blockPositionZ, int blockPositionY)
@@ -143,7 +143,7 @@ namespace _4DMonoEngine.Core.Chunks
                 //When we do a remove we can't take a shortcut. Luckily only removals on the shell will change the bounding box
                 UpdateBoundingBox();
             }
-            SetDirty(blockPositionX, blockPositionY, blockPositionZ);
+            SetLightingDirty(blockPositionX, blockPositionY, blockPositionZ);
         }
 
         public void UpdateBoundingBox()
@@ -233,7 +233,24 @@ namespace _4DMonoEngine.Core.Chunks
             return string.Format("{0} {1}", ChunkCachePosition, ChunkState);
         }
 
-        public override void SetDirty(int x, int y, int z)
+        public override void SetLightingDirty(int x, int y, int z)
+        {
+            if (ChunkState == ChunkState.Ready || ChunkState == ChunkState.AwaitingBuild)
+            {
+                ChunkState = ChunkState.AwaitingLighting;
+            }
+            /*var edgesBlockIsIn = GetChunkEdgesBlockIsIn(x, y, z);
+            foreach (var edge in edgesBlockIsIn)
+            {
+                var neighborChunk = m_getNeighborChunk(this, edge);
+                if (neighborChunk != null && (neighborChunk.ChunkState == ChunkState.Ready || ChunkState == ChunkState.AwaitingBuild))
+                {
+                    neighborChunk.ChunkState = ChunkState.AwaitingLighting;
+                }
+            }*/
+        }
+
+        public override void SetMeshDirty(int x, int y, int z)
         {
             if (ChunkState == ChunkState.Ready)
             {

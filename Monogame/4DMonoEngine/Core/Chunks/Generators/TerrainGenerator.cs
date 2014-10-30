@@ -96,7 +96,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
                         var cY = chunkY + y;
                         Block block;
 
-					    if (cY > groundLevel + 10)
+                        if (cY > groundLevel + 10)// && cX >= 11 && cX < 13 && cZ >= 71 && cZ < 73)
 					    {
 					        block = new Block(Block.None) {LightSun = CellularLighting<Block>.MaxSun}; //MinLight };
 					    }

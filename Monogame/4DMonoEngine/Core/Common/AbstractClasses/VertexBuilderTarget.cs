@@ -15,7 +15,8 @@ namespace _4DMonoEngine.Core.Common.AbstractClasses
         public readonly List<BlockVertex> VertexList;
         public readonly List<short> IndexList;
         public short Index;
-        public abstract void SetDirty(int x, int y, int z);
+        public abstract void SetLightingDirty(int x, int y, int z);
+        public abstract void SetMeshDirty(int x, int y, int z);
 
         protected VertexBuilderTarget()
         {
