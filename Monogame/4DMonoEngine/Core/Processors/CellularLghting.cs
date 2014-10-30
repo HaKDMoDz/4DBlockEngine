@@ -305,56 +305,46 @@ namespace _4DMonoEngine.Core.Processors
                 var y = container.Y;
                 var z = container.Z;
                 var blockIndex = m_mappingFunction(x, y, z);
-                var propogate = false;
                 var light = container.Light;
-                var opacity = m_blockSource[blockIndex].Opacity;
-                if (opacity >= 1)
+                var currentLight = GetChannel(blockIndex, channel);
+                if ((byte) light < currentLight)
                 {
                     continue;
                 }
-                if (light >= GetChannel(blockIndex, channel) || (container.PropogateDown && light >= Chunk.MaxSunValue))
+                SetChannel(blockIndex, channel, channel == Channel.Sun ? MinLight : (byte)0);
+                light = currentLight;
+                if ((byte)light < MinLight)
                 {
-                    propogate = true;
-                    SetChannel(blockIndex, channel, channel == Channel.Sun ? MinLight : (byte)0);
+                    continue;
                 }
-
-                if (propogate)
-                {
-                    if (!container.PropogateDown || light < MaxSun || opacity > 0)
-                    {
-                        light = light * (1 - opacity) * SDropoff;
-                    }
-                    ConditionallyClear(sourceTarget, x + 1, y, z, channel, light);
-                    ConditionallyClear(sourceTarget, x - 1, y, z, channel, light);
-                    ConditionallyClear(sourceTarget, x, y, z + 1, channel, light);
-                    ConditionallyClear(sourceTarget, x, y, z - 1, channel, light);
-                    ConditionallyClear(sourceTarget, x, y + 1, z, channel, light);
-                    ConditionallyClear(sourceTarget, x, y - 1, z, channel, light, channel == Channel.Sun);
-               }
+                ConditionallyClear(sourceTarget, x + 1, y, z, channel, light);
+                ConditionallyClear(sourceTarget, x - 1, y, z, channel, light);
+                ConditionallyClear(sourceTarget, x, y, z + 1, channel, light);
+                ConditionallyClear(sourceTarget, x, y, z - 1, channel, light);
+                ConditionallyClear(sourceTarget, x, y + 1, z, channel, light);
+                ConditionallyClear(sourceTarget, x, y - 1, z, channel, light, channel == Channel.Sun);
             }
         }
 
         private void ConditionallyClear(VertexBuilderTarget sourceTarget, int x, int y, int z, Channel channel, float incomingLight, bool lightDown = false)
         {
-            var target = m_getTarget(x, y, z);
-            if (target == null) //we wrapped around!
-            {
-                return;
-            }
-            if (target != sourceTarget)
-            {
-                target.SetLightingDirty(x, y, z);
-                return;
-            }
             var blockIndex = m_mappingFunction(x, y, z);
-            var opacity = m_blockSource[blockIndex].Opacity;
-            if (opacity >= 1 && incomingLight > MinLight)
+            if (GetChannel(blockIndex, channel) <  (byte)incomingLight)
             {
-                return;
-            }
-            var nextCellLight = GetChannel(blockIndex, channel);
-            if (nextCellLight > MinLight && nextCellLight > (byte)incomingLight)
-            {
+                var target = m_getTarget(x, y, z);
+                if (target == null) //we wrapped around!
+                {
+                    return;
+                }
+                if (target != sourceTarget)
+                {
+                    target.SetMeshDirty(x, y, z);
+                }
+                var opacity = m_blockSource[blockIndex].Opacity;
+                if (opacity >= 1)
+                {
+                    return;
+                }
                 EnqueueClear(new LightQueueContainer(x, y, z, incomingLight, lightDown), channel);
             }
         }
@@ -400,29 +390,21 @@ namespace _4DMonoEngine.Core.Processors
                 var y = container.Y;
                 var z = container.Z;
                 var blockIndex = m_mappingFunction(x, y, z);
-                var opacity = m_blockSource[blockIndex].Opacity;
-                if (opacity >= 1)
+                var light = container.Light;
+                if ((byte)light <= GetChannel(blockIndex, channel))
                 {
-                    //TODO : replace this with a check for a light emission level from the block dictionary
-                    SetChannel(blockIndex, channel, 0);
                     continue;
                 }
-                var light = container.Light;
-                var currentLight = GetChannel(blockIndex, channel);
+                SetChannel(blockIndex, channel, (byte)light);
+                var opacity = m_blockSource[blockIndex].Opacity;
                 if (!container.PropogateDown || light < MaxSun || opacity > 0)
                 {
                     light = light * (1 - opacity) * SDropoff;
                 }
-                if ((byte)light <= currentLight)
+                if ((byte)light <= MinLight)
                 {
                     continue;
                 }
-                if (light <= MinLight)
-                {
-                    SetChannel(blockIndex, channel, MinLight);
-                    continue;
-                }
-                SetChannel(blockIndex, channel, (byte)light);
                 ConditionallyPropogate(sourceTarget, x + 1, y, z, channel, light);
                 ConditionallyPropogate(sourceTarget, x - 1, y, z, channel, light);
                 ConditionallyPropogate(sourceTarget, x, y, z + 1, channel, light);

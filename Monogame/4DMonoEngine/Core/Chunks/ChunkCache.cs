@@ -170,13 +170,13 @@ namespace _4DMonoEngine.Core.Chunks
             }
         }
 
-      //  private bool add = true;
-      //  private int count = 0;
+        private bool add = true;
+        private int count = 0;
         public override void Update(GameTime gameTime)
         {
-         /*   if (m_startUpState == StartUpState.Started)
+            if (m_startUpState == StartUpState.Started)
             {
-                if (count++ > 1000 && m_EditQueue.Count == 0)
+                if (count++ > 100 && m_EditQueue.Count == 0)
                 {
                     count = 0;
                     if (add)
@@ -190,7 +190,7 @@ namespace _4DMonoEngine.Core.Chunks
                     add = !add;
                     m_cachePositionUpdated = true;
                 }
-            }*/
+            }
             if (m_startUpState != StartUpState.AwaitingStart)
             {
                 return;
