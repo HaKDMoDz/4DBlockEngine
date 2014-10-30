@@ -167,12 +167,11 @@ namespace _4DMonoEngine.Core.Processors
             {
                 PropogateFromLight(x, y, z, Channel.Blue, (byte) currentLight.Z);
             }
-            if (currentLight.W <= block.LightSun)
+            if (currentLight.W > block.LightSun)
             {
-                return;
+                var down = m_blockSource[m_mappingFunction(x, y + 1, z)].LightSun >= (byte) currentLight.W;
+                PropogateFromLight(x, y, z, Channel.Sun, (byte) currentLight.W, down);
             }
-            var down = m_blockSource[m_mappingFunction(x, y + 1, z)].LightSun >= (byte) currentLight.W;
-            PropogateFromLight(x, y, z, Channel.Sun, (byte) currentLight.W, down);
         }
 
         public void AddBlock(int x, int y, int z)
@@ -198,16 +197,16 @@ namespace _4DMonoEngine.Core.Processors
             MaxLight(x, y, z + 1, ref currentLight);
             MaxLight(x, y, z - 1, ref currentLight);
             MaxLight(x, y + 1, z, ref currentLight);
-            MaxLight(x, y - 1, z, ref currentLight);
+            MaxLight(x, y - 1, z, ref currentLight, true);
         }
 
-        private void MaxLight(int x, int y, int z, ref Vector4 currentLight)
+        private void MaxLight(int x, int y, int z, ref Vector4 currentLight, bool down = false)
         {
             var blockIndex = m_mappingFunction(x, y, z);
-            var lightRed = m_blockSource[blockIndex].LightRed;
-            var lightGreen = m_blockSource[blockIndex].LightGreen;
-            var lightBlue = m_blockSource[blockIndex].LightBlue;
-            var lightSun = m_blockSource[blockIndex].LightSun;
+            var lightRed = CalculateDropOff(m_blockSource[blockIndex].LightRed, blockIndex);
+            var lightGreen = CalculateDropOff(m_blockSource[blockIndex].LightGreen, blockIndex);
+            var lightBlue = CalculateDropOff(m_blockSource[blockIndex].LightBlue, blockIndex);
+            var lightSun = CalculateDropOff(m_blockSource[blockIndex].LightSun, blockIndex, down);
             if (currentLight.X < lightRed)
             {
                 currentLight.X = lightRed;
@@ -224,6 +223,16 @@ namespace _4DMonoEngine.Core.Processors
             {
                 currentLight.W = lightSun;
             }
+        }
+
+        private float CalculateDropOff(float light, int blockIndex, bool down = false)
+        {
+            var opacity = m_blockSource[blockIndex].Opacity;
+            if (!down || light < MaxSun || opacity > 0)
+            {
+                light = light * (1 - opacity) * SDropoff;
+            }
+            return light;
         }
 
         public void AddLight(SparseArray3D<Vector3Byte> lights, int x, int y, int z, Vector3Byte light)
@@ -396,11 +405,7 @@ namespace _4DMonoEngine.Core.Processors
                     continue;
                 }
                 SetChannel(blockIndex, channel, (byte)light);
-                var opacity = m_blockSource[blockIndex].Opacity;
-                if (!container.PropogateDown || light < MaxSun || opacity > 0)
-                {
-                    light = light * (1 - opacity) * SDropoff;
-                }
+                light = CalculateDropOff(light, blockIndex, down);
                 if ((byte)light <= MinLight)
                 {
                     continue;

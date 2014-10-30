@@ -32,8 +32,8 @@ namespace _4DMonoEngine.Core.Universe
         private const uint Left = 16;
         private const Keys LeftKey = Keys.A;
         private readonly Block[] m_blocks;
-        private readonly HashSet<string> m_eventsHandled;
         private readonly EventSource m_eventSourceImpl;
+        private readonly EventSinkImpl m_eventSinkImpl;
         private Vector3 m_velocity;
         private Vector3 m_lookVector;
         private Vector3 m_position;
@@ -46,6 +46,7 @@ namespace _4DMonoEngine.Core.Universe
         private readonly Action<EventArgs> m_mousePositionUpdated;
         private readonly Action<EventArgs> m_keyDown;
         private readonly Action<EventArgs> m_keyUp;
+
         private readonly MappingFunctionVector3 m_mappingFunction;
 
         public Player(Block[] blocks, MappingFunctionVector3 mappingFunction)
@@ -54,24 +55,19 @@ namespace _4DMonoEngine.Core.Universe
             m_blocks = blocks;
             m_mappingFunction = mappingFunction;
             Equipable = new Shovel();
-            m_eventsHandled = new HashSet<string>
-            {
-                EventConstants.MousePositionUpdated, 
-                EventConstants.LeftMouseDown, 
-                EventConstants.LeftMouseUp,
-                EventConstants.RightMouseDown, 
-                EventConstants.RightMouseUp,
-                EventConstants.KeyDown,
-                EventConstants.KeyUp
-            };
+            m_eventSinkImpl = new EventSinkImpl();
+            m_eventSinkImpl.AddHandler<Vector2Args>(EventConstants.MousePositionUpdated, OnMouseUpdated);
+            m_eventSinkImpl.AddHandler<KeyArgs>(EventConstants.KeyDown, OnKeyDown);
+            m_eventSinkImpl.AddHandler<KeyArgs>(EventConstants.KeyUp, OnKeyUp);
+            m_eventSinkImpl.AddHandler<MouseButtonArgs>(EventConstants.LeftMouseDown, OnLeftMouseDown);
+            m_eventSinkImpl.AddHandler<MouseButtonArgs>(EventConstants.LeftMouseUp, OnLeftMouseUp);
+            m_eventSinkImpl.AddHandler<MouseButtonArgs>(EventConstants.RightMouseDown, OnRightMouseDown);
+            m_eventSinkImpl.AddHandler<MouseButtonArgs>(EventConstants.RightMouseUp, OnRightMouseUp);
             EventsFired = new[]
             {
                 EventConstants.PlayerPositionUpdated,
                 EventConstants.ViewUpdated
             };
-            m_mousePositionUpdated = EventHelper.Wrap<Vector2Args>(OnMouseUpdated);
-            m_keyDown = EventHelper.Wrap<KeyArgs>(OnKeyDown);
-            m_keyUp = EventHelper.Wrap<KeyArgs>(OnKeyUp);
             m_eventSourceImpl = new EventSource(EventsFired, true);
         }
 
@@ -215,22 +211,12 @@ namespace _4DMonoEngine.Core.Universe
 
         public bool CanHandleEvent(string eventName)
         {
-            return m_eventsHandled.Contains(eventName);
+            return m_eventSinkImpl.CanHandleEvent(eventName);
         }
 
         public Action<EventArgs> GetHandlerForEvent(string eventName)
         {
-            switch (eventName)
-            {
-                case EventConstants.KeyDown:
-                    return m_keyDown;
-                case EventConstants.KeyUp:
-                    return m_keyUp;
-                case EventConstants.MousePositionUpdated:
-                    return m_mousePositionUpdated;
-                default:
-                    return null;
-            }
+            m_eventSinkImpl.GetHandlerForEvent(eventName);
         }
 
         private void OnMouseUpdated(Vector2Args obj)
@@ -280,6 +266,23 @@ namespace _4DMonoEngine.Core.Universe
                     m_controlBitVector |= Left;
                     break;
             }
+        }
+
+        private void  OnLeftMouseDown(MouseButtonArgs mouse)
+        {
+            Console.Out.WriteLine("Implement me!");
+        }
+        private void OnLeftMouseUp(MouseButtonArgs mouse)
+        {
+            Console.Out.WriteLine("Implement me!");
+        }
+        private void OnRightMouseDown(MouseButtonArgs mouse)
+        {
+            Console.Out.WriteLine("Implement me!");
+        }
+        private void  OnRightMouseUp(MouseButtonArgs mouse)
+        {
+            Console.Out.WriteLine("Implement me!");
         }
 
         public IEnumerable<string> EventsFired { get; private set; }

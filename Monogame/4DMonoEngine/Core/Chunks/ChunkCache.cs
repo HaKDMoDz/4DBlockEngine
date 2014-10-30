@@ -531,24 +531,12 @@ namespace _4DMonoEngine.Core.Chunks
 
         public bool CanHandleEvent(string eventName)
         {
-            switch (eventName)
-            {
-                case EventConstants.PlayerPositionUpdated:
-                    return true;
-                default:
-                    return false;
-            }
+            return m_eventSinkImpl.CanHandleEvent(eventName);
         }
 
         public Action<EventArgs> GetHandlerForEvent(string eventName)
         {
-            switch (eventName)
-            {
-                case EventConstants.PlayerPositionUpdated:
-                    return m_wrappedPositionHandler;
-                default:
-                    return null;
-            }
+            m_eventSinkImpl.GetHandlerForEvent(eventName);
         }
 
         private struct WorldEdit
