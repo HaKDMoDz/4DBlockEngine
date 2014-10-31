@@ -405,7 +405,7 @@ namespace _4DMonoEngine.Core.Processors
                     continue;
                 }
                 SetChannel(blockIndex, channel, (byte)light);
-                light = CalculateDropOff(light, blockIndex, down);
+                light = CalculateDropOff(light, blockIndex, container.PropogateDown);
                 if ((byte)light <= MinLight)
                 {
                     continue;

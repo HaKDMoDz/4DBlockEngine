@@ -43,10 +43,6 @@ namespace _4DMonoEngine.Core.Universe
         private const float Gravity = -15f;
         private const float JumpVelocity = 6f;
 
-        private readonly Action<EventArgs> m_mousePositionUpdated;
-        private readonly Action<EventArgs> m_keyDown;
-        private readonly Action<EventArgs> m_keyUp;
-
         private readonly MappingFunctionVector3 m_mappingFunction;
 
         public Player(Block[] blocks, MappingFunctionVector3 mappingFunction)
@@ -216,7 +212,7 @@ namespace _4DMonoEngine.Core.Universe
 
         public Action<EventArgs> GetHandlerForEvent(string eventName)
         {
-            m_eventSinkImpl.GetHandlerForEvent(eventName);
+            return m_eventSinkImpl.GetHandlerForEvent(eventName);
         }
 
         private void OnMouseUpdated(Vector2Args obj)

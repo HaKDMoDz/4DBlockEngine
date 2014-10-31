@@ -22,9 +22,9 @@ namespace _4DMonoEngine.Core.Graphics
             World = Matrix.Identity;
             Projection = Matrix.CreatePerspectiveFieldOfView(ViewAngle, aspectRatio, NearPlaneDistance, FarPlaneDistance);
             m_eventSinkImpl = new EventSinkImpl();
-            EventSinkImpl.AddHandler<Vector2Args>(EventConstants.ScreenSizeUpdated, OnUpdateScreenSize);
-            EventSinkImpl.AddHandler<Vector3Args>(EventConstants.ViewUpdated, OnUpdateTarget);
-            EventSinkImpl.AddHandler<Vector3Args>(EventConstants.PlayerPositionUpdated, OnUpdatePosition);
+            m_eventSinkImpl.AddHandler<Vector2Args>(EventConstants.ScreenSizeUpdated, OnUpdateScreenSize);
+			m_eventSinkImpl.AddHandler<Vector3Args>(EventConstants.ViewUpdated, OnUpdateTarget);
+			m_eventSinkImpl.AddHandler<Vector3Args>(EventConstants.PlayerPositionUpdated, OnUpdatePosition);
         }
 
         private void Update()
@@ -57,7 +57,7 @@ namespace _4DMonoEngine.Core.Graphics
 
         public Action<EventArgs> GetHandlerForEvent(string eventName)
         {
-            m_eventSinkImpl.GetHandlerForEvent(eventName);
+            return m_eventSinkImpl.GetHandlerForEvent(eventName);
         }
     }
 }

@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.PerformanceData;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -64,7 +63,7 @@ namespace _4DMonoEngine.Core.Chunks
         private readonly VertexBuilder<Block> m_vertexBuilder;
         private readonly SparseArray3D<Chunk> m_chunkStorage;
         private Vector4 m_cacheCenterPosition;
-        private readonly Action<EventArgs> m_wrappedPositionHandler; 
+		private readonly EventSinkImpl m_eventSinkImpl;
 
         private bool m_cachePositionUpdated;
 
@@ -90,7 +89,8 @@ namespace _4DMonoEngine.Core.Chunks
             m_vertexBuilder = new VertexBuilder<Block>(Blocks, BlockIndexByWorldPosition, graphicsDevice);
             m_chunkStorage = new SparseArray3D<Chunk>(CacheRange * 2 + 1, CacheRange * 2 + 1);
             m_cacheCenterPosition = new Vector4();
-            m_wrappedPositionHandler = EventHelper.Wrap<Vector3Args>(UpdateCachePosition);
+			m_eventSinkImpl = new EventSinkImpl ();
+            m_eventSinkImpl.AddHandler<Vector3Args>(EventConstants.PlayerPositionUpdated, OnUpdateCachePosition);
             m_startUpState = StartUpState.NotStarted;
             m_processingQueue = new Queue<Chunk>();
             m_EditQueue = new ConcurrentQueue<WorldEdit>();
@@ -147,12 +147,12 @@ namespace _4DMonoEngine.Core.Chunks
             m_lightingEngine.RemoveBlock(x, y, x);
         }
 
-        private void UpdateCachePosition(Vector3Args args)
+        private void OnUpdateCachePosition(Vector3Args args)
         {
-            UpdateCachePosition((int)args.Vector.X, (int)args.Vector.Y, (int)args.Vector.Z);
+            OnUpdateCachePosition((int)args.Vector.X, (int)args.Vector.Y, (int)args.Vector.Z);
         }
 
-        public void UpdateCachePosition(int x, int y, int z)
+        public void OnUpdateCachePosition(int x, int y, int z)
         {
             if (x == (int) m_cacheCenterPosition.X && y == (int) m_cacheCenterPosition.Y &&
                 z == (int) m_cacheCenterPosition.Z)
@@ -536,7 +536,7 @@ namespace _4DMonoEngine.Core.Chunks
 
         public Action<EventArgs> GetHandlerForEvent(string eventName)
         {
-            m_eventSinkImpl.GetHandlerForEvent(eventName);
+           return  m_eventSinkImpl.GetHandlerForEvent(eventName);
         }
 
         private struct WorldEdit
