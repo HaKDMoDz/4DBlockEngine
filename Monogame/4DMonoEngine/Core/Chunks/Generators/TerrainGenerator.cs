@@ -21,7 +21,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
         private CellNoise3D m_voroni;
         private BiomeGeneratorCollection m_biomeGenerator;
         private ProvinceGeneratorCollection m_provinceGenerator;
-        private PlantPopulator m_populator;
+		private StructureGenerator m_populator;
         private PathGenerator m_riverGenerator;
         private readonly Block[] m_blocks;
 
@@ -56,7 +56,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
             m_detail2 = new SimplexNoise3D(random.NextUInt());
             m_volume = new SimplexNoise4D(random.NextUInt());
             m_voroni = new CellNoise3D(random.NextUInt());
-            m_populator = new PlantPopulator(random.NextUInt(), m_blocks, m_mappingFunction);
+            m_populator = new StructureGenerator(random.NextUInt(), m_blocks, m_mappingFunction);
             m_riverGenerator = new PathGenerator(random.NextUInt(), GetHeight);
             m_riverGenerator.InitializePathSystem(0, 0, 0, 256);
             m_biomeGenerator = new BiomeGeneratorCollection(random.NextUInt(), GetHeight, settings.Biomes, rescale, m_sealevel, m_mountainHeight);

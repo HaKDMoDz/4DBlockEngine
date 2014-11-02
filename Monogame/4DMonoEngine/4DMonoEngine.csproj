@@ -130,7 +130,6 @@
     <Compile Include="Core\Utils\Random\DeckOfCards.cs" />
     <Compile Include="Core\Common\Extensions\NumberExtensions.cs" />
     <Compile Include="Core\Common\Extensions\StringBuilderExtensions.cs" />
-    <Compile Include="Core\Common\Extensions\StringExtensions.cs" />
     <Compile Include="Core\Logging\ConsoleTarget.cs" />
     <Compile Include="Core\Logging\FileTarget.cs" />
     <Compile Include="Core\Logging\Logger.cs" />
@@ -190,6 +189,7 @@
     <Compile Include="Core\Utils\MathUtilities.cs" />
     <Compile Include="Core\Utils\SparseArray2D.cs" />
     <Compile Include="Core\Utils\SparseArray3D.cs" />
+    <Compile Include="Core\Utils\HilbertCurve.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

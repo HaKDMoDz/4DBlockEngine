@@ -317,7 +317,9 @@ namespace _4DMonoEngine.Core.Processors
                 var light = container.Light;
                 var currentLight = GetChannel(blockIndex, channel);
                 if ((byte) light < currentLight)
-                {
+				{
+					PropogateFromLight (x, y, z, channel, currentLight, container.PropogateDown);
+					SetChannel(blockIndex, channel, (byte)0);
                     continue;
                 }
                 SetChannel(blockIndex, channel, channel == Channel.Sun ? MinLight : (byte)0);

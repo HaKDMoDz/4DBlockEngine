@@ -9,7 +9,7 @@ using _4DMonoEngine.Core.Utils.Noise;
 namespace _4DMonoEngine.Core.Chunks.Generators.Structures
 {
     //TODO : refactor this into a proper structure system
-    public class PlantPopulator
+    public class StructureGenerator
     {
         private readonly Block[] m_blocks;
         private readonly MappingFunction m_mappingFunction;
@@ -19,7 +19,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
         private float m_sampleScale;
         private float m_minSampleScale;
 
-        public PlantPopulator(ulong seed, Block[] blocks, MappingFunction mappingFunction)
+		public StructureGenerator(ulong seed, Block[] blocks, MappingFunction mappingFunction)
         {
             m_blocks = blocks;
             m_mappingFunction = mappingFunction;

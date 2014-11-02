@@ -55,8 +55,8 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
                     {
                         continue;
                     }
-                    var centroidX= x + (int) Math.Round(data.Delta.X*PathCellNoiseScale, MidpointRounding.ToEven);
-                    var centroidZ = z + (int) Math.Round(data.Delta.Y*PathCellNoiseScale, MidpointRounding.ToEven);
+                    var centroidX = x + (int) Math.Round(data.Delta.X * PathCellNoiseScale, MidpointRounding.ToEven);
+                    var centroidZ = z + (int) Math.Round(data.Delta.Y * PathCellNoiseScale, MidpointRounding.ToEven);
                     InsertNodeIntoMaps(data.Id, centroidX, centroidZ, originW);
                 }
             }
@@ -82,7 +82,6 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
                     nodePool.Remove(activeNode);
                     continue;
                 }
-                //TODO : replace with a fold
                 workPool.Sort((a, b) => SortPool(activeNode, a, b));
                 var nextNode = workPool[0];
                 activeNode.Edges.Add(nextNode, 1);
