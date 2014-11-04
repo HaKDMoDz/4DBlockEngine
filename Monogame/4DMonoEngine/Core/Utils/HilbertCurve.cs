@@ -85,7 +85,7 @@ namespace _4DMonoEngine.Core.Utils
             return X;
         }
 
-        public static HilbertIndex HilbertIndexTransposed(uint[] hilbertAxes, int bits)
+        public static HilbertIndex HilbertIndexTransposed(uint[] hilbertAxes, int bits = 5)
         {
             var X = (uint[])hilbertAxes.Clone();
             var n = hilbertAxes.Length; // n: Number of dimensions

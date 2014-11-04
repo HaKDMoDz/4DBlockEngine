@@ -190,6 +190,9 @@
     <Compile Include="Core\Utils\SparseArray2D.cs" />
     <Compile Include="Core\Utils\SparseArray3D.cs" />
     <Compile Include="Core\Utils\HilbertCurve.cs" />
+    <Compile Include="Core\Pages\Page.cs" />
+    <Compile Include="Core\Pages\PageCache.cs" />
+    <Compile Include="Core\Pages\PageManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
