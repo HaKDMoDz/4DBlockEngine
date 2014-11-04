@@ -27,7 +27,7 @@ namespace _4DMonoEngine.Core.Events
 
         public Action<EventArgs> GetHandlerForEvent(string eventName)
         {
-        	Debug.Assert(m_registerdHandlers.ContainsKey(eventName));
+        	Debug.Assert(m_registerdHandlers.ContainsKey(eventName), "Could not find handler for " + eventName);
         	return m_registerdHandlers[eventName];
         }
 

@@ -23,8 +23,9 @@ namespace _4DMonoEngine.Core.Graphics
             Projection = Matrix.CreatePerspectiveFieldOfView(ViewAngle, aspectRatio, NearPlaneDistance, FarPlaneDistance);
             m_eventSinkImpl = new EventSinkImpl();
             m_eventSinkImpl.AddHandler<Vector2Args>(EventConstants.ScreenSizeUpdated, OnUpdateScreenSize);
-			m_eventSinkImpl.AddHandler<Vector3Args>(EventConstants.ViewUpdated, OnUpdateTarget);
-			m_eventSinkImpl.AddHandler<Vector3Args>(EventConstants.PlayerPositionUpdated, OnUpdatePosition);
+            m_eventSinkImpl.AddHandler<Vector3Args>(EventConstants.ViewUpdated, OnUpdateTarget);
+            m_eventSinkImpl.AddHandler<Vector3Args>(EventConstants.PlayerPositionUpdated, OnUpdatePosition);
+         //   m_eventSinkImpl.AddHandler<Vector3Args>(EventConstants.ModalScreenPushed, OnUpdatePosition);
         }
 
         private void Update()

@@ -101,6 +101,7 @@
     <Compile Include="Core\Events\Args\Vector3Args.cs" />
     <Compile Include="Core\Events\EventDispatcher.cs" />
     <Compile Include="Core\Events\EventConstants.cs" />
+    <Compile Include="Core\Events\EventSinkImpl.cs" />
     <Compile Include="Core\Events\EventSource.cs" />
     <Compile Include="Core\Events\IEventDispatcher.cs" />
     <Compile Include="Core\Events\IEventSink.cs" />

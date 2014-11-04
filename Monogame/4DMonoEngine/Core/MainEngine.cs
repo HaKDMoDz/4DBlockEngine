@@ -82,8 +82,8 @@ namespace _4DMonoEngine.Core
             CentralDispatch.Register(EventConstants.PlayerPositionUpdated, Camera.GetHandlerForEvent(EventConstants.PlayerPositionUpdated));
             CentralDispatch.Register(EventConstants.ViewUpdated, Camera.GetHandlerForEvent(EventConstants.ViewUpdated));
             CentralDispatch.Register(EventConstants.ScreenSizeUpdated, Camera.GetHandlerForEvent(EventConstants.ScreenSizeUpdated));
-            CentralDispatch.Register(EventConstants.ModalScreenPushed, Camera.GetHandlerForEvent(EventConstants.ModalScreenPushed));
-            CentralDispatch.Register(EventConstants.ModalScreenPopped, Camera.GetHandlerForEvent(EventConstants.ModalScreenPopped));
+           // CentralDispatch.Register(EventConstants.ModalScreenPushed, Camera.GetHandlerForEvent(EventConstants.ModalScreenPushed));
+           // CentralDispatch.Register(EventConstants.ModalScreenPopped, Camera.GetHandlerForEvent(EventConstants.ModalScreenPopped));
 
         }
 
