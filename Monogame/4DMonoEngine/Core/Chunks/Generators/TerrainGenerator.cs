@@ -124,7 +124,14 @@ namespace _4DMonoEngine.Core.Chunks.Generators
                      //   block.Color = (ushort)((tint << 8) | (tint << 4) | tint);
 					    if (riverData != null && cY <= groundLevel && cY >= groundLevel - 1)
 					    {
-                            block = new Block(BlockDictionary.GetInstance().GetBlockIdForName("Water"));
+                            block = new Block(BlockDictionary.GetInstance().GetBlockIdForName("Water"))
+                            {
+                                LightRed = 255,
+                                LightBlue = 255,
+                                LightGreen = 255
+                                
+                            };
+                           
 					        //block.Color = (ushort)riverData.Id;
 					    }
 

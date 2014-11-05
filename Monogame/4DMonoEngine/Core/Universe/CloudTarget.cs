@@ -27,11 +27,6 @@ namespace _4DMonoEngine.Core.Universe
 
         }
 
-        public override void SetLightingDirty(int x, int y, int z)
-        {
-            //NO OP
-        }
-
         public override void SetMeshDirty(int x, int y, int z)
         {
             //NO OP

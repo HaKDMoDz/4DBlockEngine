@@ -62,11 +62,6 @@ namespace _4DMonoEngine.Core.Chunks
 
         }
 
-        public bool IsInBounds(float x, float y, float z)
-        {
-            return !(x < BoundingBox.Min.X || y < BoundingBox.Min.Y || z < BoundingBox.Min.Z || x > BoundingBox.Max.X || y > BoundingBox.Max.Y || z > BoundingBox.Max.Z);
-        }
-
         public static IEnumerable<FaceDirection> GetChunkEdgesBlockIsIn(int x, int y, int z)
         {
             var edges = new List<FaceDirection>();
@@ -131,7 +126,6 @@ namespace _4DMonoEngine.Core.Chunks
             {
                 BoundingBox.Min.Y = blockPositionY;
             }
-            SetLightingDirty(blockPositionX, blockPositionY, blockPositionZ);
         }
 
         public void RemoveBlock(int blockPositionX, int blockPositionZ, int blockPositionY)
@@ -143,7 +137,6 @@ namespace _4DMonoEngine.Core.Chunks
                 //When we do a remove we can't take a shortcut. Luckily only removals on the shell will change the bounding box
                 UpdateBoundingBox();
             }
-            SetLightingDirty(blockPositionX, blockPositionY, blockPositionZ);
         }
 
         public void UpdateBoundingBox()
@@ -233,23 +226,6 @@ namespace _4DMonoEngine.Core.Chunks
             return string.Format("{0} {1}", ChunkCachePosition, ChunkState);
         }
 
-        public override void SetLightingDirty(int x, int y, int z)
-        {
-            if (ChunkState == ChunkState.Ready || ChunkState == ChunkState.AwaitingBuild)
-            {
-                ChunkState = ChunkState.AwaitingLighting;
-            }
-            /*var edgesBlockIsIn = GetChunkEdgesBlockIsIn(x, y, z);
-            foreach (var edge in edgesBlockIsIn)
-            {
-                var neighborChunk = m_getNeighborChunk(this, edge);
-                if (neighborChunk != null && (neighborChunk.ChunkState == ChunkState.Ready || ChunkState == ChunkState.AwaitingBuild))
-                {
-                    neighborChunk.ChunkState = ChunkState.AwaitingLighting;
-                }
-            }*/
-        }
-
         public override void SetMeshDirty(int x, int y, int z)
         {
             if (ChunkState == ChunkState.Ready)
@@ -276,7 +252,6 @@ namespace _4DMonoEngine.Core.Chunks
                 color = Color.DarkRed;
             }
             BoundingBoxRenderer.Render(BoundingBox, graphicsDevice, camera.View, camera.Projection, color);
-            
         }
 
         public void PrepForRemoval()

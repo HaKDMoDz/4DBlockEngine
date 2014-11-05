@@ -164,8 +164,13 @@ namespace _4DMonoEngine.Core.Processors
             var blueBr = (block5.LightBlue + block6.LightBlue + block7.LightBlue + block0.LightBlue) >> 2;
             var blueBl = (block7.LightBlue + block8.LightBlue + block1.LightBlue + block0.LightBlue) >> 2;
 
-            var flipped = (sunTl + redTl + greenTl + blueTl) + (sunBr + redBr + greenBr + blueBr) >=
-                           (sunTr + redTr + greenTr + blueTr) + (sunBl + redBl + greenBl + blueBl);
+            var aoTl = 3 - block1.Opacity + block2.Opacity + block3.Opacity;
+            var aoTr = 3 - block3.Opacity + block4.Opacity + block5.Opacity;
+            var aoBr = 3 - block5.Opacity + block6.Opacity + block7.Opacity;
+            var aoBl = 3 - block7.Opacity + block8.Opacity + block1.Opacity;
+
+
+            var flipped = aoTl + aoBr < aoTr + aoBl;
 
             var localTl = new HalfVector4(sunTl / 255.0f, redTl / 255.0f, greenTl / 255.0f, blueTl / 255.0f);
             var localTr = new HalfVector4(sunTr / 255.0f, redTr / 255.0f, greenTr / 255.0f, blueTr / 255.0f);

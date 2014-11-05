@@ -406,12 +406,12 @@ namespace _4DMonoEngine.Core.Processors
                 {
                     continue;
                 }
-                SetChannel(blockIndex, channel, (byte)light);
-                light = CalculateDropOff(light, blockIndex, container.PropogateDown);
                 if ((byte)light <= MinLight)
                 {
+                    SetChannel(blockIndex, channel, MinLight);
                     continue;
                 }
+                SetChannel(blockIndex, channel, (byte)light);
                 ConditionallyPropogate(sourceTarget, x + 1, y, z, channel, light);
                 ConditionallyPropogate(sourceTarget, x - 1, y, z, channel, light);
                 ConditionallyPropogate(sourceTarget, x, y, z + 1, channel, light);
@@ -427,6 +427,7 @@ namespace _4DMonoEngine.Core.Processors
             var blockIndex = m_mappingFunction(x, y, z);
             if ((byte)incomingLight > GetChannel(blockIndex, channel))
             {
+                incomingLight = CalculateDropOff(incomingLight, blockIndex, lightDown);
                 var target = m_getTarget(x, y, z);
                 if (target == null) //we wrapped around!
                 {
