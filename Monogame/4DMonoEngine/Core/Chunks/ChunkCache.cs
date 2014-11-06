@@ -13,6 +13,7 @@ using _4DMonoEngine.Core.Events;
 using _4DMonoEngine.Core.Events.Args;
 using _4DMonoEngine.Core.Graphics;
 using _4DMonoEngine.Core.Logging;
+using _4DMonoEngine.Core.Pages;
 using _4DMonoEngine.Core.Processors;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -174,9 +175,28 @@ namespace _4DMonoEngine.Core.Chunks
         private int count = 0;
         public override void Update(GameTime gameTime)
         {
-           /* if (m_startUpState == StartUpState.Started)
+            if (m_startUpState == StartUpState.Started)
             {
-                if (count++ > 100 && m_EditQueue.Count == 0)
+                /*if (add)
+                {
+                    var manager = new PageManager();
+                    var data = new Block[Page.PageSizeInBlocks*Page.PageSizeInBlocks*Page.PageSizeInBlocks];
+                    for (var x = 0; x < Page.PageSizeInBlocks; x++) 
+                    {
+                        for (var y = 0; y < Page.PageSizeInBlocks; y++)
+                        {
+                            for (var z = 0; z < Page.PageSizeInBlocks; z++)
+                            {
+                                data[Page.BlockIndexFromRelativePosition(x, y, z)] =
+                                    Blocks[BlockIndexByWorldPosition(x, y, z)];
+                            }
+                        }
+                    }
+                    var page = new Page(0, 0, 0, BlockIndexByWorldPosition(0, 0, 0), data);
+                    manager.TestCompression(page);
+                    add = false;
+                }*/
+                /*if (count++ > 100 && m_EditQueue.Count == 0)
                 {
                     count = 0;
                     if (add)
@@ -189,8 +209,8 @@ namespace _4DMonoEngine.Core.Chunks
                     }
                     add = !add;
                     m_cachePositionUpdated = true;
-                }
-            }*/
+                }*/
+            }
             if (m_startUpState != StartUpState.AwaitingStart)
             {
                 return;
@@ -373,6 +393,7 @@ namespace _4DMonoEngine.Core.Chunks
                     goto case ChunkState.AwaitingLighting;
                 case ChunkState.AwaitingLighting:
                     chunk.ChunkState = ChunkState.Lighting;
+                    m_lightingEngine.Process(chunk.Position.X, chunk.Position.Y, chunk.Position.Z);
                     chunk.ChunkState = ChunkState.AwaitingBuild;
                     goto case ChunkState.AwaitingBuild;
                 case ChunkState.AwaitingBuild:

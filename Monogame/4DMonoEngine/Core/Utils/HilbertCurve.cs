@@ -24,7 +24,7 @@ namespace _4DMonoEngine.Core.Utils
             Transpose = transpose;
             for(int i = 0; i < Dimensions; ++i)
             {
-                Transpose[i] = (index & ((uint)Math.Pow(2, bits) - 1))<< (i * bits);
+                Transpose[i] = (index >> (i * bits)) & ((uint)Math.Pow(2, bits) - 1);
             }
         }
     } 
@@ -50,7 +50,7 @@ namespace _4DMonoEngine.Core.Utils
     {
 		public static uint[] HilbertAxes(uint index, int dimensions = 3, int bits = 5)
 		{
-			return HilbertAxes(index, dimensions, bits);
+			return HilbertAxes(new HilbertIndex(index, dimensions, bits));
 		}
 
         public static uint[] HilbertAxes(HilbertIndex index)

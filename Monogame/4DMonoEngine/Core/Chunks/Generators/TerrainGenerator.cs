@@ -98,7 +98,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 
                         if (cY > groundLevel + 10)// && cX >= 11 && cX < 13 && cZ >= 71 && cZ < 73)
 					    {
-                            block = new Block(Block.None) {LightSun = CellularLighting<Block>.MaxSun}; //*/CellularLighting<Block>.MinLight };
+                            block = new Block(Block.None) {LightSun = /*CellularLighting<Block>.MaxSun}; //*/CellularLighting<Block>.MinLight };
 					    }
 					    else if (cY > groundLevel)
 					    {

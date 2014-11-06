@@ -72,6 +72,7 @@
     <Compile Include="Core\Common\Enums\FaceDirection.cs" />
     <Compile Include="Core\Common\Extensions\FunctionExtensions.cs" />
     <Compile Include="Core\Common\Interfaces\IInitializable.cs" />
+    <Compile Include="Core\Common\Interfaces\IPageable.cs" />
     <Compile Include="Core\Events\EventHelper.cs" />
     <Compile Include="Core\Common\Interfaces\IAction.cs" />
     <Compile Include="Core\Common\Interfaces\IDataContainer.cs" />
@@ -192,7 +193,7 @@
     <Compile Include="Core\Utils\SparseArray3D.cs" />
     <Compile Include="Core\Utils\HilbertCurve.cs" />
     <Compile Include="Core\Pages\Page.cs" />
-    <Compile Include="Core\Pages\PageCache.cs" />
+    <Compile Include="Core\Utils\LruCache.cs" />
     <Compile Include="Core\Pages\PageManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

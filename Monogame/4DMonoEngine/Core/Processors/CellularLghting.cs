@@ -118,10 +118,7 @@ namespace _4DMonoEngine.Core.Processors
                         {
                             CalculateLightOnShell(cX, cY, cZ);
                         }
-                        else
-                        {
-                            ConditionallyInsertLight(cX, cY, cZ);
-                        }
+                        ConditionallyInsertLight(cX, cY, cZ);
                     }
                 }
             }
@@ -156,21 +153,21 @@ namespace _4DMonoEngine.Core.Processors
         {
             var blockIndex = m_mappingFunction(x, y, z);
             var block = m_blockSource[blockIndex];
-            if (block.LightRed > MinLight)
+            if (block.EmissivityRed > MinLight)
             {
-                ClearCellAndEnqueLight(x, y, z, blockIndex, Channel.Red, block.LightRed);
+                PropogateFromLight(x, y, z, Channel.Red, block.EmissivityRed);
             }
-            if (block.LightGreen > MinLight)
+            if (block.EmissivityGreen > MinLight)
             {
-                ClearCellAndEnqueLight(x, y, z, blockIndex, Channel.Green, block.LightGreen);
+                PropogateFromLight(x, y, z, Channel.Green, block.EmissivityGreen);
             }
-            if (block.LightBlue > MinLight)
+            if (block.EmissivityBlue > MinLight)
             {
-                ClearCellAndEnqueLight(x, y, z, blockIndex, Channel.Blue, block.LightBlue);
+                PropogateFromLight(x, y, z, Channel.Blue, block.EmissivityBlue);
             }
-            if (block.LightSun > MinLight)
+            if (block.EmissivitySun > MinLight)
             {
-                ClearCellAndEnqueLight(x, y, z, blockIndex, Channel.Sun, block.LightSun);
+                PropogateFromLight(x, y, z, Channel.Sun, block.EmissivitySun);
             }
         }
 
