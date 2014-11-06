@@ -50,6 +50,11 @@ namespace _4DMonoEngine.Core.Universe
             get { return m_type != 0; }
         }
 
+        public byte EmissivitySun { get { return 0;}  }
+        public byte EmissivityRed { get { return 0; } }
+        public byte EmissivityGreen { get { return 0;} }
+        public byte EmissivityBlue { get { return 0; } }
+
         public static readonly CloudBlock Cloud = new CloudBlock(BlockDictionary.GetInstance().GetBlockIdForName("Cloud"), 0);
         public static readonly CloudBlock Empty = new CloudBlock(0, 255);
         public static readonly CloudBlock UndersideClear = new CloudBlock(0, 200);

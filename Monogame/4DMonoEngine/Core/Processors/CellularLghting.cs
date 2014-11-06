@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Microsoft.Xna.Framework;
-using _4DMonoEngine.Core.Chunks;
 using _4DMonoEngine.Core.Common.AbstractClasses;
 using _4DMonoEngine.Core.Common.Interfaces;
 using _4DMonoEngine.Core.Utils;
@@ -87,32 +85,6 @@ namespace _4DMonoEngine.Core.Processors
             }
         }
 
-        private byte ResetChannel(int blockIndex, Channel channel)
-        {
-            byte oldValue;
-            switch (channel)
-            {
-                case Channel.Sun:
-                    oldValue = m_blockSource[blockIndex].LightSun;
-                    m_blockSource[blockIndex].LightSun = 0;
-                    return oldValue;
-                case Channel.Red:
-                    oldValue = m_blockSource[blockIndex].LightRed;
-                    m_blockSource[blockIndex].LightRed = 0;
-                    return oldValue;
-                case Channel.Green:
-                    oldValue = m_blockSource[blockIndex].LightGreen;
-                    m_blockSource[blockIndex].LightGreen = 0;
-                    return oldValue;
-                case Channel.Blue:
-                    oldValue = m_blockSource[blockIndex].LightBlue;
-                    m_blockSource[blockIndex].LightBlue = 0;
-                    return oldValue;
-                default:
-                    throw new ArgumentOutOfRangeException("channel");
-            }
-        }
-
         private Queue<LightQueueContainer> GetAddQueueForChannel(Channel channel)
         {
             return m_lightQueuesToAdd[(int)channel];
@@ -123,106 +95,104 @@ namespace _4DMonoEngine.Core.Processors
             return m_lightQueuesToRemove[(int)channel];
         }
 
-        internal void Process(int chunkIndexX, int chunkIndexY, int chunkIndexZ, SparseArray3D<Vector3Byte> lights)
+        internal void Process(int chunkIndexX, int chunkIndexY, int chunkIndexZ)
         {
-            GetLightsOnShell(chunkIndexX, chunkIndexY, chunkIndexZ,lights);
+            CalculateInitialLighting(chunkIndexX, chunkIndexY, chunkIndexZ);
             PropogateFromSources(m_getTarget(chunkIndexX, chunkIndexY, chunkIndexZ));
         }
 
-        private void GetLightsOnShell(int chunkIndexX, int chunkIndexY, int chunkIndexZ, SparseArray3D<Vector3Byte> lights)
+        private void CalculateInitialLighting(int chunkIndexX, int chunkIndexY, int chunkIndexZ)
         {
             for (var x = 0; x < m_chunkSize; ++x)
             {
                 for (var z = 0; z < m_chunkSize; ++z)
                 {
-                    for (var y = m_chunkSize - 1; y >= 0 ; --y)
+                    for (var y = m_chunkSize - 1; y >= 0; --y)
                     {
                         var cX = chunkIndexX + x;
                         var cY = chunkIndexY + y;
                         var cZ = chunkIndexZ + z;
-                        ConditionallyInsertLight(cX, cY, cZ);
-                        if (lights.ContainsKey(cX, cY, cZ))
+                        if (x == 0 || x == m_chunkSize - 1 ||
+                            y == 0 || y == m_chunkSize - 1 ||
+                            z == 0 || z == m_chunkSize - 1)
                         {
-                            PropogateFromLight(cX, cY, cZ, lights[cX, cY, cZ]);
+                            CalculateLightOnShell(cX, cY, cZ);
+                        }
+                        else
+                        {
+                            ConditionallyInsertLight(cX, cY, cZ);
                         }
                     }
                 }
             }
         }
 
+        private void CalculateLightOnShell(int x, int y, int z)
+        {
+            var neighborLightSun = GetMaxNeighborLightForChannel(x, y, z, Channel.Sun);
+            var neighborLightRed =  GetMaxNeighborLightForChannel(x, y, z, Channel.Red);
+            var neighborLightGreen = GetMaxNeighborLightForChannel(x, y, z, Channel.Green);
+            var neighborLightBlue = GetMaxNeighborLightForChannel(x, y, z, Channel.Blue);
+            var block = m_blockSource[m_mappingFunction(x, y, z)];
+            if ((byte)neighborLightRed > block.LightRed)
+            {
+                PropogateFromLight(x, y, z, Channel.Red, neighborLightRed);
+            }
+            if ((byte)neighborLightGreen > block.LightGreen)
+            {
+                PropogateFromLight(x, y, z, Channel.Green, neighborLightGreen);
+            }
+            if ((byte)neighborLightBlue > block.LightBlue)
+            {
+                PropogateFromLight(x, y, z, Channel.Blue, neighborLightBlue);
+            }
+            if ((byte)neighborLightSun > block.LightSun)
+            {
+                PropogateFromLight(x, y, z, Channel.Sun, neighborLightSun);
+            }
+        }
+
         private void ConditionallyInsertLight(int x, int y, int z)
         {
-            var currentLight = new Vector4();
-            var block = m_blockSource[m_mappingFunction(x, y, z)];
-            GetMaxLight(x, y, z, ref currentLight);
-            if (currentLight.X > block.LightRed)
-            {
-                PropogateFromLight(x, y, z, Channel.Red, (byte) currentLight.X);
-            }
-            if (currentLight.Y > block.LightGreen)
-            {
-                PropogateFromLight(x, y, z, Channel.Green, (byte) currentLight.Y);
-            }
-            if (currentLight.Z > block.LightBlue)
-            {
-                PropogateFromLight(x, y, z, Channel.Blue, (byte) currentLight.Z);
-            }
-            if (currentLight.W > block.LightSun)
-            {
-                var down = m_blockSource[m_mappingFunction(x, y + 1, z)].LightSun >= (byte) currentLight.W;
-                PropogateFromLight(x, y, z, Channel.Sun, (byte) currentLight.W, down);
-            }
-        }
-
-        public void AddBlock(int x, int y, int z)
-        {
-            ClearAllChannelsFromCell(x, y, z);
-        }
-
-        public void RemoveBlock(int x, int y, int z)
-        {
-            var currentLight = new Vector4();
-            GetMaxLight(x, y, z, ref currentLight);
-            PropogateFromLight(x, y, z, Channel.Red, (byte)currentLight.X);
-            PropogateFromLight(x, y, z, Channel.Green, (byte)currentLight.Y);
-            PropogateFromLight(x, y, z, Channel.Blue, (byte)currentLight.Z);
-            var down = m_blockSource[m_mappingFunction(x, y + 1, z)].LightSun >= (byte)currentLight.W;
-            PropogateFromLight(x, y, z, Channel.Sun, (byte)currentLight.W, down);
-        }
-
-        private void GetMaxLight(int x, int y, int z, ref Vector4 currentLight)
-        {
-            MaxLight(x + 1, y, z, ref currentLight);
-            MaxLight(x - 1, y, z, ref currentLight);
-            MaxLight(x, y, z + 1, ref currentLight);
-            MaxLight(x, y, z - 1, ref currentLight);
-            MaxLight(x, y + 1, z, ref currentLight);
-            MaxLight(x, y - 1, z, ref currentLight, true);
-        }
-
-        private void MaxLight(int x, int y, int z, ref Vector4 currentLight, bool down = false)
-        {
             var blockIndex = m_mappingFunction(x, y, z);
-            var lightRed = CalculateDropOff(m_blockSource[blockIndex].LightRed, blockIndex);
-            var lightGreen = CalculateDropOff(m_blockSource[blockIndex].LightGreen, blockIndex);
-            var lightBlue = CalculateDropOff(m_blockSource[blockIndex].LightBlue, blockIndex);
-            var lightSun = CalculateDropOff(m_blockSource[blockIndex].LightSun, blockIndex, down);
-            if (currentLight.X < lightRed)
+            var block = m_blockSource[blockIndex];
+            if (block.LightRed > MinLight)
             {
-                currentLight.X = lightRed;
+                ClearCellAndEnqueLight(x, y, z, blockIndex, Channel.Red, block.LightRed);
             }
-            if (currentLight.Y < lightGreen)
+            if (block.LightGreen > MinLight)
             {
-                currentLight.Y = lightGreen;
+                ClearCellAndEnqueLight(x, y, z, blockIndex, Channel.Green, block.LightGreen);
             }
-            if (currentLight.Z < lightBlue)
+            if (block.LightBlue > MinLight)
             {
-                currentLight.Z = lightBlue;
+                ClearCellAndEnqueLight(x, y, z, blockIndex, Channel.Blue, block.LightBlue);
             }
-            if (currentLight.W < lightSun)
+            if (block.LightSun > MinLight)
             {
-                currentLight.W = lightSun;
+                ClearCellAndEnqueLight(x, y, z, blockIndex, Channel.Sun, block.LightSun);
             }
+        }
+
+        private float GetMaxNeighborLightForChannel(int x, int y, int z, Channel channel)
+        {
+            var blockIndex = m_mappingFunction(x + 1, y, z);
+            var pX = CalculateDropOff(GetChannel(blockIndex, channel), blockIndex);
+            blockIndex = m_mappingFunction(x - 1, y, z);
+            var nX = CalculateDropOff(GetChannel(blockIndex, channel), blockIndex);
+            var maxX = pX > nX ? pX : nX;
+            blockIndex = m_mappingFunction(x, y, z + 1);
+            var pZ = CalculateDropOff(GetChannel(blockIndex, channel), blockIndex);
+            blockIndex = m_mappingFunction(x, y, z - 1);
+            var nZ = CalculateDropOff(GetChannel(blockIndex, channel), blockIndex);
+            var maxZ = pZ > nZ ? pZ : nZ;
+            blockIndex = m_mappingFunction(x, y + 1, z);
+            var pY = CalculateDropOff(GetChannel(blockIndex, channel), blockIndex, channel == Channel.Sun);
+            blockIndex = m_mappingFunction(x, y - 1, z);
+            var nY = CalculateDropOff(GetChannel(blockIndex, channel), blockIndex);
+            var maxY = pY > nY ? pY : nY;
+            var max = maxX > maxZ ? maxX : maxZ;
+            return max > maxY ? max : maxY;
         }
 
         private float CalculateDropOff(float light, int blockIndex, bool down = false)
@@ -235,48 +205,68 @@ namespace _4DMonoEngine.Core.Processors
             return light;
         }
 
-        public void AddLight(SparseArray3D<Vector3Byte> lights, int x, int y, int z, Vector3Byte light)
+        public void AddBlock(int x, int y, int z, T source)
         {
-            if (lights.ContainsKey(x, y, z))
+            ClearAllChannelsFromCell(x, y, z);
+            if (source.EmissivityRed > MinLight)
             {
-                return;
+                PropogateFromLight(x, y, z, Channel.Red, source.EmissivityRed);
             }
-            lights[x, y, z] = light;
-            var blockIndex = m_mappingFunction( x, y, z);
-            if (light.X > m_blockSource[blockIndex].LightRed)
+            if (source.EmissivityGreen > MinLight)
             {
-                PropogateFromLight(x, y, z, Channel.Red, light.X);
+                PropogateFromLight(x, y, z, Channel.Green, source.EmissivityGreen);
             }
-            if (light.Y > m_blockSource[blockIndex].LightGreen)
+            if (source.EmissivityBlue > MinLight)
             {
-                PropogateFromLight(x, y, z, Channel.Green, light.Y);
+                PropogateFromLight(x, y, z, Channel.Blue, source.EmissivityBlue);
             }
-            if (light.Z > m_blockSource[blockIndex].LightBlue)
+            if (source.EmissivitySun > MinLight)
             {
-                PropogateFromLight(x, y, z, Channel.Blue, light.Z);
+                PropogateFromLight(x, y, z, Channel.Sun, source.EmissivitySun);
             }
             PropogateFromSources(m_getTarget(x, y, z));
         }
 
-        public void AddLight(SparseArray3D<Vector3Byte> lights, Vector3Int position, Vector3Byte light)
+        public void RemoveBlock(int x, int y, int z)
         {
-            AddLight(lights, position.X, position.Y, position.Z, light);
-        }
-
-        public void RemoveLight(SparseArray3D<Vector3Byte> lights, int x, int y, int z)
-        {
-            if (!lights.ContainsKey(x, y, z))
+            var blockIndex = m_mappingFunction(x, y, z);
+            var source = m_blockSource[blockIndex];
+            if (source.EmissivityRed > MinLight)
             {
-                return;
+                ClearChannelFromCell(x, y, z, blockIndex, Channel.Red);
             }
-            lights.Remove(x, y, z);
-            ClearLightChannelsFromCell(x, y, z);
-            PropogateFromSources(m_getTarget(x, y, z));
-        }
-
-        public void RemoveLight(SparseArray3D<Vector3Byte> lights, Vector3Int position)
-        {
-            RemoveLight(lights, position.X, position.Y, position.Z);
+            else
+            {
+                var neighborLightRed = GetMaxNeighborLightForChannel(x, y, z, Channel.Red);
+                PropogateFromLight(x, y, z, Channel.Red, neighborLightRed);
+            }
+            if (source.EmissivityGreen > MinLight)
+            {
+                ClearChannelFromCell(x, y, z, blockIndex, Channel.Green);
+            }
+            else
+            {
+                var neighborLightGreen = GetMaxNeighborLightForChannel(x, y, z, Channel.Green);
+                PropogateFromLight(x, y, z, Channel.Green, neighborLightGreen);
+            }
+            if (source.EmissivityBlue > MinLight)
+            {
+                ClearChannelFromCell(x, y, z, blockIndex, Channel.Blue);
+            }
+            else
+            {
+                var neighborLightBlue = GetMaxNeighborLightForChannel(x, y, z, Channel.Blue);
+                PropogateFromLight(x, y, z, Channel.Blue, neighborLightBlue);
+            }
+            if (source.EmissivitySun > MinLight)
+            {
+                ClearChannelFromCell(x, y, z, blockIndex, Channel.Sun);
+            }
+            else
+            {
+                var neighborLightSun = GetMaxNeighborLightForChannel(x, y, z, Channel.Sun);
+                PropogateFromLight(x, y, z, Channel.Sun, neighborLightSun);
+            }
         }
 
         private void ClearAllChannelsFromCell(int x, int y, int z)
@@ -288,19 +278,10 @@ namespace _4DMonoEngine.Core.Processors
             }
         }
 
-        private void ClearLightChannelsFromCell(int x, int y, int z)
-        {
-            var blockIndex = m_mappingFunction(x, y, z);
-            ClearChannelFromCell(x, y, z, blockIndex, Channel.Red);
-            ClearChannelFromCell(x, y, z, blockIndex, Channel.Blue);
-            ClearChannelFromCell(x, y, z, blockIndex, Channel.Green);
-        }
-
         private void ClearChannelFromCell(int x, int y, int z, int blockIndex, Channel channel)
         {
             var incomingSunLight = GetChannel(blockIndex, channel);
-            var container = new LightQueueContainer(x, y, z, incomingSunLight);
-            EnqueueClear(container, channel);
+            GetRemoveQueueForChannel(channel).Enqueue(new LightQueueContainer(x, y, z, incomingSunLight));
             ClearCellsAndAddBoundries(m_getTarget(x, y, z), channel);
         }
 
@@ -318,8 +299,6 @@ namespace _4DMonoEngine.Core.Processors
                 var currentLight = GetChannel(blockIndex, channel);
                 if ((byte) light < currentLight)
 				{
-					PropogateFromLight (x, y, z, channel, currentLight, container.PropogateDown);
-					SetChannel(blockIndex, channel, (byte)0);
                     continue;
                 }
                 SetChannel(blockIndex, channel, channel == Channel.Sun ? MinLight : (byte)0);
@@ -335,12 +314,14 @@ namespace _4DMonoEngine.Core.Processors
                 ConditionallyClear(sourceTarget, x, y + 1, z, channel, light);
                 ConditionallyClear(sourceTarget, x, y - 1, z, channel, light, channel == Channel.Sun);
             }
+            PropogateFromSources(sourceTarget);
         }
 
         private void ConditionallyClear(VertexBuilderTarget sourceTarget, int x, int y, int z, Channel channel, float incomingLight, bool lightDown = false)
         {
             var blockIndex = m_mappingFunction(x, y, z);
-            if (GetChannel(blockIndex, channel) <  (byte)incomingLight)
+            var currentLight = GetChannel(blockIndex, channel);
+            if ((byte)incomingLight >= currentLight || (lightDown && incomingLight >= MaxSun))
             {
                 var target = m_getTarget(x, y, z);
                 if (target == null) //we wrapped around!
@@ -356,13 +337,18 @@ namespace _4DMonoEngine.Core.Processors
                 {
                     return;
                 }
-                EnqueueClear(new LightQueueContainer(x, y, z, incomingLight, lightDown), channel);
+                GetRemoveQueueForChannel(channel).Enqueue(new LightQueueContainer(x, y, z, incomingLight));
+            }
+            else
+            {
+                ClearCellAndEnqueLight(x, y, z, blockIndex, channel, currentLight);
             }
         }
 
-        private void EnqueueClear(LightQueueContainer container, Channel channel)
+        private void ClearCellAndEnqueLight(int x, int y, int z, int blockIndex, Channel channel, float incomingLight)
         {
-            GetRemoveQueueForChannel(channel).Enqueue(container);
+            PropogateFromLight(x, y, z, channel, incomingLight);
+             SetChannel(blockIndex, channel, 0);
         }
 
         private void PropogateFromLight(int x, int y, int z, Vector3Byte currentLight)
@@ -372,15 +358,9 @@ namespace _4DMonoEngine.Core.Processors
             PropogateFromLight(x, y, z, Channel.Green, currentLight.Z);
         }
 
-        private void PropogateFromLight(int x, int y, int z, Channel channel, byte incomingLight, bool down = false)
+        private void PropogateFromLight(int x, int y, int z, Channel channel, float incomingLight)
         {
-            var container = new LightQueueContainer(x, y, z, incomingLight, down);
-            EnqueueLight(container, channel);
-        }
-
-        private void EnqueueLight(LightQueueContainer container, Channel channel)
-        {
-            GetAddQueueForChannel(channel).Enqueue(container);
+            GetAddQueueForChannel(channel).Enqueue(new LightQueueContainer(x, y, z, incomingLight));
         }
 
         private void PropogateFromSources(VertexBuilderTarget sourceTarget)
@@ -442,7 +422,7 @@ namespace _4DMonoEngine.Core.Processors
                 {
                     return;
                 }
-                EnqueueLight(new LightQueueContainer(x, y, z, incomingLight, lightDown), channel);
+                PropogateFromLight(x, y, z, channel, incomingLight);
             }
         }
 
@@ -452,14 +432,12 @@ namespace _4DMonoEngine.Core.Processors
             public readonly int Y;
             public readonly int Z;
             public readonly float Light;
-            public readonly bool PropogateDown;
-            public LightQueueContainer(int x, int y, int z, float light, bool propogateDown = false)
+            public LightQueueContainer(int x, int y, int z, float light)
             {
                 X = x;
                 Y = y;
                 Z = z;
                 Light = light;
-                PropogateDown = propogateDown;
             }
         }
     }

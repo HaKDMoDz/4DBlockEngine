@@ -27,7 +27,11 @@
 		"Durability" : 0.4,
 		"Elasticity" : 0.1,
 		"Adhesion" : 0.9,
-		"Mass" : 8
+		"Mass" : 8,
+		"EmissivitySun" : 0,
+		"EmissivityRed" : 0,
+		"EmissivityGreen" : 0,
+		"EmissivityBlue" : 0
 	},
 	{
 		"Name" : "Sand",
@@ -37,7 +41,11 @@
 		"Durability" : 0.3,
 		"Elasticity" : 0.1,
 		"Adhesion" : 0.1,
-		"Mass" : 4
+		"Mass" : 4,
+		"EmissivitySun" : 0,
+		"EmissivityRed" : 0,
+		"EmissivityGreen" : 0,
+		"EmissivityBlue" : 0
 	},
 	{
 		"Name" : "SandStone",
@@ -47,7 +55,11 @@
 		"Durability" : 0.4,
 		"Elasticity" : 0.1,
 		"Adhesion" : 0.9,
-		"Mass" : 8
+		"Mass" : 8,
+		"EmissivitySun" : 0,
+		"EmissivityRed" : 0,
+		"EmissivityGreen" : 0,
+		"EmissivityBlue" : 0
 	},
 	{
 		"Name" : "StoneDark",
@@ -57,7 +69,11 @@
 		"Durability" : 0.4,
 		"Elasticity" : 0.1,
 		"Adhesion" : 0.9,
-		"Mass" : 8
+		"Mass" : 8,
+		"EmissivitySun" : 0,
+		"EmissivityRed" : 0,
+		"EmissivityGreen" : 0,
+		"EmissivityBlue" : 0
 	},
 	{
 		"Name" : "Snow",
@@ -67,6 +83,10 @@
 		"Durability" : 0.4,
 		"Elasticity" : 0.1,
 		"Adhesion" : 0.9,
-		"Mass" : 8
+		"Mass" : 8,
+		"EmissivitySun" : 0,
+		"EmissivityRed" : 0,
+		"EmissivityGreen" : 0,
+		"EmissivityBlue" : 0
 	}
 ]

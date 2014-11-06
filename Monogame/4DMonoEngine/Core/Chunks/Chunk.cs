@@ -27,12 +27,9 @@ namespace _4DMonoEngine.Core.Chunks
     public sealed class Chunk : VertexBuilderTarget, IInGameDebuggable
     {
         public delegate Chunk GetNeighborChunk(Chunk origin, FaceDirection edge);
-        public const byte MaxSunValue = 255;
         public const int SizeInBlocks = 32;
         private readonly Block[] m_blocks;
         public Vector3Int ChunkCachePosition;
-
-        public readonly SparseArray3D<Vector3Byte> LightSources;
 
         public ChunkState ChunkState;
         private readonly MappingFunction m_mappingFunction;
@@ -55,7 +52,6 @@ namespace _4DMonoEngine.Core.Chunks
             BoundingBox = new BoundingBox(new Vector3(Position.X, Position.Y, Position.Z),
                                           new Vector3(Position.X + SizeInBlocks, Position.Y + SizeInBlocks,
                                                       Position.Z + SizeInBlocks));
-            LightSources = new SparseArray3D<Vector3Byte>(SizeInBlocks, SizeInBlocks);
 #if DEBUG
             MainEngine.GetEngineInstance().DebugOnlyDebugManager.RegisterInGameDebuggable(this);
 #endif

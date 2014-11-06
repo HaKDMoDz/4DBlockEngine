@@ -131,7 +131,7 @@ namespace _4DMonoEngine.Core.Chunks
             var flattenIndex = BlockIndexByWorldPosition(x, y, z);
             Blocks[flattenIndex] = block;
             chunk.AddBlock(x, y, z);
-            m_lightingEngine.AddBlock(x, y, z);
+            m_lightingEngine.AddBlock(x, y, z, block);
         }
 
         public void RemoveBlock(int x, int y, int z)
@@ -174,7 +174,7 @@ namespace _4DMonoEngine.Core.Chunks
         private int count = 0;
         public override void Update(GameTime gameTime)
         {
-            if (m_startUpState == StartUpState.Started)
+           /* if (m_startUpState == StartUpState.Started)
             {
                 if (count++ > 100 && m_EditQueue.Count == 0)
                 {
@@ -190,7 +190,7 @@ namespace _4DMonoEngine.Core.Chunks
                     add = !add;
                     m_cachePositionUpdated = true;
                 }
-            }
+            }*/
             if (m_startUpState != StartUpState.AwaitingStart)
             {
                 return;
@@ -278,16 +278,10 @@ namespace _4DMonoEngine.Core.Chunks
                 switch (result.EditType)
                 {
                     case WorldEdit.WorldEditType.RemoveBlock:
+                        Console.WriteLine("clearing block");
                         break;
                     case WorldEdit.WorldEditType.AddBlock:
-                        break;
-                    case WorldEdit.WorldEditType.RemoveLight:
-                        Console.WriteLine("clearing light");
-                        m_lightingEngine.RemoveLight(chunk.LightSources, result.Position);
-                        break;
-                    case WorldEdit.WorldEditType.AddLight:
-                        Console.WriteLine("adding light");
-                        m_lightingEngine.AddLight(chunk.LightSources, result.Position, result.NewLight);
+                        Console.WriteLine("adding block");
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -379,7 +373,6 @@ namespace _4DMonoEngine.Core.Chunks
                     goto case ChunkState.AwaitingLighting;
                 case ChunkState.AwaitingLighting:
                     chunk.ChunkState = ChunkState.Lighting;
-                    m_lightingEngine.Process(chunk.Position.X, chunk.Position.Y, chunk.Position.Z, chunk.LightSources);
                     chunk.ChunkState = ChunkState.AwaitingBuild;
                     goto case ChunkState.AwaitingBuild;
                 case ChunkState.AwaitingBuild:
@@ -544,9 +537,7 @@ namespace _4DMonoEngine.Core.Chunks
             public enum WorldEditType
             {
                 RemoveBlock,
-                AddBlock,
-                RemoveLight,
-                AddLight
+                AddBlock
             }
 
             public Vector3Int Position;

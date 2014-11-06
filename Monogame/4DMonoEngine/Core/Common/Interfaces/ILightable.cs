@@ -14,5 +14,9 @@ namespace _4DMonoEngine.Core.Common.Interfaces
         float Opacity { get; }
         HalfVector2[] GetTextureMapping(FaceDirection faceDir);
         bool Exists { get; }
+        byte EmissivitySun { get; }
+        byte EmissivityRed { get; }
+        byte EmissivityGreen { get; }
+        byte EmissivityBlue { get; }
     }
 }

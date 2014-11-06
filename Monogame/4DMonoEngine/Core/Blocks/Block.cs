@@ -89,5 +89,28 @@ namespace _4DMonoEngine.Core.Blocks
         {
             get { return BlockDictionary.GetInstance().GetStaticData(Type).Opacity; }
         }
+
+        public byte EmissivitySun
+        {
+            get { return BlockDictionary.GetInstance().GetStaticData(Type).EmissivitySun; }
+        }
+
+        public byte EmissivityRed
+        {
+            get { return BlockDictionary.GetInstance().GetStaticData(Type).EmissivityRed; }
+        }
+
+        public byte EmissivityGreen
+        {
+            get { return BlockDictionary.GetInstance().GetStaticData(Type).EmissivityGreen; }
+        }
+
+        public byte EmissivityBlue
+        {
+            get { return BlockDictionary.GetInstance().GetStaticData(Type).EmissivityBlue; }
+        }
+
+
+
     }
 }

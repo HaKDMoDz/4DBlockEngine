@@ -7,7 +7,11 @@
 		"Durability" : 0,
 		"Elasticity" : 0,
 		"Adhesion" : 0,
-		"Mass" : 0
+		"Mass" : 0,
+		"EmissivitySun" : 0,
+		"EmissivityRed" : 0,
+		"EmissivityGreen" : 0,
+		"EmissivityBlue" : 0
 	},
 	{
 		"Name" : "Cloud",
@@ -17,6 +21,10 @@
 		"Durability" : 0.01,
 		"Elasticity" : 0.01,
 		"Adhesion" : 0.01,
-		"Mass" : 0.01
+		"Mass" : 0.01,
+		"EmissivitySun" : 0,
+		"EmissivityRed" : 0,
+		"EmissivityGreen" : 0,
+		"EmissivityBlue" : 0
 	}
 ]
