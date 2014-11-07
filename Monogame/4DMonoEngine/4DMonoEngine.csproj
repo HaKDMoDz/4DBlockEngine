@@ -108,11 +108,13 @@
     <Compile Include="Core\Events\IEventSink.cs" />
     <Compile Include="Core\Events\IEventSource.cs" />
     <Compile Include="Core\Graphics\RenderingConstants.cs" />
+    <Compile Include="Core\Initialization\SaveSystemInitializer.cs" />
     <Compile Include="Core\Initialization\BlockInitializer.cs" />
     <Compile Include="Core\Initialization\InitializationController.cs" />
     <Compile Include="Core\Initialization\SimulationInitializer.cs" />
     <Compile Include="Core\Managers\DebugManager.cs" />
     <Compile Include="Core\Managers\EntityManager.cs" />
+    <Compile Include="Core\Pages\SaveDirectory.cs" />
     <Compile Include="Core\Processors\CellularLghting.cs" />
     <Compile Include="Core\Processors\VertexBuilder.cs" />
     <Compile Include="Core\Common\Interfaces\IInGameDebuggable.cs" />

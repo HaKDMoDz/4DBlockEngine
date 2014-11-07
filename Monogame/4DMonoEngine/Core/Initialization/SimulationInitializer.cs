@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using _4DMonoEngine.Core.Common.Interfaces;
 using _4DMonoEngine.Core.Universe;
@@ -19,7 +16,7 @@ namespace _4DMonoEngine.Core.Initialization
         {
             m_game = game;
             m_seed = seed;
-            m_dependencies = new List<Type>() {typeof(BlockInitializer)};
+            m_dependencies = new List<Type>() {typeof(BlockInitializer), typeof(SaveSystemInitializer)};
         }
 
 

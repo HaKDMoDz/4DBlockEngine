@@ -77,7 +77,7 @@ namespace _4DMonoEngine.Core.Blocks
 
         public HalfVector2[] GetTextureMapping(FaceDirection faceDir)
         {
-            return BlockDictionary.GetInstance().GetTextureMapping(Type, faceDir);
+            return BlockDictionary.Instance.GetTextureMapping(Type, faceDir);
         }
 
         public bool Exists
@@ -87,27 +87,27 @@ namespace _4DMonoEngine.Core.Blocks
 
         public float Opacity
         {
-            get { return BlockDictionary.GetInstance().GetStaticData(Type).Opacity; }
+            get { return BlockDictionary.Instance.GetStaticData(Type).Opacity; }
         }
 
         public byte EmissivitySun
         {
-            get { return BlockDictionary.GetInstance().GetStaticData(Type).EmissivitySun; }
+            get { return BlockDictionary.Instance.GetStaticData(Type).EmissivitySun; }
         }
 
         public byte EmissivityRed
         {
-            get { return BlockDictionary.GetInstance().GetStaticData(Type).EmissivityRed; }
+            get { return BlockDictionary.Instance.GetStaticData(Type).EmissivityRed; }
         }
 
         public byte EmissivityGreen
         {
-            get { return BlockDictionary.GetInstance().GetStaticData(Type).EmissivityGreen; }
+            get { return BlockDictionary.Instance.GetStaticData(Type).EmissivityGreen; }
         }
 
         public byte EmissivityBlue
         {
-            get { return BlockDictionary.GetInstance().GetStaticData(Type).EmissivityBlue; }
+            get { return BlockDictionary.Instance.GetStaticData(Type).EmissivityBlue; }
         }
 
 

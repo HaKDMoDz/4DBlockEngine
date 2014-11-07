@@ -9,9 +9,10 @@ namespace _4DMonoEngine.Core.Blocks
     public class BlockDictionary
     {
         //TODO : make this not static
-        public static BlockDictionary GetInstance()
+
+        public static BlockDictionary Instance
         {
-            return s_instance ?? (s_instance = new BlockDictionary());
+            get { return s_instance ?? (s_instance = new BlockDictionary()); }
         }
 
         private static BlockDictionary s_instance;
@@ -28,10 +29,9 @@ namespace _4DMonoEngine.Core.Blocks
             m_blockNameMap = new Dictionary<string, ushort>();
             m_blockTypeMap = new Dictionary<string, ushort[]>();
             m_blockTextureMappings = new Dictionary<int, HalfVector2[]>();
-            InitialzeAsync();
         }
 
-        private async void InitialzeAsync()
+        public async void Initialize()
         {
             var settings = await MainEngine.GetEngineInstance().GeneralSettings;
             var typeMapping = settings.BlockTypeMap;

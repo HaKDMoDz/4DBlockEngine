@@ -60,8 +60,8 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
                     fileName = parts[0];
                     recordName = parts[1];
                 }
-                var regionData = await MainEngine.GetEngineInstance().GetConfig<T>(fileName, recordName);
-                m_generators.Add(regionData.GetKey(), GeneratorBuilder(noiseCache, regionData));
+                var regionData = MainEngine.GetEngineInstance().GetConfig<T>(fileName, recordName);
+                m_generators.Add((await regionData).GetKey(), GeneratorBuilder(noiseCache, (await regionData)));
             }
         }
 

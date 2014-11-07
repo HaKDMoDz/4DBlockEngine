@@ -12,8 +12,6 @@ namespace _4DMonoEngine.Core.Initialization
     {
         public delegate void InitializationHandler();
         private readonly List<IInitializable> m_initializables;
-        private bool m_isComplete;
-        private InitializationHandler m_initializationHandler;
 
         public InitializationController()
         {
@@ -24,23 +22,12 @@ namespace _4DMonoEngine.Core.Initialization
         {
             m_initializables = new List<IInitializable>(entries);
         }
-
-        public void SetInitializationHandler(InitializationHandler handler)
-        {
-            m_initializationHandler = handler;
-        }
-
         public void AddEntry(IInitializable entry)
         {
             m_initializables.Add(entry);
         }
 
-        public bool IsComplete()
-        {
-            return m_isComplete;
-        }
-
-        public void Run()
+        public async Task<bool> Run()
         {
             var chained = new HashSet<Type>();
             var initializationChain = new Queue<IInitializable>();
@@ -63,7 +50,7 @@ namespace _4DMonoEngine.Core.Initialization
             }
             if (initializationChain.Count > 0)
             {
-                Task.Run(() =>
+                return await Task.Run(() =>
                 {
                     var current = new Dictionary<Type, IInitializable>();
 
@@ -84,21 +71,10 @@ namespace _4DMonoEngine.Core.Initialization
                     {
                         Thread.Sleep(10);
                     }
-                    if (m_initializationHandler != null)
-                    {
-                        m_initializationHandler();
-                    }
-                    m_isComplete = true;
+                    return true;
                 });
             }
-            else
-            {
-                if (m_initializationHandler != null)
-                {
-                    m_initializationHandler();
-                }
-                m_isComplete = true;
-            }
+            return true;
         }
     }
 }

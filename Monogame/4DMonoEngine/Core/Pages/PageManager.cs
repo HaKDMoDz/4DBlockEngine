@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
+using _4DMonoEngine.Core.Assets;
 using _4DMonoEngine.Core.Utils;
 using _4DMonoEngine.Core.Utils.Vector;
 using System.IO;
@@ -15,6 +16,8 @@ namespace _4DMonoEngine.Core.Pages
 		private readonly int[] m_hilbertCurve;
 	    private readonly LruCache<Page> m_pageCache;
 	    private readonly string m_dataDirectory;
+
+	    private readonly byte[] m_buffer;
 
 		public PageManager()
 		{
@@ -33,6 +36,13 @@ namespace _4DMonoEngine.Core.Pages
             var executableDir = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().GetName().CodeBase);
             Debug.Assert(!String.IsNullOrEmpty(executableDir));
             m_dataDirectory = Path.Combine(executableDir, "Saves").Substring(6);
+		    const int blockBytes = sizeof (byte) * 4 + sizeof (ushort) * 2;
+            m_buffer = new byte[sizeof(int)* 3 + blockBytes * count];
+          /*  if (File.Exists(Path.Combine(m_dataDirectory, "SaveDirectory.json")))
+		    {
+		        var loader = new JsonLoader(m_dataDirectory);
+                loader.Load<SaveDirectory>("SaveDirectory", "SaveDirectory");
+		    }*/
 		}
 
 
@@ -60,7 +70,7 @@ namespace _4DMonoEngine.Core.Pages
 		{
 
             var timer = Stopwatch.StartNew();
-			using (var blockCompressStream = new MemoryStream())
+			using (var blockCompressStream = new MemoryStream(m_buffer))
 			{
 				using (var blockCompressWriter = new BinaryWriter(blockCompressStream))
                 {

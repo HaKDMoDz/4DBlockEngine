@@ -124,7 +124,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
                      //   block.Color = (ushort)((tint << 8) | (tint << 4) | tint);
 					    if (riverData != null && cY <= groundLevel && cY >= groundLevel - 1)
 					    {
-					        block = new Block(BlockDictionary.GetInstance().GetBlockIdForName("Water"));
+					        block = new Block(BlockDictionary.Instance.GetBlockIdForName("Water"));
 					    }
 
                         m_blocks[m_mappingFunction(cX, cY, cZ)] = block;
@@ -135,7 +135,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
                         var cY = chunkY + y;
 					    var blockIndex = m_mappingFunction(cX, cY, cZ);
 					    if (!m_blocks[blockIndex].Exists)
-					        m_blocks[blockIndex] = new Block(BlockDictionary.GetInstance().GetBlockIdForName("Water"));
+					        m_blocks[blockIndex] = new Block(BlockDictionary.Instance.GetBlockIdForName("Water"));
 					}
 
 			        if (Math.Abs(data.Delta.X - cX) < 0.01 && Math.Abs(data.Delta.Y - cZ) < 0.01)

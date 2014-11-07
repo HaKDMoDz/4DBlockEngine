@@ -39,7 +39,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
                 layer = worldRegionLayer;
                 break;
             }
-            return new Block(BlockDictionary.GetInstance().GetBlockIdForName(layer.BlockName));
+            return new Block(BlockDictionary.Instance.GetBlockIdForName(layer.BlockName));
         }
     }
 }

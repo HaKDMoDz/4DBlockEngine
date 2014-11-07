@@ -23,7 +23,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
         {
             m_blocks = blocks;
             m_mappingFunction = mappingFunction;
-            m_treeId = BlockDictionary.GetInstance().GetBlockIdForName("Sand");
+            m_treeId = BlockDictionary.Instance.GetBlockIdForName("Sand");
             m_densityFunction = new SimplexNoise2D(seed);
             m_cellNoise = new CellNoise2D(seed);
             m_sampleScale = 64;

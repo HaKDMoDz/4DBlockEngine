@@ -52,7 +52,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
             }
             cache.Depth = accumulator;
             cache.LayerIndex = index % Layers.Count;
-            return new Block(BlockDictionary.GetInstance().GetBlockIdForName(layer.BlockName));
+            return new Block(BlockDictionary.Instance.GetBlockIdForName(layer.BlockName));
         }
     }
 }

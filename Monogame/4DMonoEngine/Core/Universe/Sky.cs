@@ -38,11 +38,11 @@ namespace _4DMonoEngine.Core.Universe
 
         public float Opacity
         {
-            get { return BlockDictionary.GetInstance().GetStaticData(m_type).Opacity; }
+            get { return BlockDictionary.Instance.GetStaticData(m_type).Opacity; }
         }
         public HalfVector2[] GetTextureMapping(FaceDirection faceDir)
         {
-            return BlockDictionary.GetInstance().GetTextureMapping(m_type, faceDir);
+            return BlockDictionary.Instance.GetTextureMapping(m_type, faceDir);
         }
 
         public bool Exists
@@ -55,7 +55,7 @@ namespace _4DMonoEngine.Core.Universe
         public byte EmissivityGreen { get { return 0;} }
         public byte EmissivityBlue { get { return 0; } }
 
-        public static readonly CloudBlock Cloud = new CloudBlock(BlockDictionary.GetInstance().GetBlockIdForName("Cloud"), 0);
+        public static readonly CloudBlock Cloud = new CloudBlock(BlockDictionary.Instance.GetBlockIdForName("Cloud"), 0);
         public static readonly CloudBlock Empty = new CloudBlock(0, 255);
         public static readonly CloudBlock UndersideClear = new CloudBlock(0, 200);
         public static readonly CloudBlock UndersideOvercast = new CloudBlock(0, 140);

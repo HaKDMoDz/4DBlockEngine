@@ -5,10 +5,10 @@ using _4DMonoEngine.Core.Common.Interfaces;
 
 namespace _4DMonoEngine.Core.Initialization
 {
-    public sealed class BlockInitializer :IInitializable
+    public sealed class SaveSystemInitializer :IInitializable
     {
         private readonly List<Type> m_dependencies;
-        public BlockInitializer()
+        public SaveSystemInitializer()
         {
             m_dependencies = new List<Type>();
         }
@@ -20,12 +20,12 @@ namespace _4DMonoEngine.Core.Initialization
 
         public bool IsInitialized()
         {
-            return BlockDictionary.Instance.IsInitialized;
+            return true; //BlockDictionary.Instance.IsInitialized;
         }
 
         public void Initialize()
         {
-            BlockDictionary.Instance.Initialize();
+            //BlockDictionary.Instance.Initialize();
         }
     }
 }
