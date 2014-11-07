@@ -2,26 +2,26 @@
 
 namespace _4DMonoEngine.Core.Commands
 {
-    [Command("rasterizer", "Sets rasterizer mode.\nusage: rasterizer [wireframed|normal]")]
-    public class RasterizerCommand : Command
+    [Command("wireframe", "Sets rasterizer mode.\nusage: wireframe [on|off]")]
+    public class WireframeCommand : Command
     {
         [DefaultCommand]
         public string Default(string[] @params)
         {
-            return string.Format("Rasterizer is currently set to {0} mode.\nusage: rasterizer [wireframed|normal].",
+            return string.Format("Rasterizer is currently set to {0} mode.\nusage: wireframe [on|off].",
             MainEngine.GetEngineInstance().Rasterizer.Wireframe
-                    ? "wireframe"
-                    : "normal");
+                    ? "on"
+                    : "off");
         }
         
-        [Subcommand("wireframed","Sets rasterizer mode to wireframed.")]
+        [Subcommand("on","Sets rasterizer mode to wireframed.")]
         public string Wireframed(string[] @params)
         {
             MainEngine.GetEngineInstance().Rasterizer.Wireframe = true;
             return "Rasterizer mode set to wireframed.";
         }
 
-        [Subcommand("normal", "Sets rasterizer mode to normal.")]
+        [Subcommand("off", "Sets rasterizer mode to normal.")]
         public string Normal(string[] @params)
         {
             MainEngine.GetEngineInstance().Rasterizer.Wireframe = false;

@@ -78,8 +78,8 @@ namespace _4DMonoEngine.Core.Chunks.Generators
                     var biome = m_biomeGenerator.GetRegionGenerator(cX, cZ, cW);
                     var province = m_provinceGenerator.GetRegionGenerator(cX, cZ, cW);
 
-			      /*  var data = m_populator.CalculateNearestSamplePosition(cX, cZ);
-			        var color = (ushort)data.Id;*/
+			        var data = m_populator.CalculateNearestSamplePosition(cX, cZ);
+			        /*var color = (ushort)data.Id;*/
 			        var riverData = m_riverGenerator.GetRiverData(cX, cZ);
 
                     if (riverData != null)
@@ -96,9 +96,9 @@ namespace _4DMonoEngine.Core.Chunks.Generators
                         var cY = chunkY + y;
                         Block block;
 
-                        if (cY > groundLevel + 10)// && cX >= 11 && cX < 13 && cZ >= 71 && cZ < 73)
+                        if (cY > groundLevel + 10)
 					    {
-                            block = new Block(Block.None) {LightSun = /*CellularLighting<Block>.MaxSun}; //*/CellularLighting<Block>.MinLight };
+                            block = new Block(Block.None) {LightSun = CellularLighting<Block>.MaxSun};
 					    }
 					    else if (cY > groundLevel)
 					    {
@@ -124,15 +124,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators
                      //   block.Color = (ushort)((tint << 8) | (tint << 4) | tint);
 					    if (riverData != null && cY <= groundLevel && cY >= groundLevel - 1)
 					    {
-					        block = new Block(BlockDictionary.GetInstance().GetBlockIdForName("Water"));/*
-                            {
-                                LightRed = 255,
-                                LightBlue = 255,
-                                LightGreen = 255
-                                
-                            };*/
-
-					        //block.Color = (ushort)riverData.Id;
+					        block = new Block(BlockDictionary.GetInstance().GetBlockIdForName("Water"));
 					    }
 
                         m_blocks[m_mappingFunction(cX, cY, cZ)] = block;
@@ -143,19 +135,13 @@ namespace _4DMonoEngine.Core.Chunks.Generators
                         var cY = chunkY + y;
 					    var blockIndex = m_mappingFunction(cX, cY, cZ);
 					    if (!m_blocks[blockIndex].Exists)
-					        m_blocks[blockIndex] = new Block(BlockDictionary.GetInstance().GetBlockIdForName("Water"));/*
-                            {
-                                LightRed = 255,
-                                LightBlue = 255,
-                                LightGreen = 255
-
-                            };*/
+					        m_blocks[blockIndex] = new Block(BlockDictionary.GetInstance().GetBlockIdForName("Water"));
 					}
 
-			       /* if (Math.Abs(data.Delta.X - cX) < 0.01 && Math.Abs(data.Delta.Y - cZ) < 0.01)
+			        if (Math.Abs(data.Delta.X - cX) < 0.01 && Math.Abs(data.Delta.Y - cZ) < 0.01)
 			        {
 			            m_populator.PopulateTree(cX, cZ, (int)groundLevel);
-			        }*/
+			        }
 				}
 		    }
             //TODO : query if chunk has all neighbors loaded so we can run our erosion step

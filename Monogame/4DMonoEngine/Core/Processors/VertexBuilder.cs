@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Graphics.PackedVector;
 using _4DMonoEngine.Core.Blocks;
@@ -164,13 +165,17 @@ namespace _4DMonoEngine.Core.Processors
             var blueBr = (block5.LightBlue + block6.LightBlue + block7.LightBlue + block0.LightBlue) >> 2;
             var blueBl = (block7.LightBlue + block8.LightBlue + block1.LightBlue + block0.LightBlue) >> 2;
 
-            var aoTl = 3 - block1.Opacity + block2.Opacity + block3.Opacity;
-            var aoTr = 3 - block3.Opacity + block4.Opacity + block5.Opacity;
-            var aoBr = 3 - block5.Opacity + block6.Opacity + block7.Opacity;
-            var aoBl = 3 - block7.Opacity + block8.Opacity + block1.Opacity;
+            var occlude1 = block1.Opacity > 0;
+            var occlude3 = block3.Opacity > 0;
+            var occlude5 = block5.Opacity > 0;
+            var occlude7 = block7.Opacity > 0;
 
+            var aoTl = (occlude1 && occlude3) ? 0 : 3 - block1.Opacity + block2.Opacity + block3.Opacity;
+            var aoTr = (occlude3 && occlude5) ? 0 : 3 - block3.Opacity + block4.Opacity + block5.Opacity;
+            var aoBr = (occlude5 && occlude7) ? 0 : 3 - block5.Opacity + block6.Opacity + block7.Opacity;
+            var aoBl = (occlude7 && occlude1) ? 0 : 3 - block7.Opacity + block8.Opacity + block1.Opacity;
 
-            var flipped = aoTl + aoBr < aoTr + aoBl;
+            var flipped= aoTl + aoBr < aoTr + aoBl;
 
             var localTl = new HalfVector4(sunTl / 255.0f, redTl / 255.0f, greenTl / 255.0f, blueTl / 255.0f);
             var localTr = new HalfVector4(sunTr / 255.0f, redTr / 255.0f, greenTr / 255.0f, blueTr / 255.0f);

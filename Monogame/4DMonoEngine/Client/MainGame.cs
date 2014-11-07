@@ -62,7 +62,6 @@ namespace _4DMonoEngine.Client
 #endif
 			var skyColor = new Color(128, 173, 254);
             GraphicsDevice.Clear(skyColor);
-            GraphicsDevice.RasterizerState = MainEngine.GetEngineInstance().Rasterizer.State;
             base.Draw(gameTime);
 #if DEBUG
             m_timeRuler.EndMark("Draw");

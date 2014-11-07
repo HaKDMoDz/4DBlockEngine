@@ -153,21 +153,25 @@ namespace _4DMonoEngine.Core.Processors
         {
             var blockIndex = m_mappingFunction(x, y, z);
             var block = m_blockSource[blockIndex];
-            if (block.EmissivityRed > MinLight)
+            var lightRed = Math.Max(block.LightRed, block.EmissivityRed);
+            var lightGreen = Math.Max(block.LightGreen, block.EmissivityGreen);
+            var lightBlue = Math.Max(block.LightBlue, block.EmissivityBlue);
+            var lightSun = Math.Max(block.LightSun, block.EmissivitySun);
+            if (lightRed > MinLight)
             {
-                PropogateFromLight(x, y, z, Channel.Red, block.EmissivityRed);
+                ClearCellAndEnqueLight(x, y, z, blockIndex, Channel.Red, lightRed);
             }
-            if (block.EmissivityGreen > MinLight)
+            if (lightGreen > MinLight)
             {
-                PropogateFromLight(x, y, z, Channel.Green, block.EmissivityGreen);
+                ClearCellAndEnqueLight(x, y, z, blockIndex, Channel.Green, lightGreen);
             }
-            if (block.EmissivityBlue > MinLight)
+            if (lightBlue > MinLight)
             {
-                PropogateFromLight(x, y, z, Channel.Blue, block.EmissivityBlue);
+                ClearCellAndEnqueLight(x, y, z, blockIndex, Channel.Blue, lightBlue);
             }
-            if (block.EmissivitySun > MinLight)
+            if (lightSun > MinLight)
             {
-                PropogateFromLight(x, y, z, Channel.Sun, block.EmissivitySun);
+                ClearCellAndEnqueLight(x, y, z, blockIndex, Channel.Sun, lightSun);
             }
         }
 

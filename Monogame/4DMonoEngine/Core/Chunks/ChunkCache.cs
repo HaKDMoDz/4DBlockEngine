@@ -410,6 +410,7 @@ namespace _4DMonoEngine.Core.Chunks
 
             Game.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             Game.GraphicsDevice.BlendState = BlendState.Opaque;
+            Game.GraphicsDevice.RasterizerState = MainEngine.GetEngineInstance().Rasterizer.State;
 
             // general parameters
             m_blockEffect.Parameters["World"].SetValue(Matrix.Identity);

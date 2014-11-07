@@ -66,7 +66,7 @@
     <Compile Include="Core\Chunks\Generators\Regions\BiomeGenerator.cs" />
     <Compile Include="Core\Chunks\Generators\Regions\WorldRegionGeneratorCollection.cs" />
     <Compile Include="Core\Chunks\Generators\Regions\WorldRegionTerrainGenerator.cs" />
-    <Compile Include="Core\Commands\RasterizerCommand.cs" />
+    <Compile Include="Core\Commands\WireframeCommand.cs" />
     <Compile Include="Core\Assets\Config\BlockData.cs" />
     <Compile Include="Core\Assets\Config\BlockTextureData.cs" />
     <Compile Include="Core\Common\Enums\FaceDirection.cs" />
