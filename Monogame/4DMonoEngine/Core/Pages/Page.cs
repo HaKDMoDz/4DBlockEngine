@@ -33,11 +33,10 @@ namespace _4DMonoEngine.Core.Pages
 
 		public static int BlockIndexFromRelativePosition(int x, int y, int z)
 		{
-			var wrapX = MathUtilities.Modulo(x, PageSizeInBlocks);
-			var wrapY = MathUtilities.Modulo(y, PageSizeInBlocks);
-			var wrapZ = MathUtilities.Modulo(z, PageSizeInBlocks);
-			var flattenIndex = wrapX * BlockStepX + wrapZ * BlockStepZ + wrapY;
-			return flattenIndex;
+            if (x < 0 || x >= PageSizeInBlocks) return -1;
+            if (y < 0 || y >= PageSizeInBlocks) return -1;
+            if (z < 0 || z >= PageSizeInBlocks) return -1;
+			return x * BlockStepX + y * BlockStepZ + z;
 		}
 
     }

@@ -16,6 +16,7 @@ namespace _4DMonoEngine.Core.Pages
 		private readonly int[] m_hilbertCurve;
 	    private readonly LruCache<Page> m_pageCache;
 	    private readonly string m_dataDirectory;
+        private const int BlockBytes = sizeof(byte) * 4 + sizeof(ushort) * 2;
 
 	    private readonly byte[] m_buffer;
 
@@ -36,8 +37,7 @@ namespace _4DMonoEngine.Core.Pages
             var executableDir = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().GetName().CodeBase);
             Debug.Assert(!String.IsNullOrEmpty(executableDir));
             m_dataDirectory = Path.Combine(executableDir, "Saves").Substring(6);
-		    const int blockBytes = sizeof (byte) * 4 + sizeof (ushort) * 2;
-            m_buffer = new byte[sizeof(int)* 3 + blockBytes * count];
+            m_buffer = new byte[sizeof(int)* 3 + BlockBytes * count];
           /*  if (File.Exists(Path.Combine(m_dataDirectory, "SaveDirectory.json")))
 		    {
 		        var loader = new JsonLoader(m_dataDirectory);
@@ -55,74 +55,68 @@ namespace _4DMonoEngine.Core.Pages
             Debug.Assert(page.Z == decompPage.Z);
 	        for (var i = 0; i < page.Data.Length; ++i)
             {
-                Debug.Assert(page.Data[i].Type == decompPage.Data[i].Type);
-                Debug.Assert(page.Data[i].LightRed == decompPage.Data[i].LightRed);
-                Debug.Assert(page.Data[i].LightGreen == decompPage.Data[i].LightGreen);
-                Debug.Assert(page.Data[i].LightBlue == decompPage.Data[i].LightBlue);
-                Debug.Assert(page.Data[i].LightSun == decompPage.Data[i].LightSun);
-                Debug.Assert(page.Data[i].Color == decompPage.Data[i].Color);
+                Debug.Assert(page.Data[i].Type == decompPage.Data[i].Type, "Type on block index: " + i);
+                Debug.Assert(page.Data[i].LightRed == decompPage.Data[i].LightRed, "Red on block index: " + i);
+                Debug.Assert(page.Data[i].LightGreen == decompPage.Data[i].LightGreen, "Green on block index: " + i);
+                Debug.Assert(page.Data[i].LightBlue == decompPage.Data[i].LightBlue, "Blue on block index: " + i);
+                Debug.Assert(page.Data[i].LightSun == decompPage.Data[i].LightSun, "Sun on block index: " + i);
+                Debug.Assert(page.Data[i].Color == decompPage.Data[i].Color, "Color on block index: " + i);
 	        }
 
 	    }
 
-
-		public void CompressPage(Page page)
-		{
-
+        public void CompressPage(Page page)
+        {
             var timer = Stopwatch.StartNew();
-			using (var blockCompressStream = new MemoryStream(m_buffer))
-			{
-				using (var blockCompressWriter = new BinaryWriter(blockCompressStream))
+            
+            PutInt(page.X, 0);
+            PutInt(page.Y, 4);
+            PutInt(page.Z, 8);
+            const int headerSize = 12;
+            var count = m_hilbertCurve.Length;
+            for (var curveIndex = 0; curveIndex < count; ++curveIndex)
+            {
+                var block = page.Data[m_hilbertCurve[curveIndex]];
+                var offset = headerSize + curveIndex * 2;
+                PutShort(block.Type, offset);
+                offset = headerSize + count * 2 + curveIndex;
+                m_buffer[offset] = block.LightSun;
+                offset = headerSize + count * 3 + curveIndex;
+                m_buffer[offset] = block.LightRed;
+                offset = headerSize + count * 4 + curveIndex;
+                m_buffer[offset] = block.LightGreen;
+                offset = headerSize + count * 5 + curveIndex;
+                m_buffer[offset] = block.LightBlue;
+                offset = headerSize + count * 6 + curveIndex * 2;
+                PutShort(block.Color, offset);
+            }
+            using (var fileStream = new FileStream(Path.Combine(m_dataDirectory, page.PageId + ".page"), FileMode.Create))
+            {
+                using (var compressor = new GZipStream(fileStream, CompressionLevel.Optimal))
                 {
-                    blockCompressWriter.Write(page.X);
-                    blockCompressWriter.Write(page.Y);
-                    blockCompressWriter.Write(page.Z);
-					foreach (var blockIndex in m_hilbertCurve) 
-					{
-						var block = page.Data [blockIndex];
-						blockCompressWriter.Write(block.Type);
-					}
-					foreach (var blockIndex in m_hilbertCurve) 
-					{
-						var block = page.Data [blockIndex];
-						blockCompressWriter.Write (block.LightSun);
-					}
-					foreach (var blockIndex in m_hilbertCurve) 
-					{
-						var block = page.Data [blockIndex];
-						blockCompressWriter.Write (block.LightRed);
-					}
-					foreach (var blockIndex in m_hilbertCurve) 
-					{
-						var block = page.Data [blockIndex];
-						blockCompressWriter.Write (block.LightGreen);
-					}
-					foreach (var blockIndex in m_hilbertCurve) 
-					{
-						var block = page.Data [blockIndex];
-						blockCompressWriter.Write (block.LightBlue);
-					}
-					foreach (var blockIndex in m_hilbertCurve) 
-					{
-						var block = page.Data [blockIndex];
-						blockCompressWriter.Write (block.Color);
-                    }
-                    blockCompressStream.Position = 0;
-                    using (var fileStream = new FileStream(Path.Combine(m_dataDirectory, page.PageId + ".page"), FileMode.Create))
-                    {
-                        using (var compressor = new GZipStream(fileStream, CompressionLevel.Optimal))
-                        {
-                            blockCompressStream.CopyTo(compressor);
-                        }
-                    }
-				}
+                    compressor.Write(m_buffer, 0, m_buffer.Length);
+                }
             }
             Console.WriteLine("save time: " + timer.ElapsedMilliseconds);
-		}
+        }
 
+	    private void PutInt(int value, int offset)
+	    {
+            m_buffer[offset + 3] = (byte)((value >> 24) & 255);
+            m_buffer[offset + 2] = (byte)((value >> 16) & 255);
+            m_buffer[offset + 1] = (byte)((value >> 8) & 255);
+            m_buffer[offset] = (byte)(value & 255);
+	    }
 
+        private void PutShort(int value, int offset)
+        {
+            m_buffer[offset + 1] = (byte)((value >> 8) & 255);
+            m_buffer[offset] = (byte)(value & 255);
+        }
+        
 		public Page DecompressPage(int pageId)
-		{
+        {
+            var timer = Stopwatch.StartNew();
 			Page page;
             using (var fileStream = new FileStream(Path.Combine(m_dataDirectory, pageId + ".page"), FileMode.Open))
 			{
@@ -161,8 +155,9 @@ namespace _4DMonoEngine.Core.Pages
 						}
 					}
 				}
-			}
-			return page;
+            }
+            Console.WriteLine("load time: " + timer.ElapsedMilliseconds);
+            return page;
 		}
 	}
 }
