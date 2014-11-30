@@ -1,9 +1,5 @@
-using System;
-using System.Collections.Generic;
-using Microsoft.Xna.Framework;
 using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Common.Interfaces;
-using _4DMonoEngine.Core.Utils;
 
 namespace _4DMonoEngine.Core.Pages
 {

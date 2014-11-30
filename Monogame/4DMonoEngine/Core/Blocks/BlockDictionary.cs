@@ -8,8 +8,6 @@ namespace _4DMonoEngine.Core.Blocks
 {
     public class BlockDictionary
     {
-        //TODO : make this not static
-
         public static BlockDictionary Instance
         {
             get { return s_instance ?? (s_instance = new BlockDictionary()); }

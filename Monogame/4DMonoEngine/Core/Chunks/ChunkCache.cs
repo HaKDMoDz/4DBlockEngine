@@ -177,7 +177,7 @@ namespace _4DMonoEngine.Core.Chunks
         {
             if (m_startUpState == StartUpState.Started)
             {
-                /*if (add)
+                if (add)
                 {
                     var manager = new PageManager();
                     var data = new Block[Page.PageSizeInBlocks*Page.PageSizeInBlocks*Page.PageSizeInBlocks];
@@ -195,7 +195,7 @@ namespace _4DMonoEngine.Core.Chunks
                     var page = new Page(0, 0, 0, BlockIndexByWorldPosition(0, 0, 0), data);
                     manager.TestCompression(page);
                     add = false;
-                }*/
+                }
                 /*if (count++ > 100 && m_EditQueue.Count == 0)
                 {
                     count = 0;

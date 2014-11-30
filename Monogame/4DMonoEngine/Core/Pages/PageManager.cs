@@ -13,20 +13,29 @@ namespace _4DMonoEngine.Core.Pages
 {
 	public class PageManager
 	{
+        public static PageManager Instance
+        {
+            get { return s_instance ?? (s_instance = new PageManager()); }
+        }
+        private static PageManager s_instance;
+
 		private readonly int[] m_hilbertCurve;
 	    private readonly LruCache<Page> m_pageCache;
-	    private readonly string m_dataDirectory;
+        private readonly string m_dataDirectory;
         private const int BlockBytes = sizeof(byte) * 4 + sizeof(ushort) * 2;
+        const int BlockCount = Page.PageSizeInBlocks * Page.PageSizeInBlocks * Page.PageSizeInBlocks;
+        const int HeaderSize = 12;
+        public bool IsInitialized { get; private set; }
+	    private SaveDirectory m_directory;
 
 	    private readonly byte[] m_buffer;
 
-		public PageManager()
+		private PageManager()
 		{
 			//precompute the hilbert curve, since it will be the same for every page
-			const uint count = Page.PageSizeInBlocks * Page.PageSizeInBlocks * Page.PageSizeInBlocks;
 			var bitsPerAxis = (int)(Math.Ceiling(Math.Log (Page.PageSizeInBlocks, 2)));
-			m_hilbertCurve = new int[count];
-			for(uint index = 0; index < count; ++index)
+			m_hilbertCurve = new int[BlockCount];
+			for(uint index = 0; index < BlockCount; ++index)
 			{
 		 		var arr = HilbertCurve.HilbertAxes(index, 3, bitsPerAxis);
 				var blockIndex = Page.BlockIndexFromRelativePosition((int)arr [0], (int)arr [1], (int)arr [2]);
@@ -37,13 +46,22 @@ namespace _4DMonoEngine.Core.Pages
             var executableDir = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().GetName().CodeBase);
             Debug.Assert(!String.IsNullOrEmpty(executableDir));
             m_dataDirectory = Path.Combine(executableDir, "Saves").Substring(6);
-            m_buffer = new byte[sizeof(int)* 3 + BlockBytes * count];
-          /*  if (File.Exists(Path.Combine(m_dataDirectory, "SaveDirectory.json")))
-		    {
-		        var loader = new JsonLoader(m_dataDirectory);
-                loader.Load<SaveDirectory>("SaveDirectory", "SaveDirectory");
-		    }*/
+            m_buffer = new byte[sizeof(int)* 3 + BlockBytes * BlockCount];
 		}
+
+	    public async void Initialize()
+	    {
+	        if (File.Exists(Path.Combine(m_dataDirectory, "SaveDirectory.json")))
+	        {
+	            var loader = new JsonLoader(m_dataDirectory);
+                m_directory = await loader.Load<SaveDirectory>("SaveDirectory", "SaveDirectory");
+	        }
+	        else
+	        {
+                m_directory = new SaveDirectory();
+	        }
+	        IsInitialized = true;
+	    }
 
 
 	    public void TestCompression(Page page)
@@ -68,26 +86,23 @@ namespace _4DMonoEngine.Core.Pages
         public void CompressPage(Page page)
         {
             var timer = Stopwatch.StartNew();
-            
             PutInt(page.X, 0);
             PutInt(page.Y, 4);
             PutInt(page.Z, 8);
-            const int headerSize = 12;
-            var count = m_hilbertCurve.Length;
-            for (var curveIndex = 0; curveIndex < count; ++curveIndex)
+            for (var curveIndex = 0; curveIndex < BlockCount; ++curveIndex)
             {
                 var block = page.Data[m_hilbertCurve[curveIndex]];
-                var offset = headerSize + curveIndex * 2;
+                var offset = HeaderSize + curveIndex * 2;
                 PutShort(block.Type, offset);
-                offset = headerSize + count * 2 + curveIndex;
+                offset = HeaderSize + BlockCount * 2 + curveIndex;
                 m_buffer[offset] = block.LightSun;
-                offset = headerSize + count * 3 + curveIndex;
+                offset = HeaderSize + BlockCount * 3 + curveIndex;
                 m_buffer[offset] = block.LightRed;
-                offset = headerSize + count * 4 + curveIndex;
+                offset = HeaderSize + BlockCount * 4 + curveIndex;
                 m_buffer[offset] = block.LightGreen;
-                offset = headerSize + count * 5 + curveIndex;
+                offset = HeaderSize + BlockCount * 5 + curveIndex;
                 m_buffer[offset] = block.LightBlue;
-                offset = headerSize + count * 6 + curveIndex * 2;
+                offset = HeaderSize + BlockCount * 6 + curveIndex * 2;
                 PutShort(block.Color, offset);
             }
             using (var fileStream = new FileStream(Path.Combine(m_dataDirectory, page.PageId + ".page"), FileMode.Create))
@@ -122,42 +137,51 @@ namespace _4DMonoEngine.Core.Pages
 			{
 				using(var decompressor = new GZipStream(fileStream, CompressionMode.Decompress))
 				{
-					using (var blockDecompressReader = new BinaryReader(decompressor))
+				    decompressor.Read(m_buffer, 0, m_buffer.Length);
+                    var pageX = GetInt(0);
+                    var pageY = GetInt(4);
+                    var pageZ = GetInt(8);
+                    page = new Page(pageX, pageY, pageZ, pageId);
+                    for (var curveIndex = 0; curveIndex < BlockCount; ++curveIndex)
                     {
-                        var pageX = blockDecompressReader.ReadInt32();
-                        var pageY = blockDecompressReader.ReadInt32();
-                        var pageZ = blockDecompressReader.ReadInt32();
-                        page = new Page(pageX, pageY, pageZ, pageId);
-						foreach (var blockIndex in m_hilbertCurve) 
-						{
-							var block = new Block (blockDecompressReader.ReadUInt16 ());
-							page.Data [blockIndex] = block;
-						}
-						foreach (var blockIndex in m_hilbertCurve) 
-						{
-							page.Data [blockIndex].LightSun = blockDecompressReader.ReadByte ();
-						}
-						foreach (var blockIndex in m_hilbertCurve) 
-						{
-							page.Data [blockIndex].LightRed = blockDecompressReader.ReadByte ();
-						}
-						foreach (var blockIndex in m_hilbertCurve) 
-						{
-							page.Data [blockIndex].LightGreen = blockDecompressReader.ReadByte ();
-						}
-						foreach (var blockIndex in m_hilbertCurve) 
-						{
-							page.Data [blockIndex].LightBlue = blockDecompressReader.ReadByte ();
-						}
-						foreach (var blockIndex in m_hilbertCurve) 
-						{
-							page.Data [blockIndex].Color = blockDecompressReader.ReadUInt16();
-						}
-					}
+                        var offset = HeaderSize + curveIndex * 2;
+                        var block = new Block(GetShort(offset));
+                        offset = HeaderSize + BlockCount * 2 + curveIndex;
+                        block.LightSun = m_buffer[offset];
+                        offset = HeaderSize + BlockCount * 3 + curveIndex;
+                        block.LightRed = m_buffer[offset];
+                        offset = HeaderSize + BlockCount * 4 + curveIndex;
+                        block.LightGreen = m_buffer[offset];
+                        offset = HeaderSize + BlockCount * 5 + curveIndex;
+                        block.LightBlue = m_buffer[offset];
+                        offset = HeaderSize + BlockCount * 6 + curveIndex * 2;
+                        block.Color = GetShort(offset);
+                        page.Data[m_hilbertCurve[curveIndex]] = block;
+                    }
 				}
             }
             Console.WriteLine("load time: " + timer.ElapsedMilliseconds);
             return page;
 		}
+
+        private int GetInt(int offset)
+        {
+            var value = 0;
+            value = value | ((m_buffer[offset + 3] & 255) << 24);
+            value = value | ((m_buffer[offset + 2] & 255) << 16);
+            value = value | ((m_buffer[offset + 1] & 255) << 8);
+            value = value | (m_buffer[offset] & 255);
+            return value;
+        }
+
+        private ushort GetShort(int offset)
+        {
+            var value = 0;
+            value = value | ((m_buffer[offset + 1] & 255) << 8);
+            value = value | (m_buffer[offset] & 255); ;
+            return (ushort)value;
+        }
+
+
 	}
 }
