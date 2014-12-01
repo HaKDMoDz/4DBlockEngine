@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace _4DMonoEngine.Core.Assets.Config
+namespace _4DMonoEngine.Core.Assets.DataObjects
 {
     internal static class DataContainerPathRegistry
     {
@@ -13,6 +13,7 @@ namespace _4DMonoEngine.Core.Assets.Config
                 {typeof (BlockData), "Blocks"},
                 {typeof (BlockTextureData), "Blocks"},
                 {typeof (General), ""}, 
+                {typeof (SaveDirectory), ""}, 
         };
         public static string PathPrefix<T>()
         {

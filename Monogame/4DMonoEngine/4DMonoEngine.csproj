@@ -57,6 +57,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Core\Assets\AssetManager.cs" />
+    <Compile Include="Core\Assets\DataObjects\SaveDirectory.cs" />
+    <Compile Include="Core\Assets\JSONWriter.cs" />
     <Compile Include="Core\Assets\JSONLoader.cs" />
     <Compile Include="Core\Assets\TableLoader.cs" />
     <Compile Include="Core\Blocks\Block.cs" />
@@ -67,8 +69,8 @@
     <Compile Include="Core\Chunks\Generators\Regions\WorldRegionGeneratorCollection.cs" />
     <Compile Include="Core\Chunks\Generators\Regions\WorldRegionTerrainGenerator.cs" />
     <Compile Include="Core\Commands\WireframeCommand.cs" />
-    <Compile Include="Core\Assets\Config\BlockData.cs" />
-    <Compile Include="Core\Assets\Config\BlockTextureData.cs" />
+    <Compile Include="Core\Assets\DataObjects\BlockData.cs" />
+    <Compile Include="Core\Assets\DataObjects\BlockTextureData.cs" />
     <Compile Include="Core\Common\Enums\FaceDirection.cs" />
     <Compile Include="Core\Common\Extensions\FunctionExtensions.cs" />
     <Compile Include="Core\Common\Interfaces\IInitializable.cs" />
@@ -89,13 +91,13 @@
     <Compile Include="Core\Chunks\Generators\TerrainGenerator.cs" />
     <Compile Include="Core\Chunks\Generators\Structures\PathGenerator.cs" />
     <Compile Include="Core\Chunks\Generators\Structures\PlantPopulator.cs" />
-    <Compile Include="Core\Assets\Config\BiomeData.cs" />
-    <Compile Include="Core\Assets\Config\DataContainerPathRegistry.cs" />
-    <Compile Include="Core\Assets\Config\General.cs" />
-    <Compile Include="Core\Assets\Config\ProvinceData.cs" />
-    <Compile Include="Core\Assets\Config\WorldRegionData.cs" />
-    <Compile Include="Core\Assets\Config\WorldRegionLayer.cs" />
-    <Compile Include="Core\Assets\Config\WorldRegionParameter.cs" />
+    <Compile Include="Core\Assets\DataObjects\BiomeData.cs" />
+    <Compile Include="Core\Assets\DataObjects\DataContainerPathRegistry.cs" />
+    <Compile Include="Core\Assets\DataObjects\General.cs" />
+    <Compile Include="Core\Assets\DataObjects\ProvinceData.cs" />
+    <Compile Include="Core\Assets\DataObjects\WorldRegionData.cs" />
+    <Compile Include="Core\Assets\DataObjects\WorldRegionLayer.cs" />
+    <Compile Include="Core\Assets\DataObjects\WorldRegionParameter.cs" />
     <Compile Include="Core\Debugging\Profiling\Statistics.cs" />
     <Compile Include="Core\Events\Args\MouseButtonArgs.cs" />
     <Compile Include="Core\Events\Args\Vector2Args.cs" />
@@ -114,7 +116,6 @@
     <Compile Include="Core\Initialization\SimulationInitializer.cs" />
     <Compile Include="Core\Managers\DebugManager.cs" />
     <Compile Include="Core\Managers\EntityManager.cs" />
-    <Compile Include="Core\Pages\SaveDirectory.cs" />
     <Compile Include="Core\Processors\CellularLghting.cs" />
     <Compile Include="Core\Processors\VertexBuilder.cs" />
     <Compile Include="Core\Common\Interfaces\IInGameDebuggable.cs" />

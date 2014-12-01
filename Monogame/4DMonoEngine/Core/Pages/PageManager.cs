@@ -1,8 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Security.Policy;
+using System.Text;
+using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using _4DMonoEngine.Core.Assets;
+using _4DMonoEngine.Core.Assets.DataObjects;
+using _4DMonoEngine.Core.Chunks;
+using _4DMonoEngine.Core.Chunks.Generators;
 using _4DMonoEngine.Core.Utils;
 using _4DMonoEngine.Core.Utils.Vector;
 using System.IO;
@@ -23,12 +29,14 @@ namespace _4DMonoEngine.Core.Pages
 	    private readonly LruCache<Page> m_pageCache;
         private readonly string m_dataDirectory;
         private const int BlockBytes = sizeof(byte) * 4 + sizeof(ushort) * 2;
-        const int BlockCount = Page.PageSizeInBlocks * Page.PageSizeInBlocks * Page.PageSizeInBlocks;
-        const int HeaderSize = 12;
+        private const int BlockCount = Page.PageSizeInBlocks * Page.PageSizeInBlocks * Page.PageSizeInBlocks;
+        private const int HeaderSize = 12;
+        private const int BufferSize = HeaderSize + BlockBytes * BlockCount;
         public bool IsInitialized { get; private set; }
 	    private SaveDirectory m_directory;
-
-	    private readonly byte[] m_buffer;
+	    private JsonWriter m_jsonWriter;
+	    private readonly Stack<byte[]> m_buffers;
+	    private readonly HashSet<string> m_pagesPendingWrite;
 
 		private PageManager()
 		{
@@ -46,7 +54,10 @@ namespace _4DMonoEngine.Core.Pages
             var executableDir = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().GetName().CodeBase);
             Debug.Assert(!String.IsNullOrEmpty(executableDir));
             m_dataDirectory = Path.Combine(executableDir, "Saves").Substring(6);
-            m_buffer = new byte[sizeof(int)* 3 + BlockBytes * BlockCount];
+		    m_buffers = new Stack<byte[]>();
+            m_buffers.Push(new byte[BufferSize]);
+            m_pagesPendingWrite = new HashSet<string>();
+            m_jsonWriter = new JsonWriter(m_dataDirectory);
 		}
 
 	    public async void Initialize()
@@ -59,10 +70,112 @@ namespace _4DMonoEngine.Core.Pages
 	        else
 	        {
                 m_directory = new SaveDirectory();
+                m_jsonWriter.Write("SaveDirectory", m_directory);
 	        }
 	        IsInitialized = true;
 	    }
 
+	    public void LoadOrCreateChunk(Vector3Int position, Block[] blocks, MappingFunction mappingFunction)
+        {
+            var pagePositionX = position.X >> 6;
+            var pagePositionY = position.Y >> 6;
+            var pagePositionZ = position.Z >> 6;
+            var pageId = CreatePageId(pagePositionX, pagePositionY, pagePositionZ);
+            if (m_pageCache.ContainsPage(pageId))
+            {
+                page = m_pageCache.GetPage(pageId);
+                CopyCunkToPage(page, position, blocks, mappingFunction);
+            }
+            else if (m_directory.Pages.Contains(pageId))
+            {
+                page = DecompressPage(pageId);
+                CopyCunkToPage(page, position, blocks, mappingFunction);
+                m_pageCache.InsertPage(page);
+            }
+            else
+            {
+                var generator = new TerrainGenerator(Chunk.SizeInBlocks)   
+            }
+	    }
+
+	    public void SaveChunk(Vector3Int position, Block[] blocks, MappingFunction mappingFunction, Action<bool> callback)
+        {
+            var pagePositionX = position.X >> 6;
+            var pagePositionY = position.Y >> 6;
+            var pagePositionZ = position.Z >> 6;
+	        var pageId = CreatePageId(pagePositionX, pagePositionY, pagePositionZ);
+	        if (m_pagesPendingWrite.Contains(pageId))
+	        {
+                if (callback != null)
+                {
+                    callback(false);
+                }
+	        }
+	        else
+	        {
+	            Page page;
+	            if (m_pageCache.ContainsPage(pageId))
+	            {
+                    page = m_pageCache.GetPage(pageId);
+                    CopyCunkToPage(page, position, blocks, mappingFunction);
+	            }
+                else if (m_directory.Pages.Contains(pageId))
+                {
+                    page = DecompressPage(pageId);
+                    CopyCunkToPage(page, position, blocks, mappingFunction);
+                    m_pageCache.InsertPage(page);
+                }
+	            else
+	            {
+                    page = new Page(position.X, position.Y, position.Z, pageId);
+                    for (var x = 0; x < Page.PageSizeInBlocks; x++)
+                    {
+                        for (var y = 0; y < Page.PageSizeInBlocks; y++)
+                        {
+                            for (var z = 0; z < Page.PageSizeInBlocks; z++)
+                            {
+                                page.Data[Page.BlockIndexFromRelativePosition(x, y, z)] =
+                                    blocks[mappingFunction(position.X + x, position.Y + y, position.Z + z)];
+                            }
+                        }
+                    }
+                    m_pageCache.InsertPage(page);
+                    m_directory.Pages.Add(pageId);
+                    m_jsonWriter.Write("SaveDirectory", m_directory);
+	            }
+	            m_pagesPendingWrite.Add(pageId);
+	            Task.Run(() =>
+	            {
+	                CompressPage(page);
+	                if (callback != null)
+	                {
+	                    callback(true);
+	                }
+	                m_pagesPendingWrite.Remove(page.PageId);
+	            });
+	        }
+	    }
+
+        private void CopyCunkToPage(Page page, Vector3Int position, Block[] blocks, MappingFunction mappingFunction)
+	    {
+
+            for (var x = position.X % Page.PageSizeInBlocks; x < (position.X % Page.PageSizeInBlocks) + Chunk.SizeInBlocks; x++)
+            {
+                for (var y = position.Y % Page.PageSizeInBlocks; y < (position.Y % Page.PageSizeInBlocks) + Chunk.SizeInBlocks; y++)
+                {
+                    for (var z = position.Z % Page.PageSizeInBlocks; z < (position.Z % Page.PageSizeInBlocks) + Chunk.SizeInBlocks; z++)
+                    {
+                        page.Data[Page.BlockIndexFromRelativePosition(x, y, z)] =
+                            blocks[mappingFunction(position.X + x, position.Y + y, position.Z + z)];
+                    }
+                }
+            }
+	    }
+
+        private static string CreatePageId(int x, int y, int z)
+        {
+            return string.Format("{0} {1} {2}", x, y, z);
+        }
 
 	    public void TestCompression(Page page)
 	    {
@@ -83,102 +196,115 @@ namespace _4DMonoEngine.Core.Pages
 
 	    }
 
+	    private byte[] CheckOutBuffer()
+	    {
+	        lock (m_buffers)
+	        {
+	            return m_buffers.Count > 0 ? m_buffers.Pop() : new byte[BufferSize];
+	        }
+	    }
+
+        private void CheckInBuffer(byte[] buffer)
+        {
+            m_buffers.Push(buffer);
+        }
+
         public void CompressPage(Page page)
         {
-            var timer = Stopwatch.StartNew();
-            PutInt(page.X, 0);
-            PutInt(page.Y, 4);
-            PutInt(page.Z, 8);
+            var buffer = CheckOutBuffer();
+            PutInt(buffer, page.X, 0);
+            PutInt(buffer, page.Y, 4);
+            PutInt(buffer, page.Z, 8);
             for (var curveIndex = 0; curveIndex < BlockCount; ++curveIndex)
             {
                 var block = page.Data[m_hilbertCurve[curveIndex]];
                 var offset = HeaderSize + curveIndex * 2;
-                PutShort(block.Type, offset);
+                PutShort(buffer, block.Type, offset);
                 offset = HeaderSize + BlockCount * 2 + curveIndex;
-                m_buffer[offset] = block.LightSun;
+                buffer[offset] = block.LightSun;
                 offset = HeaderSize + BlockCount * 3 + curveIndex;
-                m_buffer[offset] = block.LightRed;
+                buffer[offset] = block.LightRed;
                 offset = HeaderSize + BlockCount * 4 + curveIndex;
-                m_buffer[offset] = block.LightGreen;
+                buffer[offset] = block.LightGreen;
                 offset = HeaderSize + BlockCount * 5 + curveIndex;
-                m_buffer[offset] = block.LightBlue;
+                buffer[offset] = block.LightBlue;
                 offset = HeaderSize + BlockCount * 6 + curveIndex * 2;
-                PutShort(block.Color, offset);
+                PutShort(buffer, block.Color, offset);
             }
             using (var fileStream = new FileStream(Path.Combine(m_dataDirectory, page.PageId + ".page"), FileMode.Create))
             {
                 using (var compressor = new GZipStream(fileStream, CompressionLevel.Optimal))
                 {
-                    compressor.Write(m_buffer, 0, m_buffer.Length);
+                    compressor.Write(buffer, 0, BufferSize);
                 }
             }
-            Console.WriteLine("save time: " + timer.ElapsedMilliseconds);
+            CheckInBuffer(buffer);
         }
 
-	    private void PutInt(int value, int offset)
+	    private static void PutInt(byte[] buffer, int value, int offset)
 	    {
-            m_buffer[offset + 3] = (byte)((value >> 24) & 255);
-            m_buffer[offset + 2] = (byte)((value >> 16) & 255);
-            m_buffer[offset + 1] = (byte)((value >> 8) & 255);
-            m_buffer[offset] = (byte)(value & 255);
+            buffer[offset + 3] = (byte)((value >> 24) & 255);
+            buffer[offset + 2] = (byte)((value >> 16) & 255);
+            buffer[offset + 1] = (byte)((value >> 8) & 255);
+            buffer[offset] = (byte)(value & 255);
 	    }
 
-        private void PutShort(int value, int offset)
+        private static void PutShort(byte[] buffer, int value, int offset)
         {
-            m_buffer[offset + 1] = (byte)((value >> 8) & 255);
-            m_buffer[offset] = (byte)(value & 255);
+            buffer[offset + 1] = (byte)((value >> 8) & 255);
+            buffer[offset] = (byte)(value & 255);
         }
         
-		public Page DecompressPage(int pageId)
-        {
-            var timer = Stopwatch.StartNew();
+		public Page DecompressPage(string pageId)
+		{
+		    var buffer = CheckOutBuffer();
 			Page page;
             using (var fileStream = new FileStream(Path.Combine(m_dataDirectory, pageId + ".page"), FileMode.Open))
 			{
 				using(var decompressor = new GZipStream(fileStream, CompressionMode.Decompress))
 				{
-				    decompressor.Read(m_buffer, 0, m_buffer.Length);
-                    var pageX = GetInt(0);
-                    var pageY = GetInt(4);
-                    var pageZ = GetInt(8);
+				    decompressor.Read(buffer, 0, BufferSize);
+                    var pageX = GetInt(buffer, 0);
+                    var pageY = GetInt(buffer, 4);
+                    var pageZ = GetInt(buffer, 8);
                     page = new Page(pageX, pageY, pageZ, pageId);
                     for (var curveIndex = 0; curveIndex < BlockCount; ++curveIndex)
                     {
                         var offset = HeaderSize + curveIndex * 2;
-                        var block = new Block(GetShort(offset));
+                        var block = new Block(GetShort(buffer, offset));
                         offset = HeaderSize + BlockCount * 2 + curveIndex;
-                        block.LightSun = m_buffer[offset];
+                        block.LightSun = buffer[offset];
                         offset = HeaderSize + BlockCount * 3 + curveIndex;
-                        block.LightRed = m_buffer[offset];
+                        block.LightRed = buffer[offset];
                         offset = HeaderSize + BlockCount * 4 + curveIndex;
-                        block.LightGreen = m_buffer[offset];
+                        block.LightGreen = buffer[offset];
                         offset = HeaderSize + BlockCount * 5 + curveIndex;
-                        block.LightBlue = m_buffer[offset];
+                        block.LightBlue = buffer[offset];
                         offset = HeaderSize + BlockCount * 6 + curveIndex * 2;
-                        block.Color = GetShort(offset);
+                        block.Color = GetShort(buffer, offset);
                         page.Data[m_hilbertCurve[curveIndex]] = block;
                     }
 				}
             }
-            Console.WriteLine("load time: " + timer.ElapsedMilliseconds);
+		    CheckInBuffer(buffer);
             return page;
 		}
 
-        private int GetInt(int offset)
+        private static int GetInt(byte[] buffer, int offset)
         {
             var value = 0;
-            value = value | ((m_buffer[offset + 3] & 255) << 24);
-            value = value | ((m_buffer[offset + 2] & 255) << 16);
-            value = value | ((m_buffer[offset + 1] & 255) << 8);
-            value = value | (m_buffer[offset] & 255);
+            value = value | ((buffer[offset + 3] & 255) << 24);
+            value = value | ((buffer[offset + 2] & 255) << 16);
+            value = value | ((buffer[offset + 1] & 255) << 8);
+            value = value | (buffer[offset] & 255);
             return value;
         }
 
-        private ushort GetShort(int offset)
+        private static ushort GetShort(byte[] buffer, int offset)
         {
             var value = 0;
-            value = value | ((m_buffer[offset + 1] & 255) << 8);
-            value = value | (m_buffer[offset] & 255); ;
+            value = value | ((buffer[offset + 1] & 255) << 8);
+            value = value | (buffer[offset] & 255); ;
             return (ushort)value;
         }
 

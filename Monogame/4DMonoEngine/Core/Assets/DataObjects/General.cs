@@ -2,7 +2,7 @@
 using System.Runtime.Serialization;
 using _4DMonoEngine.Core.Common.Interfaces;
 
-namespace _4DMonoEngine.Core.Assets.Config
+namespace _4DMonoEngine.Core.Assets.DataObjects
 {
     [DataContract]
     public class General : IDataContainer

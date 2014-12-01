@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization.Json;
 using System.Threading.Tasks;
-using _4DMonoEngine.Core.Assets.Config;
+using _4DMonoEngine.Core.Assets.DataObjects;
 using _4DMonoEngine.Core.Common.Interfaces;
 
 namespace _4DMonoEngine.Core.Assets
@@ -43,19 +43,20 @@ namespace _4DMonoEngine.Core.Assets
             Debug.Assert(File.Exists(path), "The path: " + path + " does not exist.");
             var t = Task.Run(() =>
             {
-                var fileStream = new FileStream(path, FileMode.Open);
-                var type = typeof(T);
-                if (!m_serializers.ContainsKey(type))
+                using (var fileStream = new FileStream(path, FileMode.Open))
                 {
-                    m_serializers.Add(type, new DataContractJsonSerializer(typeof(T[])));
+                    var type = typeof (T);
+                    if (!m_serializers.ContainsKey(type))
+                    {
+                        m_serializers.Add(type, new DataContractJsonSerializer(typeof (T[])));
+                    }
+                    var serializer = m_serializers[type];
+                    var response = (IDataContainer[]) serializer.ReadObject(fileStream);
+                    foreach (var dataContainer in response)
+                    {
+                        m_loadedData[filename + "_" + dataContainer.GetKey()] = dataContainer;
+                    }
                 }
-                var serializer = m_serializers[type];
-                var response = (IDataContainer[])serializer.ReadObject(fileStream);
-                foreach (var dataContainer in response)
-                {
-                    m_loadedData[filename + "_" + dataContainer.GetKey()] = dataContainer;
-                }
-                fileStream.Close();
                 return (T)m_loadedData[key];
             });
             return await t;
@@ -71,22 +72,22 @@ namespace _4DMonoEngine.Core.Assets
             Debug.Assert(File.Exists(path), "The path: " + path + " does not exist.");
             var t = Task.Run(() =>
             {
-                var fileStream = new FileStream(path, FileMode.Open);
-                var type = typeof(T);
-                if (!m_serializers.ContainsKey(type))
+                IDataContainer response;
+                using (var fileStream = new FileStream(path, FileMode.Open))
                 {
-                    m_serializers.Add(type, new DataContractJsonSerializer(type));
+                    var type = typeof (T);
+                    if (!m_serializers.ContainsKey(type))
+                    {
+                        m_serializers.Add(type, new DataContractJsonSerializer(type));
+                    }
+                    var serializer = m_serializers[type];
+                    response = (IDataContainer) serializer.ReadObject(fileStream);
+                    m_loadedData[response.GetKey()] = response;
                 }
-                var serializer = m_serializers[type];
-                var response = (IDataContainer)serializer.ReadObject(fileStream);
-                m_loadedData[response.GetKey()] = response;
-                fileStream.Close();
-                return (T) response;
+                return (T)response;
             });
             return await t;
         }
-
-
 
         public void Unload()
         {

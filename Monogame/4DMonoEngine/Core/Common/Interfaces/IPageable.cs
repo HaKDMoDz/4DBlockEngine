@@ -2,6 +2,6 @@
 {
     public interface IPageable
     {
-        int PageId { get; }
+        string PageId { get; }
     }
 }

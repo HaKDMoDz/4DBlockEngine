@@ -8,17 +8,17 @@ namespace _4DMonoEngine.Core.Pages
 		public const int PageSizeInBlocks = 64;
 		public const int BlockStepX = PageSizeInBlocks * PageSizeInBlocks;
 		public const int BlockStepZ = PageSizeInBlocks;
-        public int PageId { get; private set; }
+        public string PageId { get; private set; }
         public int X { get; private set; }
         public int Y { get; private set; }
         public int Z { get; private set; }
         public Block[] Data { get; private set; }
 
-        public Page(int x, int y, int z, int pageId)
+        public Page(int x, int y, int z, string pageId)
             : this(x, y, z, pageId, new Block[PageSizeInBlocks * PageSizeInBlocks * PageSizeInBlocks])
         {}
 
-        public Page(int x, int y, int z, int pageId, Block[] data)
+        public Page(int x, int y, int z, string pageId, Block[] data)
         {
             X = x;
             Y = y;

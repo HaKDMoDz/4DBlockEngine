@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using Microsoft.Xna.Framework;
-using _4DMonoEngine.Core.Assets.Config;
+using _4DMonoEngine.Core.Assets.DataObjects;
 using _4DMonoEngine.Core.Utils;
 
 namespace _4DMonoEngine.Core.Chunks.Generators.Regions

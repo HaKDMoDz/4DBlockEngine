@@ -1,6 +1,6 @@
 ﻿using System.Runtime.Serialization;
 
-namespace _4DMonoEngine.Core.Assets.Config
+namespace _4DMonoEngine.Core.Assets.DataObjects
 {
     [DataContract(Name = "Parameter")]
     internal class WorldRegionParameter

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Common.Interfaces;
+using _4DMonoEngine.Core.Pages;
 
 namespace _4DMonoEngine.Core.Initialization
 {
@@ -20,12 +21,12 @@ namespace _4DMonoEngine.Core.Initialization
 
         public bool IsInitialized()
         {
-            return true; //BlockDictionary.Instance.IsInitialized;
+            return PageManager.Instance.IsInitialized;
         }
 
         public void Initialize()
         {
-            //BlockDictionary.Instance.Initialize();
+            PageManager.Instance.Initialize();
         }
     }
 }

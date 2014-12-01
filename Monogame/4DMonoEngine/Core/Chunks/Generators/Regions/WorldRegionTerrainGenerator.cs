@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
-using _4DMonoEngine.Core.Assets.Config;
+using _4DMonoEngine.Core.Assets.DataObjects;
 using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Utils;
 

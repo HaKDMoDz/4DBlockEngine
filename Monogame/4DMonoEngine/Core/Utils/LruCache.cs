@@ -9,7 +9,7 @@ namespace _4DMonoEngine.Core.Utils
     public class LruCache<T> where T : IPageable
     {
 		private readonly LinkedList<T> m_ageQueue;
-    	private readonly Dictionary<int, LinkedListNode<T>> m_pages;
+    	private readonly Dictionary<string, LinkedListNode<T>> m_pages;
 		private readonly int m_capacity;
 		private int m_loadedPages;
 
@@ -17,7 +17,7 @@ namespace _4DMonoEngine.Core.Utils
     	{
 			m_capacity = capacity;
 			m_loadedPages = 0;
-    		m_pages = new Dictionary<int, LinkedListNode<T>>();
+    		m_pages = new Dictionary<string, LinkedListNode<T>>();
 			m_ageQueue = new LinkedList<T> ();
     	}
 
@@ -39,7 +39,7 @@ namespace _4DMonoEngine.Core.Utils
 			m_ageQueue.AddFirst(node);
     	}
 
-    	public T GetPage(int pageId)
+    	public T GetPage(string pageId)
     	{
     	    if (!m_pages.ContainsKey(pageId))
     	    {
@@ -52,7 +52,7 @@ namespace _4DMonoEngine.Core.Utils
     	    return page;
     	}
 
-		public bool ContainsPage(int pageId)
+		public bool ContainsPage(string pageId)
 		{
 			if(m_pages.ContainsKey(pageId))
 			{
@@ -71,7 +71,7 @@ namespace _4DMonoEngine.Core.Utils
 			m_loadedPages = 0;
 		}
 
-    	public void DropPage(int pageId)
+    	public void DropPage(string pageId)
     	{
     	    if (!m_pages.ContainsKey(pageId))
     	    {

@@ -1,5 +1,5 @@
 ﻿using System;
-using _4DMonoEngine.Core.Assets.Config;
+using _4DMonoEngine.Core.Assets.DataObjects;
 using _4DMonoEngine.Core.Blocks;
 
 namespace _4DMonoEngine.Core.Chunks.Generators.Regions

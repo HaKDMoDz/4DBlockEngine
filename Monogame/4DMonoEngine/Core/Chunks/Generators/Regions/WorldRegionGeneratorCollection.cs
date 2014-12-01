@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
-using _4DMonoEngine.Core.Assets.Config;
+using _4DMonoEngine.Core.Assets.DataObjects;
 using _4DMonoEngine.Core.Utils;
 using _4DMonoEngine.Core.Utils.Noise;
 

@@ -177,25 +177,6 @@ namespace _4DMonoEngine.Core.Chunks
         {
             if (m_startUpState == StartUpState.Started)
             {
-                if (add)
-                {
-                    var manager = new PageManager();
-                    var data = new Block[Page.PageSizeInBlocks*Page.PageSizeInBlocks*Page.PageSizeInBlocks];
-                    for (var x = 0; x < Page.PageSizeInBlocks; x++) 
-                    {
-                        for (var y = 0; y < Page.PageSizeInBlocks; y++)
-                        {
-                            for (var z = 0; z < Page.PageSizeInBlocks; z++)
-                            {
-                                data[Page.BlockIndexFromRelativePosition(x, y, z)] =
-                                    Blocks[BlockIndexByWorldPosition(x, y, z)];
-                            }
-                        }
-                    }
-                    var page = new Page(0, 0, 0, BlockIndexByWorldPosition(0, 0, 0), data);
-                    manager.TestCompression(page);
-                    add = false;
-                }
                 /*if (count++ > 100 && m_EditQueue.Count == 0)
                 {
                     count = 0;
