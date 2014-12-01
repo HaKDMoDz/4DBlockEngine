@@ -59,7 +59,6 @@ namespace _4DMonoEngine.Core.Chunks
         private Effect m_blockEffect; // block effect.
         private Texture2D m_blockTextureAtlas; // block texture atlas
 
-        private readonly TerrainGenerator m_generator;
         private readonly CellularLighting<Block> m_lightingEngine;
         private readonly VertexBuilder<Block> m_vertexBuilder;
         private readonly SparseArray3D<Chunk> m_chunkStorage;
@@ -77,7 +76,7 @@ namespace _4DMonoEngine.Core.Chunks
         private readonly Queue<Chunk> m_processingQueue;
         private readonly ConcurrentQueue<WorldEdit> m_EditQueue; 
 
-        public ChunkCache(Game game, uint seed) : base(game)
+        public ChunkCache(Game game) : base(game)
         {
             m_logger = MainEngine.GetEngineInstance().GetLogger("ChunkCache");
             Debug.Assert(game != null);
@@ -85,7 +84,6 @@ namespace _4DMonoEngine.Core.Chunks
             Debug.Assert(ViewRange < CacheRange);
             Debug.Assert(graphicsDevice != null);
             Blocks = new Block[CacheSizeInBlocks * CacheSizeInBlocks * CacheSizeInBlocks];
-            m_generator = new TerrainGenerator(Chunk.SizeInBlocks, Blocks, seed, BlockIndexByWorldPosition);
             m_lightingEngine = new CellularLighting<Block>(Blocks, BlockIndexByWorldPosition, Chunk.SizeInBlocks, GetChunkByWorldPosition);
             m_vertexBuilder = new VertexBuilder<Block>(Blocks, BlockIndexByWorldPosition, graphicsDevice);
             m_chunkStorage = new SparseArray3D<Chunk>(CacheRange * 2 + 1, CacheRange * 2 + 1);
@@ -357,7 +355,7 @@ namespace _4DMonoEngine.Core.Chunks
                 return;
             }
             chunk.ChunkState = ChunkState.Generating;
-            m_generator.GenerateDataForChunk(chunk.Position.X, chunk.Position.Y, chunk.Position.Z, 0);
+            TerrainGenerator.Instance.GenerateDataForChunk(chunk.Position.X, chunk.Position.Y, chunk.Position.Z, Chunk.SizeInBlocks, Blocks, BlockIndexByWorldPosition);
             chunk.UpdateBoundingBox();
             chunk.ChunkState = ChunkState.AwaitingLighting;
         }
@@ -368,7 +366,7 @@ namespace _4DMonoEngine.Core.Chunks
             {
                 case ChunkState.AwaitingGenerate:
                     chunk.ChunkState = ChunkState.Generating;
-                    m_generator.GenerateDataForChunk(chunk.Position.X, chunk.Position.Y, chunk.Position.Z, 0);
+                    TerrainGenerator.Instance.GenerateDataForChunk(chunk.Position.X, chunk.Position.Y, chunk.Position.Z, Chunk.SizeInBlocks, Blocks, BlockIndexByWorldPosition);
                     chunk.UpdateBoundingBox();
                     chunk.ChunkState = ChunkState.AwaitingLighting;
                     goto case ChunkState.AwaitingLighting;
@@ -545,13 +543,11 @@ namespace _4DMonoEngine.Core.Chunks
 
             public Vector3Int Position;
             public WorldEditType EditType;
-            public Vector3Byte NewLight;
 
-            public WorldEdit(Vector3Int position, WorldEditType editType, Vector3Byte newLight = new Vector3Byte())
+            public WorldEdit(Vector3Int position, WorldEditType editType)
             {
                 Position = position;
                 EditType = editType;
-                NewLight = newLight;
             }
         }
     }

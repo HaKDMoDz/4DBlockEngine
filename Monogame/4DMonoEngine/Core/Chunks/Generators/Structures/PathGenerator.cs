@@ -39,7 +39,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
             m_paths = new List<PathNodeList>();
         }
 
-        public void InitializePathSystem(int originX, int originZ, int originW, int radius)
+        public void InitializePathSystem(int originX, int originZ, int radius)
         {
             var minX = originX - radius;
             var maxX = originX + radius;
@@ -57,7 +57,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
                     }
                     var centroidX = x + (int) Math.Round(data.Delta.X * PathCellNoiseScale, MidpointRounding.ToEven);
                     var centroidZ = z + (int) Math.Round(data.Delta.Y * PathCellNoiseScale, MidpointRounding.ToEven);
-                    InsertNodeIntoMaps(data.Id, centroidX, centroidZ, originW);
+                    InsertNodeIntoMaps(data.Id, centroidX, centroidZ);
                 }
             }
             var activeList = new Queue<PathGraphNode>(m_sources.Values);
@@ -158,9 +158,9 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
             return result;
         }
 
-        protected void InsertNodeIntoMaps(uint nodeId, int x, int z, int w)
+        protected void InsertNodeIntoMaps(uint nodeId, int x, int z)
         {
-            var height = m_getHeight(x, z, w);
+            var height = m_getHeight(x, z);
             var node = new PathGraphNode(new Vector3(x, height, z), nodeId);
             if (height >= RiversStartMinHeight)
             {
@@ -405,9 +405,9 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
                 samplePoint1.Normalize();
                 samplePoint1 = (samplePoint1 * expandedRadius) + pos;
 
-                var height0 = getHeightFunction(samplePoint0.X, samplePoint0.Y, w);
-                var height1 = getHeightFunction(samplePoint1.X, samplePoint1.Y, w);
-                var heightM = getHeightFunction(x, z, w);
+                var height0 = getHeightFunction(samplePoint0.X, samplePoint0.Y);
+                var height1 = getHeightFunction(samplePoint1.X, samplePoint1.Y);
+                var heightM = getHeightFunction(x, z);
 
                 var nodeHeight = (int)(height0 < height1 ? height0 : height1);
                 nodeHeight = (int) (heightM < nodeHeight ? heightM : nodeHeight);

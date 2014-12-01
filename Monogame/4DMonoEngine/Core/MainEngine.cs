@@ -70,6 +70,7 @@ namespace _4DMonoEngine.Core
             m_initializationController = new InitializationController();
             m_initializationController.AddEntry(new BlockInitializer());
             m_initializationController.AddEntry(new SaveSystemInitializer());
+            m_initializationController.AddEntry(new TerrainGeneratorInitializer(seed));
             var simulationInitializer = new SimulationInitializer(game, seed);
             m_initializationController.AddEntry(simulationInitializer);
 

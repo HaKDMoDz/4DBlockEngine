@@ -16,7 +16,7 @@ namespace _4DMonoEngine.Core.Initialization
         {
             m_game = game;
             m_seed = seed;
-            m_dependencies = new List<Type>() {typeof(BlockInitializer), typeof(SaveSystemInitializer)};
+            m_dependencies = new List<Type>() {typeof(BlockInitializer), typeof(SaveSystemInitializer), typeof(TerrainGeneratorInitializer)};
         }
 
 

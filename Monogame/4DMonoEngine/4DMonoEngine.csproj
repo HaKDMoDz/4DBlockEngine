@@ -110,6 +110,7 @@
     <Compile Include="Core\Events\IEventSink.cs" />
     <Compile Include="Core\Events\IEventSource.cs" />
     <Compile Include="Core\Graphics\RenderingConstants.cs" />
+    <Compile Include="Core\Initialization\TerrainGeneratorInitializer.cs" />
     <Compile Include="Core\Initialization\SaveSystemInitializer.cs" />
     <Compile Include="Core\Initialization\BlockInitializer.cs" />
     <Compile Include="Core\Initialization\InitializationController.cs" />

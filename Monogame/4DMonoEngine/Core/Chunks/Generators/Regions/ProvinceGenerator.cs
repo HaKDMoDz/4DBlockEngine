@@ -14,12 +14,12 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
             m_lockObject = new object();
         }
 
-        public override Block Apply(int upperBound, int worldPositionX, int worldPositionY, int worldPositionZ, int worldPositionW)
+        public override Block Apply(int upperBound, int worldPositionX, int worldPositionY, int worldPositionZ)
         {
             DepthCacheEntry cache;
             lock (m_lockObject)
             {
-                cache = GetDepthCache(worldPositionX, worldPositionZ, worldPositionW);
+                cache = GetDepthCache(worldPositionX, worldPositionZ);
             }
             float accumulator;
             int index;
@@ -41,7 +41,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
             {
                 var worldRegionLayer = Layers[index++ % Layers.Count];
                 accumulator += (int)Math.Ceiling(worldRegionLayer.Thickness *
-                                    GetNoise(worldPositionX, worldRegionLayer.Id, worldPositionZ, worldPositionW,
+                                    GetNoise(worldPositionX, worldRegionLayer.Id, worldPositionZ,
                                         worldRegionLayer.NoiseOffset, worldRegionLayer.NoiseScale));
                 if (!(accumulator > (upperBound - worldPositionY)))
                 {

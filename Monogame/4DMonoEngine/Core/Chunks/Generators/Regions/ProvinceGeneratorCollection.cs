@@ -18,15 +18,15 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
             return new ProvinceGenerator(noiseCache, (ProvinceData)data);
         }
 
-        protected override RegionData GetRegionData(float x, float y, float z)
+        protected override RegionData GetRegionData(float x, float y)
         {
             var region = new RegionData();
-            var centroidHeight = GetHeightFunction(x, y, z);
+            var centroidHeight = GetHeightFunction(x, y);
             var heightRatio = MathHelper.Clamp((centroidHeight - SeaLevel) / MountainHeight, 0, 1);
-            region.GeologicalActivity = ((MathHelper.Clamp(SimplexNoise3D.FractalBrownianMotion(x, y, z, BiomeSampleRescale * 8, 0, 5) * 5, -1, 1) + 1) / 2);
+            region.GeologicalActivity = ((MathHelper.Clamp(SimplexNoiseGenerator1.FractalBrownianMotion(x, y, BiomeSampleRescale * 8, 0, 5) * 5, -1, 1) + 1) / 2);
             var parameters = new OrderedDictionary
             {
-                {"Rarity", (MathHelper.Clamp(SimplexNoise2.FractalBrownianMotion(x, y, z, BiomeSampleRescale * 8, 0, 5) * 5, -1, 1) + 1) / 2},
+                {"Rarity", (MathHelper.Clamp(SimplexNoiseGenerator2.FractalBrownianMotion(x, y, BiomeSampleRescale * 8, 0, 5) * 5, -1, 1) + 1) / 2},
                 {"Elevation", heightRatio},
                 {"GeologicalActivity", region.GeologicalActivity}
             };

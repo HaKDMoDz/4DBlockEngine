@@ -83,18 +83,25 @@ namespace _4DMonoEngine.Core.Pages
             var pageId = CreatePageId(pagePositionX, pagePositionY, pagePositionZ);
             if (m_pageCache.ContainsPage(pageId))
             {
-                page = m_pageCache.GetPage(pageId);
+                var page = m_pageCache.GetPage(pageId);
                 CopyCunkToPage(page, position, blocks, mappingFunction);
             }
             else if (m_directory.Pages.Contains(pageId))
             {
-                page = DecompressPage(pageId);
+                var page = DecompressPage(pageId);
                 CopyCunkToPage(page, position, blocks, mappingFunction);
                 m_pageCache.InsertPage(page);
             }
-            else
+            else if (!m_pagesPendingWrite.Contains(pageId))
             {
-                var generator = new TerrainGenerator(Chunk.SizeInBlocks)   
+                m_pagesPendingWrite.Add(pageId);
+                var page = new Page(position.X, position.Y, position.Z, pageId);
+                
+
+
+                m_pageCache.InsertPage(page);
+                m_directory.Pages.Add(pageId);
+                m_jsonWriter.Write("SaveDirectory", m_directory);
             }
 	    }
 

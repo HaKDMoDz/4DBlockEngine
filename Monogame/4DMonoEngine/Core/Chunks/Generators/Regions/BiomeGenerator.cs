@@ -13,7 +13,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
             FoliageDensity = biomeData.FoliageDensity;
         }
 
-        public override Block Apply(int upperBound, int worldPositionX, int worldPositionY, int worldPositionZ, int worldPositionW)
+        public override Block Apply(int upperBound, int worldPositionX, int worldPositionY, int worldPositionZ)
         {
             var accumulator = 0;
             var layer = Layers[Layers.Count - 1];
@@ -27,7 +27,7 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
                 else
                 {
                     step = (int)Math.Ceiling(worldRegionLayer.Thickness*
-                                        GetNoise(worldPositionX, worldRegionLayer.Id, worldPositionZ, worldPositionW,
+                                        GetNoise(worldPositionX, worldRegionLayer.Id, worldPositionZ,
                                             worldRegionLayer.NoiseOffset, worldRegionLayer.NoiseScale));
                 }
 

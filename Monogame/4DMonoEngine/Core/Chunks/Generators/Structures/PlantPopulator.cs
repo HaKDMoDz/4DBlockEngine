@@ -11,18 +11,14 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
     //TODO : refactor this into a proper structure system
     public class StructureGenerator
     {
-        private readonly Block[] m_blocks;
-        private readonly MappingFunction m_mappingFunction;
         private ushort m_treeId;
         private readonly CellNoise2D m_cellNoise;
         private readonly SimplexNoise2D m_densityFunction;
         private float m_sampleScale;
         private float m_minSampleScale;
 
-		public StructureGenerator(ulong seed, Block[] blocks, MappingFunction mappingFunction)
+		public StructureGenerator(ulong seed)
         {
-            m_blocks = blocks;
-            m_mappingFunction = mappingFunction;
             m_treeId = BlockDictionary.Instance.GetBlockIdForName("Sand");
             m_densityFunction = new SimplexNoise2D(seed);
             m_cellNoise = new CellNoise2D(seed);
@@ -45,12 +41,12 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Structures
              return data;
          }
 
-        public void PopulateTree(int worldPositionX, int worldPositionZ, int groundLevel)
+         public void PopulateTree(int worldPositionX, int worldPositionZ, int groundLevel, Block[] blocks, MappingFunction mappingFunction)
         {
             var trunkHeight = 15 + groundLevel;
             for (var y = groundLevel; y < trunkHeight; y++)
             {
-                m_blocks[m_mappingFunction(worldPositionX, y, worldPositionZ)] = new Block(m_treeId);
+                blocks[mappingFunction(worldPositionX, y, worldPositionZ)] = new Block(m_treeId);
             }
 
            /* var radius = 3;

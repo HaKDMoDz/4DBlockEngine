@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using _4DMonoEngine.Core.Assets.DataObjects;
 using _4DMonoEngine.Core.Utils;
@@ -20,13 +19,13 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
 
     internal abstract class WorldRegionGeneratorCollection<T> where T : WorldRegionData
     {
-        protected readonly int SeaLevel; // 64;
-        protected readonly int MountainHeight; // 64;
-        protected readonly int BiomeSampleRescale; // 512;
+        protected readonly int SeaLevel;
+        protected readonly int MountainHeight;
+        protected readonly int BiomeSampleRescale;
 
         private readonly Dictionary<string, WorldRegionTerrainGenerator> m_generators;
-        protected readonly SimplexNoise3D SimplexNoise3D;
-        protected readonly SimplexNoise3D SimplexNoise2;
+        protected readonly SimplexNoise2D SimplexNoiseGenerator1;
+        protected readonly SimplexNoise2D SimplexNoiseGenerator2;
         protected readonly GetHeight GetHeightFunction;
 
         protected WorldRegionGeneratorCollection(ulong seed, GetHeight getHeightFunction, IEnumerable<string> regions, int biomeSampleRescale, int seaLevel, int mountainHeight)
@@ -35,8 +34,8 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
             SeaLevel = seaLevel;
             MountainHeight = mountainHeight;
 
-            SimplexNoise3D = new SimplexNoise3D(seed);
-            SimplexNoise2 = new SimplexNoise3D(seed + 0x8fd3952e35bb901f); // the 2 generators just need to be offset by some arbitrary value
+            SimplexNoiseGenerator1 = new SimplexNoise2D(seed);
+            SimplexNoiseGenerator2 = new SimplexNoise2D(seed + 0x8fd3952e35bb901f); // the 2 generators just need to be offset by some arbitrary value
             m_generators = new Dictionary<string, WorldRegionTerrainGenerator>();
             InitializeAsync(seed + 0x3a98bfad, regions); //another arbitrary offset
             GetHeightFunction = getHeightFunction;
@@ -67,13 +66,13 @@ namespace _4DMonoEngine.Core.Chunks.Generators.Regions
 
         protected abstract WorldRegionTerrainGenerator GeneratorBuilder(float[] noiseCache, WorldRegionData data);
 
-        public WorldRegionTerrainGenerator GetRegionGenerator(float x, float y, float z)
+        public WorldRegionTerrainGenerator GetRegionGenerator(float x, float y)
         {
-            var biome = GetRegionData(x, y, z);
+            var biome = GetRegionData(x, y);
             return m_generators[biome.Type];
         }
 
-        protected abstract RegionData GetRegionData(float x, float y, float z);
+        protected abstract RegionData GetRegionData(float x, float y);
         
 
         protected string GetRegionType(IDictionary parameters)

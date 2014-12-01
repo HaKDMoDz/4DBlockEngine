@@ -32,7 +32,7 @@ namespace _4DMonoEngine.Core.Universe
         {
             m_fogVector = new Vector2(Chunk.SizeInBlocks * ChunkCache.ViewRange, Chunk.SizeInBlocks * (ChunkCache.ViewRange + 4));
             m_worldComponents = new List<Renderable>();
-            m_chunkCache = new ChunkCache(game, seed);
+            m_chunkCache = new ChunkCache(game);
             m_worldComponents.Add(m_chunkCache);
             m_worldComponents.Add(new Sky(game, seed));
             m_player = new Player(ChunkCache.Blocks, ChunkCache.BlockIndexByWorldPosition);
