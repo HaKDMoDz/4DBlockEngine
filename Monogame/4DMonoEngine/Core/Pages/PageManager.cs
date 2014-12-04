@@ -77,32 +77,66 @@ namespace _4DMonoEngine.Core.Pages
 
 	    public void LoadOrCreateChunk(Vector3Int position, Block[] blocks, MappingFunction mappingFunction)
         {
-            var pagePositionX = position.X >> 6;
-            var pagePositionY = position.Y >> 6;
-            var pagePositionZ = position.Z >> 6;
+            var pagePositionX = position.X / Page.PageSizeInBlocks;
+            var pagePositionY = position.Y / Page.PageSizeInBlocks;
+            var pagePositionZ = position.Z / Page.PageSizeInBlocks;
             var pageId = CreatePageId(pagePositionX, pagePositionY, pagePositionZ);
             if (m_pageCache.ContainsPage(pageId))
             {
                 var page = m_pageCache.GetPage(pageId);
-                CopyCunkToPage(page, position, blocks, mappingFunction);
+                CopyPageToChunk(page, position, blocks, mappingFunction);
             }
             else if (m_directory.Pages.Contains(pageId))
             {
                 var page = DecompressPage(pageId);
-                CopyCunkToPage(page, position, blocks, mappingFunction);
+                CopyPageToChunk(page, position, blocks, mappingFunction);
                 m_pageCache.InsertPage(page);
             }
             else if (!m_pagesPendingWrite.Contains(pageId))
             {
                 m_pagesPendingWrite.Add(pageId);
                 var page = new Page(position.X, position.Y, position.Z, pageId);
-                
-
+                var worldPosX = pagePositionX * Page.PageSizeInBlocks;
+                var worldPosY = pagePositionY * Page.PageSizeInBlocks;
+                var worldPosZ = pagePositionZ * Page.PageSizeInBlocks;
+                TerrainGenerator.Instance.GenerateDataForChunk(worldPosX, worldPosY, worldPosZ,
+                                                               Page.PageSizeInBlocks, page.Data, (x, y, z) => Page.BlockIndexFromRelativePosition(
+                                                                   x - worldPosX, y - worldPosY, z - worldPosZ));
 
                 m_pageCache.InsertPage(page);
                 m_directory.Pages.Add(pageId);
-                m_jsonWriter.Write("SaveDirectory", m_directory);
+                CopyPageToChunk(page, position, blocks, mappingFunction);
+                //m_jsonWriter.Write("SaveDirectory", m_directory);
+                Task.Run(() =>
+                {
+                    CompressPage(page);
+                    m_pagesPendingWrite.Remove(page.PageId);
+                });
             }
+	    }
+
+        private static void CopyPageToChunk(Page page, Vector3Int position, Block[] blocks, MappingFunction mappingFunction)
+        {
+            var originX = MathUtilities.Modulo(position.X, Page.PageSizeInBlocks);
+            var originY = MathUtilities.Modulo(position.Y, Page.PageSizeInBlocks);
+            var originZ = MathUtilities.Modulo(position.Z, Page.PageSizeInBlocks);
+            for (var x = originX; x < originX + Chunk.SizeInBlocks; x++)
+            {
+                for (var y = originY; y < originY + Chunk.SizeInBlocks; y++)
+                {
+                    for (var z = originZ; z < originZ + Chunk.SizeInBlocks; z++)
+                    {
+                        blocks[mappingFunction(position.X + x, position.Y + y, position.Z + z)] =
+                            page.Data[Page.BlockIndexFromRelativePosition(x, y, z)];
+                    }
+                }
+            }
+        }
+
+
+	    public void DebugFlushPageDirectory()
+	    {
+            m_jsonWriter.Write("SaveDirectory", m_directory);
 	    }
 
 	    public void SaveChunk(Vector3Int position, Block[] blocks, MappingFunction mappingFunction, Action<bool> callback)
@@ -148,7 +182,7 @@ namespace _4DMonoEngine.Core.Pages
                     }
                     m_pageCache.InsertPage(page);
                     m_directory.Pages.Add(pageId);
-                    m_jsonWriter.Write("SaveDirectory", m_directory);
+                   // m_jsonWriter.Write("SaveDirectory", m_directory);
 	            }
 	            m_pagesPendingWrite.Add(pageId);
 	            Task.Run(() =>
@@ -163,14 +197,16 @@ namespace _4DMonoEngine.Core.Pages
 	        }
 	    }
 
-        private void CopyCunkToPage(Page page, Vector3Int position, Block[] blocks, MappingFunction mappingFunction)
-	    {
-
-            for (var x = position.X % Page.PageSizeInBlocks; x < (position.X % Page.PageSizeInBlocks) + Chunk.SizeInBlocks; x++)
+        private static void CopyCunkToPage(Page page, Vector3Int position, Block[] blocks, MappingFunction mappingFunction)
+        {
+            var originX = MathUtilities.Modulo(position.X, Page.PageSizeInBlocks);
+            var originY = MathUtilities.Modulo(position.Y, Page.PageSizeInBlocks);
+            var originZ = MathUtilities.Modulo(position.Z, Page.PageSizeInBlocks);
+            for (var x = originX; x < originX + Chunk.SizeInBlocks; x++)
             {
-                for (var y = position.Y % Page.PageSizeInBlocks; y < (position.Y % Page.PageSizeInBlocks) + Chunk.SizeInBlocks; y++)
+                for (var y = originY; y < originY + Chunk.SizeInBlocks; y++)
                 {
-                    for (var z = position.Z % Page.PageSizeInBlocks; z < (position.Z % Page.PageSizeInBlocks) + Chunk.SizeInBlocks; z++)
+                    for (var z = originZ; z < originZ + Chunk.SizeInBlocks; z++)
                     {
                         page.Data[Page.BlockIndexFromRelativePosition(x, y, z)] =
                             blocks[mappingFunction(position.X + x, position.Y + y, position.Z + z)];

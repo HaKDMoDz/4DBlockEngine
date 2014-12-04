@@ -198,7 +198,12 @@ namespace _4DMonoEngine.Core.Chunks
             Task.Run(() =>
             {
                 RecacheChunks();
-                Parallel.ForEach(m_chunkStorage.Values.ToList(), ProcessChunkInCacheRange);
+                //Parallel.ForEach(m_chunkStorage.Values.ToList(), ProcessChunkInCacheRange);
+                foreach (var chunk in m_chunkStorage)
+                {
+                    ProcessChunkInCacheRange(chunk.Value);
+                }
+                PageManager.Instance.DebugFlushPageDirectory();
                 var cacheThread = new Thread(CacheThread) { IsBackground = true };
                 cacheThread.Start();
                 m_startUpState = StartUpState.Started;   
@@ -355,7 +360,8 @@ namespace _4DMonoEngine.Core.Chunks
                 return;
             }
             chunk.ChunkState = ChunkState.Generating;
-            TerrainGenerator.Instance.GenerateDataForChunk(chunk.Position.X, chunk.Position.Y, chunk.Position.Z, Chunk.SizeInBlocks, Blocks, BlockIndexByWorldPosition);
+            //TerrainGenerator.Instance.GenerateDataForChunk(chunk.Position.X, chunk.Position.Y, chunk.Position.Z, Chunk.SizeInBlocks, Blocks, BlockIndexByWorldPosition);
+            PageManager.Instance.LoadOrCreateChunk(chunk.Position, Blocks, BlockIndexByWorldPosition);
             chunk.UpdateBoundingBox();
             chunk.ChunkState = ChunkState.AwaitingLighting;
         }
@@ -366,7 +372,8 @@ namespace _4DMonoEngine.Core.Chunks
             {
                 case ChunkState.AwaitingGenerate:
                     chunk.ChunkState = ChunkState.Generating;
-                    TerrainGenerator.Instance.GenerateDataForChunk(chunk.Position.X, chunk.Position.Y, chunk.Position.Z, Chunk.SizeInBlocks, Blocks, BlockIndexByWorldPosition);
+                    //TerrainGenerator.Instance.GenerateDataForChunk(chunk.Position.X, chunk.Position.Y, chunk.Position.Z, Chunk.SizeInBlocks, Blocks, BlockIndexByWorldPosition);
+                    PageManager.Instance.LoadOrCreateChunk(chunk.Position, Blocks, BlockIndexByWorldPosition);
                     chunk.UpdateBoundingBox();
                     chunk.ChunkState = ChunkState.AwaitingLighting;
                     goto case ChunkState.AwaitingLighting;

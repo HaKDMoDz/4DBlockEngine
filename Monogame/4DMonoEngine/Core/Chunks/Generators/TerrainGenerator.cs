@@ -134,10 +134,12 @@ namespace _4DMonoEngine.Core.Chunks.Generators
 					        blocks[blockIndex] = new Block(BlockDictionary.Instance.GetBlockIdForName("Water"));
 					}
 
-			        if (Math.Abs(data.Delta.X - cX) < 0.01 && Math.Abs(data.Delta.Y - cZ) < 0.01)
+
+                    //TODO : redesign populator to be compatible with page loading
+			       /* if (Math.Abs(data.Delta.X - cX) < 0.01 && Math.Abs(data.Delta.Y - cZ) < 0.01)
 			        {
 			            m_populator.PopulateTree(cX, cZ, (int)groundLevel, blocks, mappingFunction);
-			        }
+			        }*/
 				}
 		    }
             //TODO : query if chunk has all neighbors loaded so we can run our erosion step
