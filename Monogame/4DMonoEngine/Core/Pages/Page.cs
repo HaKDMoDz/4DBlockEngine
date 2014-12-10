@@ -5,7 +5,7 @@ namespace _4DMonoEngine.Core.Pages
 {
     public class Page : IPageable
     {
-        public const int PageSizeInBlocks = 128;
+        public const int PageSizeInBlocks = 32;
         public const int BlockStepX = PageSizeInBlocks*PageSizeInBlocks;
         public const int BlockStepZ = PageSizeInBlocks;
 

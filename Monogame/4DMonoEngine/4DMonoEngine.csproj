@@ -62,6 +62,7 @@
     <Compile Include="Core\Assets\JSONLoader.cs" />
     <Compile Include="Core\Assets\TableLoader.cs" />
     <Compile Include="Core\Blocks\Block.cs" />
+    <Compile Include="Core\Blocks\BlockDataUtilities.cs" />
     <Compile Include="Core\Blocks\BlockDictionary.cs" />
     <Compile Include="Core\Chunks\Generators\Regions\ProvinceGeneratorCollection.cs" />
     <Compile Include="Core\Chunks\Generators\Regions\ProvinceGenerator.cs" />

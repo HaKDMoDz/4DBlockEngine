@@ -5,11 +5,10 @@ namespace _4DMonoEngine.Core.Utils
     /// <summary>
     /// A dictionary objects that accepts 3 keys for indexing.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     public class SparseArray3D<T> : ConcurrentDictionary<long, T>
     {
-        private long m_rowSize;
-        private long m_columnSize;
+        private readonly long m_rowSize;
+        private readonly long m_columnSize;
         public SparseArray3D(long rowSize, long columnSize) : base()
         {
             m_rowSize = rowSize;

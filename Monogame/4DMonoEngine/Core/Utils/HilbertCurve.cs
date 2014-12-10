@@ -5,9 +5,9 @@ namespace _4DMonoEngine.Core.Utils
 {
     public struct HilbertIndex
     {
-        public uint[] Transpose;
-        public int Bits;
-        public int Dimensions;
+        public readonly uint[] Transpose;
+        public readonly int Bits;
+        public readonly int Dimensions;
         public HilbertIndex(uint[] transpose, int bits)
         {
             Transpose = transpose;
@@ -22,9 +22,17 @@ namespace _4DMonoEngine.Core.Utils
             Bits = bits;
             Dimensions = transpose.Length;
             Transpose = transpose;
-            for(int i = 0; i < Dimensions; ++i)
+            var len = Bits*Dimensions-1;
+            var mask = ((2U << (bits - 1)) - 1);
+            for(var i = 0; i < Dimensions; ++i)
             {
-                Transpose[i] = (index >> (i * bits)) & ((uint)Math.Pow(2, bits) - 1);
+                uint row = 0;
+                for (var j = 0; j < Bits; ++j)
+                {
+                    var source = j * Dimensions + (Dimensions - (i + 1));
+                    row |= ((index >> source) & 1) << j;
+                }
+                Transpose[i] = row & mask;
             }
         }
     } 
@@ -57,7 +65,7 @@ namespace _4DMonoEngine.Core.Utils
         {
             var X = (uint[])index.Transpose.Clone();
 			var bits = index.Bits;
-            int n = index.Dimensions; // n: Number of dimensions
+            var n = index.Dimensions; // n: Number of dimensions
             uint N = 2U << (bits - 1), P, Q, t;
             int i;
             // Gray decode by H ^ (H/2)

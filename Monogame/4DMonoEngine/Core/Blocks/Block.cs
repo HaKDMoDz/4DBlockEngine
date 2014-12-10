@@ -1,4 +1,6 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using System.Runtime.Serialization;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics.PackedVector;
 using _4DMonoEngine.Core.Blocks.Dynamic;
 using _4DMonoEngine.Core.Common.Enums;
@@ -6,8 +8,34 @@ using _4DMonoEngine.Core.Common.Interfaces;
 
 namespace _4DMonoEngine.Core.Blocks
 {
-    public struct Block : ILightable
+    [Serializable]
+    public struct Block : ILightable, ISerializable
     {
+        public bool Equals(Block other)
+        {
+            return m_type == other.m_type && m_color == other.m_color && m_lightSun == other.m_lightSun && m_lightRed == other.m_lightRed && m_lightGreen == other.m_lightGreen && m_lightBlue == other.m_lightBlue;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            return obj is Block && Equals((Block) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = m_type.GetHashCode();
+                hashCode = (hashCode*397) ^ m_color.GetHashCode();
+                hashCode = (hashCode*397) ^ m_lightSun.GetHashCode();
+                hashCode = (hashCode*397) ^ m_lightRed.GetHashCode();
+                hashCode = (hashCode*397) ^ m_lightGreen.GetHashCode();
+                hashCode = (hashCode*397) ^ m_lightBlue.GetHashCode();
+                return hashCode;
+            }
+        }
+
         public const ushort None = 0;
         //private DynamicBlock m_dynamicBlockData;
         private readonly ushort m_type;
@@ -25,6 +53,16 @@ namespace _4DMonoEngine.Core.Blocks
             m_lightRed = 0;
             m_lightGreen = 0;
             m_lightBlue = 0;
+        }
+
+        public Block(SerializationInfo info, StreamingContext context)
+        {
+            m_type = info.GetUInt16("t");
+            m_color = (15 << 8) | (15 << 4) | 15;
+            m_lightSun = info.GetByte("ls");
+            m_lightRed = info.GetByte("lr");
+            m_lightGreen = info.GetByte("lg");
+            m_lightBlue = info.GetByte("lb");
         }
 
         public static Block Empty
@@ -111,6 +149,35 @@ namespace _4DMonoEngine.Core.Blocks
         }
 
 
+        public static bool operator ==(Block b1, Block b2)
+        {
+            return b1.Type == b2.Type &&
+                   b1.LightSun == b2.LightSun &&
+                   b1.LightRed == b2.LightRed &&
+                   b1.LightGreen == b2.LightGreen &&
+                   b1.LightBlue == b2.LightBlue &&
+                   b1.Color == b2.Color;
+        }
 
+        public static bool operator !=(Block b1, Block b2)
+        {
+            return b1.Type != b2.Type ||
+                   b1.LightSun != b2.LightSun ||
+                   b1.LightRed != b2.LightRed ||
+                   b1.LightGreen != b2.LightGreen ||
+                   b1.LightBlue != b2.LightBlue ||
+                   b1.Color != b2.Color;
+        }
+
+
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            info.AddValue("t", Type);
+            info.AddValue("ls", LightSun);
+            info.AddValue("lr", LightRed);
+            info.AddValue("lg", LightGreen);
+            info.AddValue("lb", LightBlue);
+            info.AddValue("c", Color);
+        }
     }
 }

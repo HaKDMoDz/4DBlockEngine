@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
@@ -103,15 +104,47 @@ namespace _4DMonoEngine.Core.Pages
                                                                Page.PageSizeInBlocks, page.Data, (x, y, z) => Page.BlockIndexFromRelativePosition(
                                                                    x - worldPosX, y - worldPosY, z - worldPosZ));
 
+                //BlockDataUtilities.SetupScanDirectedHilbertCurve(Page.PageSizeInBlocks);
+                BlockDataUtilities.GetHilbertCurve(32);
+               // var timer = Stopwatch.StartNew();
+                float compressionRatio;
+                BlockDataUtilities.ScanDirection scanDir;
+                var tree = BlockDataUtilities.ConvertArrayToIntervalTreeHilbert(page.Data, Page.PageSizeInBlocks,
+                    out compressionRatio);
+                //Console.WriteLine("optimal creation time: " + timer.ElapsedMilliseconds);
+              //  Console.WriteLine("h: " + scanDir);
+                Console.WriteLine("h: " + compressionRatio);
+              //  timer.Restart();
+                var tree2 = BlockDataUtilities.ConvertArrayToIntervalTreeOptimal(page.Data, Page.PageSizeInBlocks,
+                   out compressionRatio, out scanDir);
+                //Console.WriteLine("linear tree creation time: " + timer.ElapsedMilliseconds);
+               // Console.WriteLine("l: " + scanDir);
+                Console.WriteLine("l: " + compressionRatio);
+
+                /*timer.Restart();
+                var formatter = new BinaryFormatter();
+                using (var fileStream = new FileStream(Path.Combine(m_dataDirectory, page.PageId + "_tree.page"), FileMode.Create))
+                {
+                    using (var compressor = new GZipStream(fileStream, CompressionLevel.Optimal))
+                    {
+                        formatter.Serialize(compressor, tree);
+                    }
+                }
+                Console.WriteLine("tree compressionTime time: " + timer.ElapsedMilliseconds);
+
+                timer.Restart();
+                CompressPage(page);
+                Console.WriteLine("normal compressionTime time: " + timer.ElapsedMilliseconds);*/
+
                 m_pageCache.InsertPage(page);
                 m_directory.Pages.Add(pageId);
                 CopyPageToChunk(page, position, blocks, mappingFunction);
                 //m_jsonWriter.Write("SaveDirectory", m_directory);
-                Task.Run(() =>
+              /*  Task.Run(() =>
                 {
                     CompressPage(page);
                     m_pagesPendingWrite.Remove(page.PageId);
-                });
+                });*/
             }
 	    }
 

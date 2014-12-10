@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.Serialization;
 
 namespace _4DMonoEngine.Core.Utils
@@ -10,7 +9,8 @@ namespace _4DMonoEngine.Core.Utils
 
     /// <summary>
     /// Interval tree implementation adapted from https://brooknovak.wordpress.com/2013/12/07/augmented-interval-tree-in-c/ 
-    /// Because voxel data can't overlap the original implementation was modified to no longer consider overlap to improve efficiency and reduce garbage
+    /// Because voxel data can't overlap the original implementation was modified to no longer consider overlap to improve efficiency and reduce garbage. 
+    /// This means that the implementation is decidedly less correct, but it itr works for my case.
     /// </summary>
     /// <typeparam name="TInterval">The interval type</typeparam>
     /// <typeparam name="TPoint">The interval's start and end type</typeparam>
@@ -115,7 +115,7 @@ namespace _4DMonoEngine.Core.Utils
         public bool Contains(TInterval item)
         {
             Debug.Assert(!ReferenceEquals(item, null), "specified item is null");
-            return FindMatchingNodes(item).Any();
+            return ContainsInterval(item);
         }
 
         public void Clear()
@@ -183,25 +183,18 @@ namespace _4DMonoEngine.Core.Utils
 
         public bool Remove(TInterval item)
         {
-            if (ReferenceEquals(item, null))
-                throw new ArgumentNullException("item");
+            Debug.Assert(!ReferenceEquals(item, null), "specified item is null");
 
             if (m_root == null)
-                return false;
-
-            var candidates = FindMatchingNodes(item).ToList();
-
-            if (candidates.Count == 0)
-                return false;
-
-            IntervalNode toBeRemoved;
-            if (candidates.Count == 1)
             {
-                toBeRemoved = candidates[0];
+                return false;
             }
-            else
+
+            var toBeRemoved = FindNode(item);
+
+            if (toBeRemoved == null)
             {
-                toBeRemoved = candidates.SingleOrDefault(x => ReferenceEquals(x.Data, item)) ?? candidates[0];
+                return false;
             }
 
             var parent = toBeRemoved.Parent;
@@ -362,48 +355,57 @@ namespace _4DMonoEngine.Core.Utils
             return found != null;
         }
 
-        public bool ContainsOverlappingInterval(TInterval item)
+        public bool ContainsInterval(TInterval item)
         {
             if (ReferenceEquals(item, null))
                 throw new ArgumentNullException("item");
-
-            return PerformStabbingQuery(m_root, item).Count > 0;
+            IntervalNode found;
+            PerformStabbingQuery(m_root, item, out found);
+            return found != null;
         }
 
-        public TInterval[] FindOverlapping(TInterval item)
+        public TInterval FindInterval(TInterval item)
         {
-            if (ReferenceEquals(item, null))
-                throw new ArgumentNullException("item");
+            Debug.Assert(!ReferenceEquals(item, null), "Item is null");
 
-            return PerformStabbingQuery(m_root, item).Select(node => node.Data).ToArray();
+            IntervalNode found;
+            PerformStabbingQuery(m_root, item, out found);
+            return found != null ? found.Data : default(TInterval);
+        }
+
+        private IntervalNode FindNode(TInterval item)
+        {
+            Debug.Assert(!ReferenceEquals(item, null), "Item is null");
+
+            IntervalNode found;
+            PerformStabbingQuery(m_root, item, out found);
+            return found;
         }
 
         private void PerformCopy(int arrayIndex, int arrayLength, Action<int, TInterval> setAtIndexDelegate)
         {
-            if (arrayIndex < 0)
-                throw new ArgumentOutOfRangeException("arrayIndex");
+            Debug.Assert(arrayIndex >= 0, "Specified index < 0");
             var i = arrayIndex;
             var enumerator = GetEnumerator();
             while (enumerator.MoveNext())
             {
                 if (i >= arrayLength)
+                {
                     throw new ArgumentOutOfRangeException("arrayIndex",
                         "Not enough elements in array to copy content into");
+                }
                 setAtIndexDelegate(i, enumerator.Current);
                 i++;
             }
-        }
-
-        private IEnumerable<IntervalNode> FindMatchingNodes(TInterval interval)
-        {
-            return PerformStabbingQuery(m_root, interval).Where(node => node.Data.Equals(interval));
         }
 
         private void SetRoot(IntervalNode node)
         {
             m_root = node;
             if (m_root != null)
+            {
                 m_root.Parent = null;
+            }
         }
 
         private TPoint Start(TInterval interval)
@@ -430,33 +432,36 @@ namespace _4DMonoEngine.Core.Utils
 
         private void PerformStabbingQuery(IntervalNode node, TPoint point, out IntervalNode result)
         {
+            result = null;
             while (true)
             {
                 if (node == null)
                 {
-                    result = null;
                     return;
                 }
 
                 if (point.CompareTo(node.MaxEndPoint) > 0)
                 {
-                    result = null;
                     return;
                 }
 
                 if (node.Left != null)
                 {
                     PerformStabbingQuery(node.Left, point, out result);
+                    if (result != null)
+                    {
+                        return;
+                    }
                 }
 
                 if (DoesIntervalContain(node.Data, point))
                 {
                     result = node;
+                    return;
                 }
 
                 if (point.CompareTo(node.Start) < 0)
                 {
-                    result = null;
                     return;
                 }
 
@@ -467,18 +472,18 @@ namespace _4DMonoEngine.Core.Utils
                 }
                 break;
             }
-            result = null;
         }
 
-        private List<IntervalNode> PerformStabbingQuery(IntervalNode node, TInterval interval)
+        private IntervalNode PerformStabbingQuery(IntervalNode node, TInterval interval)
         {
-            var result = new List<IntervalNode>();
-            PerformStabbingQuery(node, interval, result);
+            IntervalNode result;
+            PerformStabbingQuery(node, interval, out result);
             return result;
         }
 
-        private void PerformStabbingQuery(IntervalNode node, TInterval interval, ICollection<IntervalNode> result)
+        private void PerformStabbingQuery(IntervalNode node, TInterval interval, out IntervalNode result)
         {
+            result = null;
             while (true)
             {
                 if (node == null)
@@ -493,12 +498,17 @@ namespace _4DMonoEngine.Core.Utils
 
                 if (node.Left != null)
                 {
-                    PerformStabbingQuery(node.Left, interval, result);
+                    PerformStabbingQuery(node.Left, interval, out result);
+                    if(result != null)
+                    {
+                        return;
+                    }
                 }
 
                 if (DoIntervalsOverlap(node.Data, interval))
                 {
-                    result.Add(node);
+                    result = node;
+                    return;
                 }
 
                 if (End(interval).CompareTo(node.Start) < 0)
@@ -592,14 +602,16 @@ namespace _4DMonoEngine.Core.Utils
         [Serializable]
         private class IntervalNode
         {
-            private IntervalNode left;
-            private IntervalNode right;
+            private IntervalNode m_left;
+            private IntervalNode m_right;
 
             public IntervalNode(TInterval data, TPoint start, TPoint end)
             {
                 if (start.CompareTo(end) > 0)
+                {
                     throw new ArgumentOutOfRangeException("end",
                         "The suplied interval has an invalid range, where start is greater than end");
+                }
                 Data = data;
                 Start = start;
                 End = end;
@@ -615,12 +627,14 @@ namespace _4DMonoEngine.Core.Utils
 
             public IntervalNode Left
             {
-                get { return left; }
+                get { return m_left; }
                 set
                 {
-                    left = value;
-                    if (left != null)
-                        left.Parent = this;
+                    m_left = value;
+                    if (m_left != null)
+                    {
+                        m_left.Parent = this;
+                    }
                     UpdateHeight();
                     UpdateMaxEndPoint();
                 }
@@ -628,12 +642,14 @@ namespace _4DMonoEngine.Core.Utils
 
             public IntervalNode Right
             {
-                get { return right; }
+                get { return m_right; }
                 set
                 {
-                    right = value;
-                    if (right != null)
-                        right.Parent = this;
+                    m_right = value;
+                    if (m_right != null)
+                    {
+                        m_right.Parent = this;
+                    }
                     UpdateHeight();
                     UpdateMaxEndPoint();
                 }
@@ -644,11 +660,17 @@ namespace _4DMonoEngine.Core.Utils
                 get
                 {
                     if (Left != null && Right != null)
+                    {
                         return Left.Height - Right.Height;
+                    }
                     if (Left != null)
+                    {
                         return Left.Height + 1;
+                    }
                     if (Right != null)
+                    {
                         return -(Right.Height + 1);
+                    }
                     return 0;
                 }
             }
@@ -661,30 +683,41 @@ namespace _4DMonoEngine.Core.Utils
             public void UpdateHeight()
             {
                 if (Left != null && Right != null)
+                {
                     Height = Math.Max(Left.Height, Right.Height) + 1;
+                }
                 else if (Left != null)
+                {
                     Height = Left.Height + 1;
+                }
                 else if (Right != null)
+                {
                     Height = Right.Height + 1;
+                }
                 else
+                {
                     Height = 0;
+                }
             }
 
             private static TPoint Max(TPoint comp1, TPoint comp2)
             {
-                if (comp1.CompareTo(comp2) > 0)
-                    return comp1;
-                return comp2;
+                return comp1.CompareTo(comp2) > 0 ? comp1 : comp2;
             }
 
             public void UpdateMaxEndPoint()
             {
                 var max = End;
                 if (Left != null)
+                {
                     max = Max(max, Left.MaxEndPoint);
+                }
                 if (Right != null)
+                {
                     max = Max(max, Right.MaxEndPoint);
-                MaxEndPoint = max;
+                }
+
+            MaxEndPoint = max;
             }
 
             public override string ToString()
@@ -695,18 +728,18 @@ namespace _4DMonoEngine.Core.Utils
 
         private class IntervalTreeEnumerator : IEnumerator<TInterval>
         {
-            private readonly ulong modificationsAtCreation;
-            private readonly IntervalNode startNode;
-            private readonly IntervalTree<TInterval, TPoint> tree;
-            private IntervalNode current;
-            private bool hasVisitedCurrent;
-            private bool hasVisitedRight;
+            private readonly ulong m_modificationsAtCreation;
+            private readonly IntervalNode m_startNode;
+            private readonly IntervalTree<TInterval, TPoint> m_tree;
+            private IntervalNode m_current;
+            private bool m_hasVisitedCurrent;
+            private bool m_hasVisitedRight;
 
             public IntervalTreeEnumerator(IntervalTree<TInterval, TPoint> tree)
             {
-                this.tree = tree;
-                modificationsAtCreation = tree.m_modifications;
-                startNode = GetLeftMostDescendantOrSelf(tree.m_root);
+                m_tree = tree;
+                m_modificationsAtCreation = tree.m_modifications;
+                m_startNode = GetLeftMostDescendantOrSelf(tree.m_root);
                 Reset();
             }
 
@@ -714,13 +747,17 @@ namespace _4DMonoEngine.Core.Utils
             {
                 get
                 {
-                    if (current == null)
+                    if (m_current == null)
+                    {
                         throw new InvalidOperationException("Enumeration has finished.");
+                    }
 
-                    if (ReferenceEquals(current, startNode) && !hasVisitedCurrent)
+                    if (ReferenceEquals(m_current, m_startNode) && !m_hasVisitedCurrent)
+                    {
                         throw new InvalidOperationException("Enumeration has not started.");
+                    }
 
-                    return current.Data;
+                    return m_current.Data;
                 }
             }
 
@@ -731,50 +768,57 @@ namespace _4DMonoEngine.Core.Utils
 
             public void Reset()
             {
-                if (modificationsAtCreation != tree.m_modifications)
+                if (m_modificationsAtCreation != m_tree.m_modifications)
+                {
                     throw new InvalidOperationException("Collection was modified.");
-                current = startNode;
-                hasVisitedCurrent = false;
-                hasVisitedRight = false;
+                }
+                m_current = m_startNode;
+                m_hasVisitedCurrent = false;
+                m_hasVisitedRight = false;
             }
 
             public bool MoveNext()
             {
-                if (modificationsAtCreation != tree.m_modifications)
+                if (m_modificationsAtCreation != m_tree.m_modifications)
+                {
                     throw new InvalidOperationException("Collection was modified.");
+                }
 
-                if (tree.m_root == null)
+                if (m_tree.m_root == null)
+                {
                     return false;
+                }
 
                 // Visit this node
-                if (!hasVisitedCurrent)
+                if (!m_hasVisitedCurrent)
                 {
-                    hasVisitedCurrent = true;
+                    m_hasVisitedCurrent = true;
                     return true;
                 }
 
                 // Go right, visit the right's left most descendant (or the right node itself)
-                if (!hasVisitedRight && current.Right != null)
+                if (!m_hasVisitedRight && m_current.Right != null)
                 {
-                    current = current.Right;
+                    m_current = m_current.Right;
                     MoveToLeftMostDescendant();
-                    hasVisitedCurrent = true;
-                    hasVisitedRight = false;
+                    m_hasVisitedCurrent = true;
+                    m_hasVisitedRight = false;
                     return true;
                 }
 
                 // Move upward
                 do
                 {
-                    var wasVisitingFromLeft = current.IsLeftChild;
-                    current = current.Parent;
-                    if (wasVisitingFromLeft)
+                    var wasVisitingFromLeft = m_current.IsLeftChild;
+                    m_current = m_current.Parent;
+                    if (!wasVisitingFromLeft)
                     {
-                        hasVisitedCurrent = false;
-                        hasVisitedRight = false;
-                        return MoveNext();
+                        continue;
                     }
-                } while (current != null);
+                    m_hasVisitedCurrent = false;
+                    m_hasVisitedRight = false;
+                    return MoveNext();
+                } while (m_current != null);
 
                 return false;
             }
@@ -785,13 +829,15 @@ namespace _4DMonoEngine.Core.Utils
 
             private void MoveToLeftMostDescendant()
             {
-                current = GetLeftMostDescendantOrSelf(current);
+                m_current = GetLeftMostDescendantOrSelf(m_current);
             }
 
-            private IntervalNode GetLeftMostDescendantOrSelf(IntervalNode node)
+            private static IntervalNode GetLeftMostDescendantOrSelf(IntervalNode node)
             {
                 if (node == null)
+                {
                     return null;
+                }
                 while (node.Left != null)
                 {
                     node = node.Left;

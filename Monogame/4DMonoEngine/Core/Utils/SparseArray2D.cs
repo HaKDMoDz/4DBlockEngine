@@ -6,7 +6,6 @@ namespace _4DMonoEngine.Core.Utils
     /// <summary>
     /// A dictionary objects that accepts dual keys for indexing.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     public class SparseArray2D<T> : ConcurrentDictionary<long, T>
     {
         private const long RowSize = Int32.MaxValue;
