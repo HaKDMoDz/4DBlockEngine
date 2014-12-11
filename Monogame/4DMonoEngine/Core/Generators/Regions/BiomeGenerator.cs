@@ -2,7 +2,7 @@
 using _4DMonoEngine.Core.Assets.DataObjects;
 using _4DMonoEngine.Core.Blocks;
 
-namespace _4DMonoEngine.Core.Chunks.Generators.Regions
+namespace _4DMonoEngine.Core.Generators.Regions
 {
     internal class BiomeGenerator : WorldRegionTerrainGenerator
     {

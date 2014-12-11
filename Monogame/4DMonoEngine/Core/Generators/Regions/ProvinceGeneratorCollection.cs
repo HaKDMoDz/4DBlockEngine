@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework;
 using _4DMonoEngine.Core.Assets.DataObjects;
 using _4DMonoEngine.Core.Utils;
 
-namespace _4DMonoEngine.Core.Chunks.Generators.Regions
+namespace _4DMonoEngine.Core.Generators.Regions
 {
     internal class ProvinceGeneratorCollection : WorldRegionGeneratorCollection<ProvinceData>
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using _4DMonoEngine.Core.Chunks.Generators;
 using _4DMonoEngine.Core.Common.Interfaces;
+using _4DMonoEngine.Core.Generators;
 
 namespace _4DMonoEngine.Core.Initialization
 {

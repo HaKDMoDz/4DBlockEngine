@@ -7,7 +7,7 @@ using _4DMonoEngine.Core.Assets.DataObjects;
 using _4DMonoEngine.Core.Utils;
 using _4DMonoEngine.Core.Utils.Noise;
 
-namespace _4DMonoEngine.Core.Chunks.Generators.Regions
+namespace _4DMonoEngine.Core.Generators.Regions
 {
     internal struct RegionData
     {

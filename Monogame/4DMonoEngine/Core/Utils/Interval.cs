@@ -4,21 +4,21 @@ using System.Diagnostics;
 namespace _4DMonoEngine.Core.Utils
 {
     [Serializable]
-    public class Interval<T>
+    public class Interval<TData, TIndex> where TIndex : IComparable<TIndex>
     {
         private Interval() { }
 
-        public Interval(int low, int hi, T data = default(T))
+        public Interval(TIndex low, TIndex hi, TData data = default(TData))
         {
-            Debug.Assert(low <= hi, "lo higher than hi");
+            Debug.Assert(low.CompareTo(hi) > 0, "lo higher than hi");
             Low = low;
             Hi = hi;
             MutableData = data;
         }
 
-        public int Low { get; private set; }
-        public int Hi { get; private set; }
-        public T MutableData { get; set; }
+        public TIndex Low { get; private set; }
+        public TIndex Hi { get; private set; }
+        public TData MutableData { get; set; }
 
         public override string ToString()
         {

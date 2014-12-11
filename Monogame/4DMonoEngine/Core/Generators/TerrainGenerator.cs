@@ -1,14 +1,13 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
 using _4DMonoEngine.Core.Blocks;
-using _4DMonoEngine.Core.Chunks.Generators.Regions;
-using Microsoft.Xna.Framework;
-using _4DMonoEngine.Core.Chunks.Generators.Structures;
+using _4DMonoEngine.Core.Generators.Regions;
+using _4DMonoEngine.Core.Generators.Structures;
 using _4DMonoEngine.Core.Processors;
 using _4DMonoEngine.Core.Utils;
 using _4DMonoEngine.Core.Utils.Noise;
 using _4DMonoEngine.Core.Utils.Random;
 
-namespace _4DMonoEngine.Core.Chunks.Generators
+namespace _4DMonoEngine.Core.Generators
 {
     internal sealed class TerrainGenerator 
     {

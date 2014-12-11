@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Xna.Framework;
 using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Utils;
 using _4DMonoEngine.Core.Utils.Noise;
 
-namespace _4DMonoEngine.Core.Chunks.Generators.Structures
+namespace _4DMonoEngine.Core.Generators.Structures
 {
     //TODO : refactor this into a proper structure system
     public class StructureGenerator

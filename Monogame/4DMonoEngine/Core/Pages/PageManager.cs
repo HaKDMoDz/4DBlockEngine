@@ -9,7 +9,7 @@ using Microsoft.Xna.Framework;
 using _4DMonoEngine.Core.Assets;
 using _4DMonoEngine.Core.Assets.DataObjects;
 using _4DMonoEngine.Core.Chunks;
-using _4DMonoEngine.Core.Chunks.Generators;
+using _4DMonoEngine.Core.Generators;
 using _4DMonoEngine.Core.Utils;
 using _4DMonoEngine.Core.Utils.Vector;
 using System.IO;
@@ -105,18 +105,18 @@ namespace _4DMonoEngine.Core.Pages
                                                                    x - worldPosX, y - worldPosY, z - worldPosZ));
 
                 //BlockDataUtilities.SetupScanDirectedHilbertCurve(Page.PageSizeInBlocks);
-                BlockDataUtilities.GetHilbertCurve(32);
+               // ChunkCompressor.GetHilbertCurve(32);
                // var timer = Stopwatch.StartNew();
                 float compressionRatio;
-                BlockDataUtilities.ScanDirection scanDir;
-                var tree = BlockDataUtilities.ConvertArrayToIntervalTreeHilbert(page.Data, Page.PageSizeInBlocks,
+                //ChunkCompressor.ScanDirection scanDir;
+                var tree = ChunkCompressor.GetCompressor(Page.PageSizeInBlocks).ConvertArrayToIntervalTree(page.Data,
                     out compressionRatio);
                 //Console.WriteLine("optimal creation time: " + timer.ElapsedMilliseconds);
               //  Console.WriteLine("h: " + scanDir);
-                Console.WriteLine("h: " + compressionRatio);
+               // Console.WriteLine("h: " + compressionRatio);
               //  timer.Restart();
-                var tree2 = BlockDataUtilities.ConvertArrayToIntervalTreeOptimal(page.Data, Page.PageSizeInBlocks,
-                   out compressionRatio, out scanDir);
+            //    var tree2 = ChunkCompressor.ConvertArrayToIntervalTreeLinear(page.Data, Page.PageSizeInBlocks,
+            //       out compressionRatio, out scanDir);
                 //Console.WriteLine("linear tree creation time: " + timer.ElapsedMilliseconds);
                // Console.WriteLine("l: " + scanDir);
                 Console.WriteLine("l: " + compressionRatio);

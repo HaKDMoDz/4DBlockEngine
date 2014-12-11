@@ -3,14 +3,15 @@ using System;
 namespace _4DMonoEngine.Core.Utils
 {
     [Serializable]
-    public class IntervalSelector<T> : IIntervalSelector<Interval<T>, int>
+    public class IntervalSelector<TData, TIndex> : IIntervalSelector<Interval<TData, TIndex>, TIndex> 
+        where TIndex : IComparable<TIndex>
     {
-        public int GetStart(Interval<T> item)
+        public TIndex GetStart(Interval<TData, TIndex> item)
         {
             return item.Low;
         }
 
-        public int GetEnd(Interval<T> item)
+        public TIndex GetEnd(Interval<TData, TIndex> item)
         {
             return item.Hi;
         }
