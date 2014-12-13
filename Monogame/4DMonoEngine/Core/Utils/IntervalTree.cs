@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.Serialization;
+using ProtoBuf;
 
 namespace _4DMonoEngine.Core.Utils
 {
@@ -15,14 +16,30 @@ namespace _4DMonoEngine.Core.Utils
     /// <typeparam name="TInterval">The interval type</typeparam>
     /// <typeparam name="TPoint">The interval's start and end type</typeparam>
 
-    [Serializable]
-    public class IntervalTree<TInterval, TPoint> : ICollection<TInterval>, ICollection, ISerializable
+    [ProtoContract]
+    public class IntervalTree<TInterval, TPoint> : ICollection<TInterval>, ICollection
         where TPoint : IComparable<TPoint>
     {
+        [ProtoMember(1)]
         private readonly IIntervalSelector<TInterval, TPoint> m_intervalSelector;
         private readonly object m_syncRoot;
         private ulong m_modifications;
         private IntervalNode m_root;
+
+        [ProtoMember(2)]
+        private TInterval[] Intervals
+        {
+            get
+            {
+                var intervals = new TInterval[Count];
+                CopyTo(intervals, 0);
+                return intervals;
+            }
+            set
+            {
+                AddRange(value);
+            }
+        }
 
         private IntervalTree()
         {
@@ -43,7 +60,7 @@ namespace _4DMonoEngine.Core.Utils
         }
 
 
-        public IntervalTree(SerializationInfo info, StreamingContext context)
+        /*public IntervalTree(SerializationInfo info, StreamingContext context)
             : this()
         {
             // Reset the property value using the GetValue method.
@@ -53,6 +70,14 @@ namespace _4DMonoEngine.Core.Utils
                     info.GetValue("selector", typeof (IIntervalSelector<TInterval, TPoint>));
             AddRange(intervals);
         }
+
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            var intervals = new TInterval[Count];
+            CopyTo(intervals, 0);
+            info.AddValue("intervals", intervals, typeof(TInterval[]));
+            info.AddValue("selector", m_intervalSelector, typeof(IIntervalSelector<TInterval, TPoint>));
+        }*/
 
         public TPoint MaxEndPoint
         {
@@ -320,14 +345,6 @@ namespace _4DMonoEngine.Core.Utils
             Count--;
             m_modifications++;
             return true;
-        }
-
-        public void GetObjectData(SerializationInfo info, StreamingContext context)
-        {
-            var intervals = new TInterval[Count];
-            CopyTo(intervals, 0);
-            info.AddValue("intervals", intervals, typeof (TInterval[]));
-            info.AddValue("selector", m_intervalSelector, typeof (IIntervalSelector<TInterval, TPoint>));
         }
 
         public void AddRange(IEnumerable<TInterval> intervals)
@@ -599,7 +616,6 @@ namespace _4DMonoEngine.Core.Utils
             }
         }
 
-        [Serializable]
         private class IntervalNode
         {
             private IntervalNode m_left;

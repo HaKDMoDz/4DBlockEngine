@@ -44,7 +44,7 @@ namespace _4DMonoEngine.Core.Chunks
 
         public IntervalTree<Interval<Block, ushort>, ushort> ConvertArrayToIntervalTree(Block[] blocks, out float compressionRatio, CompressionFlag flag = CompressionFlag.None)
         {
-            var scanDirection = ScanDirection.Xyz;
+            ScanDirection scanDirection = ScanDirection.Xyz;
             CompressionMode compressionMode;
             if (flag == CompressionFlag.None)
             {
@@ -89,7 +89,16 @@ namespace _4DMonoEngine.Core.Chunks
                         throw new ArgumentOutOfRangeException("flag");
                 }
             }
-            return compressionMode == CompressionMode.Hilbert ? ConvertArrayToIntervalTreeHilbert(blocks, out compressionRatio) : ConvertArrayToIntervalTreeLinear(blocks, scanDirection, out compressionRatio);
+            if (compressionMode == CompressionMode.Hilbert)
+            {
+                //Console.Out.WriteLine(CompressionMode.Hilbert.ToString());
+                return ConvertArrayToIntervalTreeHilbert(blocks, out compressionRatio);
+            }
+            else
+            {
+                //Console.Out.WriteLine(scanDirection.ToString());
+                return ConvertArrayToIntervalTreeLinear(blocks, scanDirection, out compressionRatio);
+            }
         }
 
         private void EvaluateHilbertTree(Block[] blocks, out float compressionRatio)

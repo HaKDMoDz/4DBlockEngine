@@ -1,8 +1,9 @@
 using System;
+using ProtoBuf;
 
 namespace _4DMonoEngine.Core.Utils
 {
-    [Serializable]
+    [ProtoContract]
     public class IntervalSelector<TData, TIndex> : IIntervalSelector<Interval<TData, TIndex>, TIndex> 
         where TIndex : IComparable<TIndex>
     {

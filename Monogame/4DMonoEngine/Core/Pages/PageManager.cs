@@ -6,6 +6,7 @@ using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
+using ProtoBuf;
 using _4DMonoEngine.Core.Assets;
 using _4DMonoEngine.Core.Assets.DataObjects;
 using _4DMonoEngine.Core.Chunks;
@@ -106,35 +107,34 @@ namespace _4DMonoEngine.Core.Pages
 
                 //BlockDataUtilities.SetupScanDirectedHilbertCurve(Page.PageSizeInBlocks);
                // ChunkCompressor.GetHilbertCurve(32);
-               // var timer = Stopwatch.StartNew();
+                var timer = Stopwatch.StartNew();
                 float compressionRatio;
                 //ChunkCompressor.ScanDirection scanDir;
                 var tree = ChunkCompressor.GetCompressor(Page.PageSizeInBlocks).ConvertArrayToIntervalTree(page.Data,
                     out compressionRatio);
-                //Console.WriteLine("optimal creation time: " + timer.ElapsedMilliseconds);
+                Console.WriteLine("tree creation time: " + timer.ElapsedMilliseconds);
               //  Console.WriteLine("h: " + scanDir);
-               // Console.WriteLine("h: " + compressionRatio);
+              //  Console.WriteLine("tree compresion ratio: " + compressionRatio);
               //  timer.Restart();
             //    var tree2 = ChunkCompressor.ConvertArrayToIntervalTreeLinear(page.Data, Page.PageSizeInBlocks,
             //       out compressionRatio, out scanDir);
                 //Console.WriteLine("linear tree creation time: " + timer.ElapsedMilliseconds);
                // Console.WriteLine("l: " + scanDir);
-                Console.WriteLine("l: " + compressionRatio);
+              //  Console.WriteLine("l: " + compressionRatio);
 
-                /*timer.Restart();
-                var formatter = new BinaryFormatter();
+                timer.Restart();
                 using (var fileStream = new FileStream(Path.Combine(m_dataDirectory, page.PageId + "_tree.page"), FileMode.Create))
                 {
                     using (var compressor = new GZipStream(fileStream, CompressionLevel.Optimal))
                     {
-                        formatter.Serialize(compressor, tree);
+                        Serializer.Serialize(compressor, tree);
                     }
                 }
                 Console.WriteLine("tree compressionTime time: " + timer.ElapsedMilliseconds);
 
                 timer.Restart();
                 CompressPage(page);
-                Console.WriteLine("normal compressionTime time: " + timer.ElapsedMilliseconds);*/
+                Console.WriteLine("normal compressionTime time: " + timer.ElapsedMilliseconds);
 
                 m_pageCache.InsertPage(page);
                 m_directory.Pages.Add(pageId);
