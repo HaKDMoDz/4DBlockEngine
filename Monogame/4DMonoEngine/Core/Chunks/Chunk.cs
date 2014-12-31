@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using _4DMonoEngine.Core.Blocks;
 using _4DMonoEngine.Core.Common.AbstractClasses;
 using _4DMonoEngine.Core.Common.Enums;
@@ -61,7 +62,6 @@ namespace _4DMonoEngine.Core.Chunks
         public static IEnumerable<FaceDirection> GetChunkEdgesBlockIsIn(int x, int y, int z)
         {
             var edges = new List<FaceDirection>();
-
             var localX = MathUtilities.Modulo(x, SizeInBlocks);
             var localY = MathUtilities.Modulo(y, SizeInBlocks);
             var localZ = MathUtilities.Modulo(z, SizeInBlocks);
@@ -133,6 +133,75 @@ namespace _4DMonoEngine.Core.Chunks
                 //When we do a remove we can't take a shortcut. Luckily only removals on the shell will change the bounding box
                 UpdateBoundingBox();
             }
+        }
+
+        private Queue<VisibilityTraceNode> m_visibilityTraceQueue;
+
+        public void RecalculateVisivility()
+        {
+            m_visibilityTraceQueue = new Queue<VisibilityTraceNode>();
+            //We need to iterate over all blocks on each face of the chunk 
+            foreach (FaceDirection direction in Enum.GetValues(typeof(FaceDirection)))
+            {
+                var workVector = new Vector3Int();
+                for (var index = 0; index < SizeInBlocks * SizeInBlocks; ++index)
+                {
+                    int faceIndex = IterateOnFace(direction, ref workVector);
+                    m_visibilityTraceQueue.Enqueue(new VisibilityTraceNode(workVector, faceIndex));
+                }
+                while(m_visibilityTraceQueue.Count > 0)
+                {
+                    var node = m_visibilityTraceQueue.Dequeue();
+                    
+                }
+            }
+        }
+
+        private  struct VisibilityTraceNode
+        {
+            public Vector3Int Position;
+            public int Index;
+            public VisibilityTraceNode(Vector3Int position, int index)
+            {
+                Position = position;
+                Index = index;
+            }
+        }
+
+        private int IterateOnFace(FaceDirection direction, ref Vector3Int index)
+        {
+            int i1;
+            switch(direction)
+            {
+                case FaceDirection.XIncreasing:                    
+                case FaceDirection.XDecreasing:
+                    i1 = index.Y;
+                    index.Y = (i1 + 1) % SizeInBlocks;
+                    if(index.Y < i1)
+                    {
+                        index.Z = (index.Z + 1) % SizeInBlocks;
+                    }
+                    break;
+                case FaceDirection.YIncreasing:
+                case FaceDirection.YDecreasing:
+                    i1 = index.X;
+                    index.X = (i1 + 1) % SizeInBlocks;
+                    if(index.X < i1)
+                    {
+                        index.Z = (index.Z + 1) % SizeInBlocks;
+                    }
+                    break;
+                case FaceDirection.ZIncreasing:
+                case FaceDirection.ZDecreasing:
+                    i1 = index.Y;
+                    index.Y = (i1 + 1) % SizeInBlocks;
+                    if(index.Y < i1)
+                    {
+                        index.X = (index.X + 1) % SizeInBlocks;
+                    }
+                    break;
+            }
+            return m_mappingFunction(index.X, index.Y, index.Z);
         }
 
         public void UpdateBoundingBox()
@@ -264,6 +333,45 @@ namespace _4DMonoEngine.Core.Chunks
                 IndexBuffer = null;
             }
             //TODO : if dirty flag is true send this chunk to the persistance manager
+        }
+    }
+
+    public struct Visibility
+    {
+        public const int TopBottom = 1 << 0;
+        public const int TopLeft = 1 << 1;
+        public const int TopRight = 1 << 2;
+        public const int TopFront = 1 << 3;
+        public const int TopBack = 1 << 4;
+        public const int LeftBottom = 1 << 5;
+        public const int LeftRight = 1 << 6;
+        public const int LeftFront = 1 << 7;
+        public const int LeftBack = 1 << 8;
+        public const int RightBottom = 1 << 9;
+        public const int RightFront = 1 << 10;
+        public const int RightBack = 1 << 11;
+        public const int FrontBottom = 1 << 12;
+        public const int FrontBack = 1 << 13;
+        public const int BackBottom = 1 << 14;
+
+        public static readonly int[] Directions = new[] { TopBottom, TopLeft, TopRight, TopBack, LeftBottom,
+                                                      LeftRight, LeftFront, LeftBack, RightBottom, RightFront, 
+                                                      RightBack, FrontBottom ,FrontBack, BackBottom};
+        private int m_bitVector;
+
+        public Visibility(int visibilityVector)
+        {
+            m_bitVector = visibilityVector;
+        }
+
+        public void SetVisiblity(int direction, bool state)
+        {
+            m_bitVector = state ? (m_bitVector | direction) : (m_bitVector & ~direction);
+        }
+
+        public bool GetVisibility(int direction)
+        {
+            return (m_bitVector & direction) != 0;
         }
     }
 }
