@@ -129,9 +129,7 @@
     <Compile Include="Core\Common\AbstractClasses\WorldRenderable.cs" />
     <Compile Include="Core\Universe\Fluids\FluidCell.cs" />
     <Compile Include="Core\Universe\Fluids\FluidContainer.cs" />
-    <Compile Include="Core\Utils\Interval.cs" />
-    <Compile Include="Core\Utils\IntervalSelector.cs" />
-    <Compile Include="Core\Utils\IntervalTree.cs" />
+    <Compile Include="Core\Utils\BlockIntervalTree.cs" />
     <Compile Include="Core\Utils\Noise\CellNoise2D.cs" />
     <Compile Include="Core\Utils\Noise\SimplexCommon.cs" />
     <Compile Include="Core\Utils\Noise\SimplexNoise2D.cs" />
