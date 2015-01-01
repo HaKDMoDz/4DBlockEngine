@@ -129,7 +129,7 @@
     <Compile Include="Core\Common\AbstractClasses\WorldRenderable.cs" />
     <Compile Include="Core\Universe\Fluids\FluidCell.cs" />
     <Compile Include="Core\Universe\Fluids\FluidContainer.cs" />
-    <Compile Include="Core\Utils\BlockIntervalTree.cs" />
+    <Compile Include="Core\Utils\Interval.cs" />
     <Compile Include="Core\Utils\Noise\CellNoise2D.cs" />
     <Compile Include="Core\Utils\Noise\SimplexCommon.cs" />
     <Compile Include="Core\Utils\Noise\SimplexNoise2D.cs" />
@@ -212,9 +212,6 @@
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
-    <Reference Include="protobuf-net">
-      <HintPath>packages\Protobuf-net\protobuf-net.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Runtime.Serialization" />

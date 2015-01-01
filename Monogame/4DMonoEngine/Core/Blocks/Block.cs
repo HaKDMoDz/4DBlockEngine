@@ -1,16 +1,12 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Runtime.Serialization;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics.PackedVector;
-using ProtoBuf;
-using _4DMonoEngine.Core.Blocks.Dynamic;
 using _4DMonoEngine.Core.Common.Enums;
 using _4DMonoEngine.Core.Common.Interfaces;
 
 namespace _4DMonoEngine.Core.Blocks
 {
-    [ProtoContract]
     public struct Block : ILightable
     {
         public const ushort None = 0;
@@ -37,42 +33,36 @@ namespace _4DMonoEngine.Core.Blocks
             get { return new Block(None); }
         }
 
-        [ProtoMember(1), DefaultValue(0)]
         public ushort Type
         {
             get { return m_type; }
             set { m_type = value;  }
         }
 
-        [ProtoMember(2), DefaultValue(0)]
         public byte LightSun
         {
             get { return m_lightSun; }
             set { m_lightSun = value; }
         }
 
-        [ProtoMember(3), DefaultValue(0)]
         public byte LightRed
         {
             get { return m_lightRed; }
             set { m_lightRed = value; }
         }
 
-        [ProtoMember(4), DefaultValue(0)]
         public byte LightGreen
         {
             get { return m_lightGreen; }
             set { m_lightGreen = value; }
         }
 
-        [ProtoMember(5), DefaultValue(0)]
         public byte LightBlue
         {
             get { return m_lightBlue; }
             set { m_lightBlue = value; }
         }
 
-        [ProtoMember(6), DefaultValue((15 << 8) | (15 << 4) | 15)]
         public ushort Color
         {
             get { return m_color; }

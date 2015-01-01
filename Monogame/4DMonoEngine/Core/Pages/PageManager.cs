@@ -1,12 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Security.Policy;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
-using ProtoBuf;
 using _4DMonoEngine.Core.Assets;
 using _4DMonoEngine.Core.Assets.DataObjects;
 using _4DMonoEngine.Core.Chunks;
@@ -36,7 +32,7 @@ namespace _4DMonoEngine.Core.Pages
         private const int BufferSize = HeaderSize + BlockBytes * BlockCount;
         public bool IsInitialized { get; private set; }
 	    private SaveDirectory m_directory;
-	    private JsonWriter m_jsonWriter;
+	    private readonly JsonWriter m_jsonWriter;
 	    private readonly Stack<byte[]> m_buffers;
 	    private readonly HashSet<string> m_pagesPendingWrite;
 
@@ -122,12 +118,16 @@ namespace _4DMonoEngine.Core.Pages
                // Console.WriteLine("l: " + scanDir);
               //  Console.WriteLine("l: " + compressionRatio);
 
+               // tree.
+
                 timer.Restart();
+                var res = tree[new Interval(17490)];
+                Console.WriteLine("tree query time: " + timer.ElapsedMilliseconds);
                 using (var fileStream = new FileStream(Path.Combine(m_dataDirectory, page.PageId + "_tree.page"), FileMode.Create))
                 {
                     using (var compressor = new GZipStream(fileStream, CompressionLevel.Optimal))
                     {
-                        Serializer.Serialize(compressor, tree);
+                        //Serializer.Serialize(compressor, tree);
                     }
                 }
                 Console.WriteLine("tree compressionTime time: " + timer.ElapsedMilliseconds);

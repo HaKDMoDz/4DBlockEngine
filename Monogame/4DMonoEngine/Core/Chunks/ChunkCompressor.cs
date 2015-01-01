@@ -42,7 +42,7 @@ namespace _4DMonoEngine.Core.Chunks
             }
         }
 
-        public BlockIntervalTree ConvertArrayToIntervalTree(Block[] blocks, out float compressionRatio, CompressionFlag flag = CompressionFlag.None)
+        public SortedList<Interval, Block> ConvertArrayToIntervalTree(Block[] blocks, out float compressionRatio, CompressionFlag flag = CompressionFlag.None)
         {
             var scanDirection = ScanDirection.Xyz;
             CompressionMode compressionMode;
@@ -153,14 +153,14 @@ namespace _4DMonoEngine.Core.Chunks
             }
         }
 
-        private BlockIntervalTree ConvertArrayToIntervalTreeHilbert(Block[] blocks,  out float compressionRatio)
+        private SortedList<Interval, Block> ConvertArrayToIntervalTreeHilbert(Block[] blocks, out float compressionRatio)
         {
             var nodesRemoved = m_hilbertCurve.Length;
             var min = 0;
             var max = 0;
             var current = Block.Empty;
             var started = false;
-            var intervals = new List<BlockIntervalTree.BlockInterval>();
+            var intervals = new SortedList<Interval, Block>();
             for (var i = 0; i < m_hilbertCurve.Length; ++i)
             {
                 var block = blocks[m_hilbertCurve[i]];
@@ -168,7 +168,7 @@ namespace _4DMonoEngine.Core.Chunks
                 {
                     if (started)
                     {
-                        intervals.Add(new BlockIntervalTree.BlockInterval((ushort)min, (ushort)max, current));
+                        intervals.Add(new Interval((ushort)min, (ushort)max), current);
                     }
                     current = block;
                     min = i;
@@ -177,16 +177,16 @@ namespace _4DMonoEngine.Core.Chunks
                 }
                 max = i;
             }
-            intervals.Add(new BlockIntervalTree.BlockInterval((ushort)min, (ushort)max, current));
+            intervals.Add(new Interval((ushort)min, (ushort)max), current);
             compressionRatio = nodesRemoved / (float)m_hilbertCurve.Length;
-            return new BlockIntervalTree(intervals);
+            return intervals;
         }
 
-        private BlockIntervalTree ConvertArrayToIntervalTreeLinear(Block[] blocks, ScanDirection optimalDirection, out float compressionRatio)
+        private SortedList<Interval, Block> ConvertArrayToIntervalTreeLinear(Block[] blocks, ScanDirection optimalDirection, out float compressionRatio)
         {
             var count = m_chunkSize * m_chunkSize * m_chunkSize;
             var nodesRemoved = count;
-            var intervals = new List<BlockIntervalTree.BlockInterval>();
+            var intervals = new SortedList<Interval, Block>();
             var min = 0;
             var max = 0;
             var current = Block.Empty;
@@ -199,7 +199,7 @@ namespace _4DMonoEngine.Core.Chunks
                 {
                     if (started)
                     {
-                        intervals.Add(new BlockIntervalTree.BlockInterval((ushort)min, (ushort)max, current));
+                        intervals.Add(new Interval((ushort)min, (ushort)max), current);
                     }
                     current = block;
                     min = i;
@@ -208,9 +208,9 @@ namespace _4DMonoEngine.Core.Chunks
                 }
                 max = i;
             }
-            intervals.Add(new BlockIntervalTree.BlockInterval((ushort)min, (ushort)max, current));
+            intervals.Add(new Interval((ushort)min, (ushort)max), current);
             compressionRatio = nodesRemoved / (float)count;
-            return new BlockIntervalTree(intervals);
+            return intervals;
         }
 
         private static int GetNextIndex(ScanDirection direction, int chunkSize, ref Vector3Int workCoords)
