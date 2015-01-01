@@ -202,7 +202,7 @@ namespace _4DMonoEngine.Core.Chunks
                 {
                     ProcessChunkInCacheRange(chunk.Value);
                 }
-                PageManager.Instance.DebugFlushPageDirectory();
+  //              PageManager.Instance.DebugFlushPageDirectory();
                 var cacheThread = new Thread(CacheThread) { IsBackground = true };
                 cacheThread.Start();
                 m_startUpState = StartUpState.Started;   
